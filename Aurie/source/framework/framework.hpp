@@ -69,7 +69,7 @@ namespace Aurie
 				// although it obviously runs after the process entrypoint already ran.
 				bool IsPreloaded : 1;
 			};
-		} Flags;
+		} Flags = {};
 
 		// Describes the image base (and by extent the module).
 		union
@@ -77,7 +77,7 @@ namespace Aurie
 			HMODULE Module;
 			PVOID Pointer;
 			uintptr_t Address;
-		} ImageBase;
+		} ImageBase = {};
 
 		// Specifies the image size in memory.
 		uint32_t ImageSize = 0;
@@ -90,7 +90,7 @@ namespace Aurie
 		{
 			PVOID Pointer;
 			uintptr_t Address;
-		} ImageEntrypoint;
+		} ImageEntrypoint = {};
 
 		// AurieInitialize
 		AurieEntry ModuleInitialize = nullptr;
@@ -113,6 +113,13 @@ namespace Aurie
 		virtual AurieObjectType GetObjectType() override
 		{
 			return AURIE_OBJECT_MODULE;
+		}
+
+		bool operator==(const AurieModule& Other) const
+		{
+			return (this->ImageBase.Address == Other.ImageBase.Address) &&
+				(this->ImageSize == Other.ImageSize) &&
+				(this->ImagePath == Other.ImagePath);
 		}
 	};
 }

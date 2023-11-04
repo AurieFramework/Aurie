@@ -8,7 +8,7 @@ namespace Aurie
 {
 	EXPORTED AurieStatus PpQueryImageArchitecture(
 		IN const fs::path& Path,
-		OUT short& ImageArchitecture
+		OUT unsigned short& ImageArchitecture
 	);
 
 	EXPORTED uintptr_t PpFindFileExportByName(
@@ -21,7 +21,7 @@ namespace Aurie
 	);
 
 	EXPORTED AurieStatus PpGetCurrentArchitecture(
-		IN short& ImageArchitecture
+		IN unsigned short& ImageArchitecture
 	);
 
 	namespace Internal
@@ -42,7 +42,7 @@ namespace Aurie
 		// Gets the Machine field from the NT header of an image
 		EXPORTED AurieStatus PpiQueryImageArchitecture(
 			IN void* Image,
-			OUT short& ImageArchitecture
+			OUT unsigned short& ImageArchitecture
 		);
 
 		// Get NT Header of image (also verifies signatures)

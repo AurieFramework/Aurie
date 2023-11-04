@@ -42,7 +42,7 @@ namespace Aurie
 
 	AurieStatus Internal::MdiMapImage(
 		IN const fs::path& ImagePath, 
-		OUT HMODULE ImageBase
+		OUT HMODULE& ImageBase
 	)
 	{
 		// If the file doesn't exist, we have nothing to map
@@ -51,7 +51,7 @@ namespace Aurie
 			return AURIE_FILE_NOT_FOUND;
 
 		AurieStatus last_status = AURIE_SUCCESS;
-		short target_arch = 0, self_arch = 0;
+		unsigned short target_arch = 0, self_arch = 0;
 		
 		// Query the target image architecture
 		last_status = PpQueryImageArchitecture(
@@ -186,12 +186,84 @@ namespace Aurie
 		return Module->ImageBase.Pointer;
 	}
 
-	AurieStatus Internal::MdiMapFolder(
-		IN const fs::path& ImagePath, 
+	AurieStatus Internal::MdiDispatchEntry(
+		IN AurieModule* Module,
+		IN AurieEntry Entry
+	)
+	{
+		// Ignore initialization attempts for the initial module
+		if (Module == g_ArInitialImage)
+			return AURIE_SUCCESS;
+
+		return Module->FrameworkInitialize(
+			g_ArInitialImage,
+			PpGetFrameworkRoutine,
+			Entry,
+			MdiGetImagePath(Module),
+			Module
+		);
+	}
+
+	void Internal::MdiRecursiveMapFolder(
+		IN const fs::path& Folder, 
 		OUT OPTIONAL size_t* ModuleCount
 	)
 	{
-		
+		size_t loaded_count = 0;
+		std::error_code ec;
+		for (const auto& entry : fs::recursive_directory_iterator(Folder, ec))
+		{
+			if (!entry.is_regular_file())
+				continue;
+
+			if (!entry.path().has_filename())
+				continue;
+
+			if (!entry.path().filename().has_extension())
+				continue;
+
+			if (entry.path().filename().extension().compare(L".dll"))
+				continue;
+
+			AurieModule* loaded_module = nullptr;
+
+			if (AurieSuccess(MdMapImage(entry.path(), loaded_module)))
+				loaded_count++;
+		}
+
+		if (ModuleCount)
+			*ModuleCount = loaded_count;
+	}
+
+	void Internal::MdiNonrecursiveMapFolder(
+		IN const fs::path& Folder, 
+		OUT OPTIONAL size_t* ModuleCount
+	)
+	{
+		size_t loaded_count = 0;
+		std::error_code ec;
+		for (const auto& entry : fs::recursive_directory_iterator(Folder, ec))
+		{
+			if (!entry.is_regular_file())
+				continue;
+
+			if (!entry.path().has_filename())
+				continue;
+
+			if (!entry.path().filename().has_extension())
+				continue;
+
+			if (entry.path().filename().extension().compare(L".dll"))
+				continue;
+
+			AurieModule* loaded_module = nullptr;
+
+			if (AurieSuccess(MdMapImage(entry.path(), loaded_module)))
+				loaded_count++;
+		}
+
+		if (ModuleCount)
+			*ModuleCount = loaded_count;
 	}
 
 	AurieStatus MdMapImage(
@@ -218,7 +290,7 @@ namespace Aurie
 		AurieLoaderEntry fwk_init = reinterpret_cast<AurieLoaderEntry>((char*)image_base + framework_init_offset);
 
 		// MdiMapImage checks for __aurie_fwk_init and ModuleEntry, but doesn't check ModulePreload since it's optional
-		// If ModulePreload has a null offset, it means it doesn't exist and should be nullptr.
+		// If the offsets are null, the thing wasn't found, and we shouldn't try to call it
 		if (!module_preload_offset)
 			module_preload = nullptr;
 
@@ -234,6 +306,8 @@ namespace Aurie
 			module_object
 		);
 
+		// TODO: Invoke module load callbacks
+
 		if (!AurieSuccess(last_status))
 			return last_status;
 
@@ -247,6 +321,24 @@ namespace Aurie
 	)
 	{
 		return Module->Flags.IsInitialized;
+	}
+
+	AurieStatus MdMapFolder(
+		IN const fs::path& FolderPath, 
+		IN bool Recursive
+	)
+	{
+		if (!fs::exists(FolderPath))
+			return AURIE_FILE_NOT_FOUND;
+
+		if (Recursive)
+		{
+			Internal::MdiRecursiveMapFolder(FolderPath, nullptr);
+			return AURIE_SUCCESS;
+		}
+
+		Internal::MdiNonrecursiveMapFolder(FolderPath, nullptr);
+		return AURIE_SUCCESS;
 	}
 
 	AurieStatus MdGetImageFilename(

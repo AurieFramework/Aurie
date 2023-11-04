@@ -50,7 +50,6 @@ namespace Aurie
 			IN const PVOID AllocationBase
 		);
 	}
-
 }
 
 #endif // AURIE_MEMORY_H_

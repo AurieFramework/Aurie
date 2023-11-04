@@ -5,14 +5,14 @@ namespace Aurie
 {
 	AurieStatus PpQueryImageArchitecture(
 		IN const std::filesystem::path& Path, 
-		OUT short& ImageArchitecture
+		OUT unsigned short& ImageArchitecture
 	)
 	{
 		AurieStatus last_status = AURIE_SUCCESS;
 
 		void* image_base = nullptr;
 		size_t image_size = 0;
-		short image_arch = 0;
+		unsigned short image_arch = 0;
 
 		// Allocate the file into memory
 		last_status = Internal::PpiMapFileToMemory(
@@ -100,7 +100,7 @@ namespace Aurie
 	}
 
 	AurieStatus PpGetCurrentArchitecture(
-		IN short& ImageArchitecture
+		IN unsigned short& ImageArchitecture
 	)
 	{
 		return Internal::PpiQueryImageArchitecture(
@@ -144,7 +144,7 @@ namespace Aurie
 
 	AurieStatus Internal::PpiQueryImageArchitecture(
 		IN void* Image, 
-		OUT short& ImageArchitecture
+		OUT unsigned short& ImageArchitecture
 	)
 	{
 		AurieStatus last_status = AURIE_SUCCESS;
@@ -270,7 +270,7 @@ namespace Aurie
 	{
 		AurieStatus last_status = AURIE_SUCCESS;
 
-		short target_image_arch = 0;
+		unsigned short target_image_arch = 0;
 		last_status = Internal::PpiQueryImageArchitecture(
 			Image,
 			target_image_arch

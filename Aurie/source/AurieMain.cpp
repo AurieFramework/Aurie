@@ -58,12 +58,46 @@ void ArProcessAttach(HINSTANCE Instance)
 		initial_module
 	);
 
-	
+	// Get the current folder (where the main executable is)
+	fs::path folder_path;
+	if (!AurieSuccess(
+		Internal::MdiGetImageFolder(
+			g_ArInitialImage, 
+			folder_path
+		)
+	))
+	{
+		return (void)MessageBoxA(
+			nullptr,
+			"Failed to get initial folder!",
+			"Aurie Framework",
+			MB_OK | MB_TOPMOST | MB_ICONERROR | MB_SETFOREGROUND
+		);
+	}
+
+	// Craft the path from which the mods will be loaded
+	folder_path = folder_path / "mods" / "aurie";
+
+	// Load everything from %APPDIR%\\mods\\aurie
+	Internal::MdiRecursiveMapFolder(
+		folder_path,
+		nullptr
+	);
+
+	// Call ModuleEntry on all loaded plugins
+	for (auto& entry : Internal::g_LdrModuleList)
+	{
+		Internal::MdiDispatchEntry(
+			&entry,
+			entry.ModuleInitialize
+		);
+	}
 }
 
 void ArProcessDetach(HINSTANCE Instance)
 {
-	// Unload
+	UNREFERENCED_PARAMETER(Instance);
+	// TODO: Loop all modules, call their unload functions, free memory allocations, free their modules...
 }
 
 BOOL WINAPI DllMain(
@@ -72,7 +106,6 @@ BOOL WINAPI DllMain(
 	LPVOID lpvReserved   // reserved
 )  
 {
-
 	// Perform actions based on the reason for calling.
 	switch (fdwReason)
 	{

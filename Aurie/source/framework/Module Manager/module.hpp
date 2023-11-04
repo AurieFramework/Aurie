@@ -18,6 +18,11 @@ namespace Aurie
 		IN AurieModule* Module
 	);
 
+	EXPORTED AurieStatus MdMapFolder(
+		IN const fs::path& FolderPath,
+		IN bool Recursive
+	);
+
 	// Gets the filename from an image
 	EXPORTED AurieStatus MdGetImageFilename(
 		IN AurieModule* Module,
@@ -41,7 +46,7 @@ namespace Aurie
 		// Internal routine responsible for ensuring module compatibility
 		AurieStatus MdiMapImage(
 			IN const fs::path& ImagePath,
-			OUT HMODULE ImageBase
+			OUT HMODULE& ImageBase
 		);
 
 		// Adds an AurieModule instance to the global list and returns a pointer to it
@@ -75,8 +80,18 @@ namespace Aurie
 			IN AurieModule* Module
 		);
 
-		EXPORTED AurieStatus MdiMapFolder(
-			IN const fs::path& ImagePath,
+		AurieStatus MdiDispatchEntry(
+			IN AurieModule* Module,
+			IN AurieEntry Entry
+		);
+
+		void MdiRecursiveMapFolder(
+			IN const fs::path& Folder,
+			OUT OPTIONAL size_t* ModuleCount
+		);
+
+		void MdiNonrecursiveMapFolder(
+			IN const fs::path& Folder,
 			OUT OPTIONAL size_t* ModuleCount
 		);
 

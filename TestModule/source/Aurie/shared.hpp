@@ -129,14 +129,14 @@ namespace Aurie
 
 	using AurieEntry = AurieStatus(*)(
 		AurieModule* Module,
-		const fs::path& ModulePath
+		const fs::path ModulePath
 		);
 
 	using AurieLoaderEntry = AurieStatus(*)(
 		IN AurieModule* InitialImage,
 		IN void* (*PpGetFrameworkRoutine)(IN const char* ImageExportName),
 		IN OPTIONAL AurieEntry Routine,
-		IN OPTIONAL const fs::path& Path,
+		IN OPTIONAL const fs::path Path,
 		IN OPTIONAL AurieModule* SelfModule
 		);
 }
@@ -170,7 +170,7 @@ namespace Aurie
 			IN AurieModule* InitialImage,
 			IN void* (*PpGetFrameworkRoutine)(IN const char* ImageExportName),
 			IN OPTIONAL AurieEntry Routine,
-			IN OPTIONAL const fs::path& Path,
+			IN OPTIONAL const fs::path Path,
 			IN OPTIONAL AurieModule* SelfModule
 		)
 		{
