@@ -76,8 +76,8 @@ namespace Aurie
 			return AURIE_INVALID_ARCH;
 
 		// Make sure the image has the required exports
-		bool has_framework_init = PpFindFileExportByName(ImagePath, "__aurie_fwk_init") != 0;
-		bool has_module_entry = PpFindFileExportByName(ImagePath, "ModuleEntry") != 0;
+		bool has_framework_init = PpFindFileExportByName(ImagePath, "__AurieFrameworkInit") != 0;
+		bool has_module_entry = PpFindFileExportByName(ImagePath, "ModuleInitialize") != 0;
 
 		if (!has_framework_init || !has_module_entry)
 			return AURIE_MODULE_INITIALIZATION_FAILED;
@@ -283,15 +283,15 @@ namespace Aurie
 			return last_status;
 
 		// Find all the required functions
-		uintptr_t framework_init_offset = PpFindFileExportByName(ImagePath, "__aurie_fwk_init");
-		uintptr_t module_init_offset = PpFindFileExportByName(ImagePath, "ModuleEntry");
-		uintptr_t module_preload_offset = PpFindFileExportByName(ImagePath, "ModulePreload");
+		uintptr_t framework_init_offset = PpFindFileExportByName(ImagePath, "__AurieFrameworkInit");
+		uintptr_t module_init_offset = PpFindFileExportByName(ImagePath, "ModuleInitialize");
+		uintptr_t module_preload_offset = PpFindFileExportByName(ImagePath, "ModulePreinitialize");
 
 		AurieEntry module_init = reinterpret_cast<AurieEntry>((char*)image_base + module_init_offset);
 		AurieEntry module_preload = reinterpret_cast<AurieEntry>((char*)image_base + module_preload_offset);
 		AurieLoaderEntry fwk_init = reinterpret_cast<AurieLoaderEntry>((char*)image_base + framework_init_offset);
 
-		// MdiMapImage checks for __aurie_fwk_init and ModuleEntry, but doesn't check ModulePreload since it's optional
+		// MdiMapImage checks for __aurie_fwk_init and ModuleInitialize, but doesn't check ModulePreinitialize since it's optional
 		// If the offsets are null, the thing wasn't found, and we shouldn't try to call it
 		if (!module_preload_offset)
 			module_preload = nullptr;

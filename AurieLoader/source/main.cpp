@@ -32,11 +32,6 @@ void MapFolder(
 
 int wmain(int argc, wchar_t** argv)
 {
-	// You cannot run the Aurie Loader by itself...
-	// It may be wise to pop up a file selection dialog, but that'd overcomplicate the whole thing.
-	if (argc < 2)
-		return 1;
-
 	// The executable we're actually going to want to launch is 
 	// always called the same as our executable, but with a .bak appended to it,
 	// i.e. "Will You Snail.exe" will turn into "Will You Snail.exe.bak"
@@ -76,10 +71,15 @@ int wmain(int argc, wchar_t** argv)
 
 	printf("[>] Process created with PID %d\n", process_info.dwProcessId);
 
+	std::cin.ignore();
+
 	MapFolder(process_info.hProcess, std::filesystem::current_path() / "mods" / "native");
 
 	CloseHandle(process_info.hProcess);
 	CloseHandle(process_info.hThread);
+
+	printf("[<] Leaving...\n");
+	Sleep(1000);
 
 	return 0;
 }

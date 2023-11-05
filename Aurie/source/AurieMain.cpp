@@ -84,6 +84,21 @@ void ArProcessAttach(HINSTANCE Instance)
 		nullptr
 	);
 
+	// Call ModulePreload on all loaded plugins
+	for (auto& entry : Internal::g_LdrModuleList)
+	{
+		Internal::MdpDispatchEntry(
+			&entry,
+			entry.ModulePreinitialize
+		);
+	}
+
+	// Resume our process
+	if (ElIsProcessSuspended())
+	{
+		Internal::ElpResumeProcess(GetCurrentProcess());
+	}
+		
 	// Call ModuleEntry on all loaded plugins
 	for (auto& entry : Internal::g_LdrModuleList)
 	{

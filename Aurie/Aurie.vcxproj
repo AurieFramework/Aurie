@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\framework\Early Launch\early_launch.hpp" />
     <ClInclude Include="source\framework\shared.hpp" />
     <ClInclude Include="source\framework\Memory Manager\memory.hpp" />
     <ClInclude Include="source\framework\Module Manager\module.hpp" />
@@ -28,6 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\AurieMain.cpp" />
+    <ClCompile Include="source\framework\Early Launch\early_launch.cpp" />
     <ClCompile Include="source\framework\Memory Manager\memory.cpp" />
     <ClCompile Include="source\framework\Module Manager\module.cpp" />
     <ClCompile Include="source\framework\Object Manager\object.cpp" />

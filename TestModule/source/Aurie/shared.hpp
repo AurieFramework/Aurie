@@ -63,11 +63,9 @@ namespace Aurie
 		AURIE_EXTERNAL_ERROR,
 		// The requested file was not found.
 		AURIE_FILE_NOT_FOUND,
-		// The requested interface was not found.
-		AURIE_INTERFACE_NOT_FOUND,
 		// The requested access to the object was denied.
 		AURIE_ACCESS_DENIED,
-		// An object with the same name / priority is already registered.
+		// An object with the same identifier / priority is already registered.
 		AURIE_OBJECT_ALREADY_EXISTS,
 		// One or more parameters were invalid.
 		AURIE_INVALID_PARAMETER,
@@ -97,9 +95,8 @@ namespace Aurie
 		AURIE_OBJECT_INTERFACE = 2,
 		// An AurieMemoryAllocation object
 		AURIE_OBJECT_ALLOCATION = 3,
-		AURIE_OBJECT_LIST = 4,
 		// An AurieHook object
-		AURIE_OBJECT_HOOK = 5
+		AURIE_OBJECT_HOOK = 4
 	};
 
 	constexpr bool AurieSuccess(const AurieStatus Status) noexcept
@@ -114,7 +111,7 @@ namespace Aurie
 		// Interface "constructor"
 		virtual AurieStatus Create() = 0;
 		// Interface "destructor"
-		virtual AurieStatus Destroy() = 0;
+		virtual void Destroy() = 0;
 		// Query interface version
 		virtual void QueryVersion(
 			OUT short& Major,
@@ -129,14 +126,14 @@ namespace Aurie
 
 	using AurieEntry = AurieStatus(*)(
 		AurieModule* Module,
-		const fs::path ModulePath
+		const fs::path& ModulePath
 		);
 
 	using AurieLoaderEntry = AurieStatus(*)(
 		IN AurieModule* InitialImage,
 		IN void* (*PpGetFrameworkRoutine)(IN const char* ImageExportName),
 		IN OPTIONAL AurieEntry Routine,
-		IN OPTIONAL const fs::path Path,
+		IN OPTIONAL const fs::path& Path,
 		IN OPTIONAL AurieModule* SelfModule
 		);
 }
@@ -166,11 +163,11 @@ namespace Aurie
 			IN const char* ImageExportName
 			);
 
-		EXPORTED AurieStatus __aurie_fwk_init(
+		EXPORTED AurieStatus __AurieFrameworkInit(
 			IN AurieModule* InitialImage,
 			IN void* (*PpGetFrameworkRoutine)(IN const char* ImageExportName),
 			IN OPTIONAL AurieEntry Routine,
-			IN OPTIONAL const fs::path Path,
+			IN OPTIONAL const fs::path& Path,
 			IN OPTIONAL AurieModule* SelfModule
 		)
 		{
@@ -188,6 +185,39 @@ namespace Aurie
 
 			return AURIE_SUCCESS;
 		}
+
+		// Universal API dispatchers made from broken YYTK updates
+		// This one is an adaptation of FunctionWrapper in YYTK's beta2 branch.
+		template <typename TRet, typename ...TArgs>
+		FORCEINLINE auto __AurieApiDispatch(const char* FunctionName, TArgs... Arguments)
+		{
+			using FN_DispatchedRoutine = TRet(*)(TArgs...);
+
+			return reinterpret_cast<FN_DispatchedRoutine>(g_PpGetFrameworkRoutine(FunctionName))(
+				Arguments...
+				);
+		}
+
+		// And this one is just a continuation of the first one, since some functions don't have parameters
+		template <typename TRet>
+		FORCEINLINE auto __AurieApiDispatch(const char* FunctionName)
+		{
+			using FN_DispatchedRoutine = TRet(*)();
+
+			return reinterpret_cast<FN_DispatchedRoutine>(g_PpGetFrameworkRoutine(FunctionName))();
+		}
+	}
+}
+
+#include <functional>
+// API definitions here
+namespace Aurie
+{
+	bool ElIsProcessSuspended()
+	{
+		using FunctionType = decltype(ElIsProcessSuspended);
+
+		return Internal::__AurieApiDispatch<std::function<FunctionType>::result_type>(__func__);
 	}
 }
 

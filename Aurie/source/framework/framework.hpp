@@ -8,8 +8,14 @@
 #define AURIE_FRAMEWORK_H_
 
 #include "shared.hpp"
-#include <Windows.h>
 
+// Include NTSTATUS values from this header, because it has all of them
+#include <ntstatus.h>
+
+// Don't include NTSTATUS values from Windows.h and winternl.h
+#define WIN32_NO_STATUS
+#include <Windows.h>
+#include <winternl.h>
 
 namespace Aurie
 {
@@ -125,8 +131,86 @@ namespace Aurie
 				(this->ImagePath == Other.ImagePath);
 		}
 	};
+
+	typedef enum _KTHREAD_STATE
+	{
+		Initialized,
+		Ready,
+		Running,
+		Standby,
+		Terminated,
+		Waiting,
+		Transition,
+		DeferredReady,
+		GateWaitObsolete,
+		WaitingForProcessInSwap,
+		MaximumThreadState
+	} KTHREAD_STATE, * PKTHREAD_STATE;
+
+	typedef enum _KWAIT_REASON
+	{
+		Executive,
+		FreePage,
+		PageIn,
+		PoolAllocation,
+		DelayExecution,
+		Suspended,
+		UserRequest,
+		WrExecutive,
+		WrFreePage,
+		WrPageIn,
+		WrPoolAllocation,
+		WrDelayExecution,
+		WrSuspended,
+		WrUserRequest,
+		WrEventPair,
+		WrQueue,
+		WrLpcReceive,
+		WrLpcReply,
+		WrVirtualMemory,
+		WrPageOut,
+		WrRendezvous,
+		WrKeyedEvent,
+		WrTerminated,
+		WrProcessInSwap,
+		WrCpuRateControl,
+		WrCalloutStack,
+		WrKernel,
+		WrResource,
+		WrPushLock,
+		WrMutex,
+		WrQuantumEnd,
+		WrDispatchInt,
+		WrPreempted,
+		WrYieldExecution,
+		WrFastMutex,
+		WrGuardedMutex,
+		WrRundown,
+		WrAlertByThreadId,
+		WrDeferredPreempt,
+		WrPhysicalFault,
+		WrIoRing,
+		WrMdlCache,
+		MaximumWaitReason
+	} KWAIT_REASON, * PKWAIT_REASON;
+
+	typedef struct _SYSTEM_THREAD_INFORMATION
+	{
+		LARGE_INTEGER KernelTime;
+		LARGE_INTEGER UserTime;
+		LARGE_INTEGER CreateTime;
+		ULONG WaitTime;
+		ULONG_PTR StartAddress;
+		CLIENT_ID ClientId;
+		KPRIORITY Priority;
+		KPRIORITY BasePriority;
+		ULONG ContextSwitches;
+		KTHREAD_STATE ThreadState;
+		KWAIT_REASON WaitReason;
+	} SYSTEM_THREAD_INFORMATION, * PSYSTEM_THREAD_INFORMATION;
 }
 
+#include "Early Launch/early_launch.hpp"
 #include "Memory Manager/memory.hpp"
 #include "Module Manager/module.hpp"
 #include "Object Manager/object.hpp"

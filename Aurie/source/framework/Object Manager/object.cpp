@@ -103,6 +103,8 @@ namespace Aurie
 					return entry.Interface == Interface;
 				}
 			);
+
+			return AURIE_SUCCESS;
 		}
 
 		AurieStatus ObpLookupInterfaceOwner(

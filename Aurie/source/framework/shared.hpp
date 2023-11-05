@@ -163,7 +163,7 @@ namespace Aurie
 			IN const char* ImageExportName
 			);
 
-		EXPORTED AurieStatus __aurie_fwk_init(
+		EXPORTED AurieStatus __AurieFrameworkInit(
 			IN AurieModule* InitialImage,
 			IN void* (*PpGetFrameworkRoutine)(IN const char* ImageExportName),
 			IN OPTIONAL AurieEntry Routine,
@@ -185,6 +185,39 @@ namespace Aurie
 
 			return AURIE_SUCCESS;
 		}
+
+		// Universal API dispatchers made from broken YYTK updates
+		// This one is an adaptation of FunctionWrapper in YYTK's beta2 branch.
+		template <typename TRet, typename ...TArgs>
+		FORCEINLINE auto __AurieApiDispatch(const char* FunctionName, TArgs... Arguments)
+		{
+			using FN_DispatchedRoutine = TRet(*)(TArgs...);
+
+			return reinterpret_cast<FN_DispatchedRoutine>(g_PpGetFrameworkRoutine(FunctionName))(
+				Arguments...
+				);
+		}
+
+		// And this one is just a continuation of the first one, since some functions don't have parameters
+		template <typename TRet>
+		FORCEINLINE auto __AurieApiDispatch(const char* FunctionName)
+		{
+			using FN_DispatchedRoutine = TRet(*)();
+
+			return reinterpret_cast<FN_DispatchedRoutine>(g_PpGetFrameworkRoutine(FunctionName))();
+		}
+	}
+}
+
+#include <functional>
+// API definitions here
+namespace Aurie
+{
+	bool ElIsProcessSuspended()
+	{
+		using FunctionType = decltype(ElIsProcessSuspended);
+
+		return Internal::__AurieApiDispatch<std::function<FunctionType>::result_type>(__func__);
 	}
 }
 

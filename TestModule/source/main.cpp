@@ -2,7 +2,10 @@
 #include "Aurie/shared.hpp"
 using namespace Aurie;
 
-EXPORTED AurieStatus ModuleEntry(IN AurieModule* Module, const fs::path& ModulePath)
+EXPORTED AurieStatus ModulePreinitialize(
+	IN AurieModule* Module,
+	IN const fs::path& ModulePath
+)
 {
 	AllocConsole();
 	FILE* fDummy;
@@ -10,6 +13,16 @@ EXPORTED AurieStatus ModuleEntry(IN AurieModule* Module, const fs::path& ModuleP
 	freopen_s(&fDummy, "CONOUT$", "w", stderr);
 	freopen_s(&fDummy, "CONOUT$", "w", stdout);
 
+	printf("[TestModule] ModulePreload. ElIsProcessSuspended returns %d\n", ElIsProcessSuspended());
+
+	return AURIE_SUCCESS;
+}
+
+EXPORTED AurieStatus ModuleInitialize(
+	IN AurieModule* Module, 
+	IN const fs::path& ModulePath
+)
+{
 	printf("Hello from the first Aurie Framework module!\n");
 	printf("- AurieModule: %p\n", Module);
 	printf("- ModulePath: %S\n", ModulePath.wstring().c_str());
