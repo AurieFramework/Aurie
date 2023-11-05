@@ -63,12 +63,10 @@ namespace Aurie
 		AURIE_EXTERNAL_ERROR,
 		// The requested file was not found.
 		AURIE_FILE_NOT_FOUND,
-		// The requested interface was not found.
-		AURIE_INTERFACE_NOT_FOUND,
 		// The requested access to the object was denied.
 		AURIE_ACCESS_DENIED,
-		// A callback with the same priority is already registered.
-		AURIE_PRIORITY_COLLISION,
+		// An object with the same identifier / priority is already registered.
+		AURIE_OBJECT_ALREADY_EXISTS,
 		// One or more parameters were invalid.
 		AURIE_INVALID_PARAMETER,
 		// Insufficient memory is available.
@@ -97,9 +95,8 @@ namespace Aurie
 		AURIE_OBJECT_INTERFACE = 2,
 		// An AurieMemoryAllocation object
 		AURIE_OBJECT_ALLOCATION = 3,
-		AURIE_OBJECT_LIST = 4,
 		// An AurieHook object
-		AURIE_OBJECT_HOOK = 5
+		AURIE_OBJECT_HOOK = 4
 	};
 
 	constexpr bool AurieSuccess(const AurieStatus Status) noexcept
@@ -114,7 +111,7 @@ namespace Aurie
 		// Interface "constructor"
 		virtual AurieStatus Create() = 0;
 		// Interface "destructor"
-		virtual AurieStatus Destroy() = 0;
+		virtual void Destroy() = 0;
 		// Query interface version
 		virtual void QueryVersion(
 			OUT short& Major,

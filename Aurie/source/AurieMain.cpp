@@ -35,7 +35,7 @@ void ArProcessAttach(HINSTANCE Instance)
 	// Create the initial image for the Aurie Framework.
 	AurieModule initial_module;
 	if (!AurieSuccess(
-		Internal::MdiCreateModule(
+		Internal::MdpCreateModule(
 			process_name,
 			Instance,
 			nullptr,
@@ -54,14 +54,14 @@ void ArProcessAttach(HINSTANCE Instance)
 		);
 	}
 
-	g_ArInitialImage = Internal::MdiAddModuleToList(
+	g_ArInitialImage = Internal::MdpAddModuleToList(
 		initial_module
 	);
 
 	// Get the current folder (where the main executable is)
 	fs::path folder_path;
 	if (!AurieSuccess(
-		Internal::MdiGetImageFolder(
+		Internal::MdpGetImageFolder(
 			g_ArInitialImage, 
 			folder_path
 		)
@@ -79,7 +79,7 @@ void ArProcessAttach(HINSTANCE Instance)
 	folder_path = folder_path / "mods" / "aurie";
 
 	// Load everything from %APPDIR%\\mods\\aurie
-	Internal::MdiRecursiveMapFolder(
+	Internal::MdpRecursiveMapFolder(
 		folder_path,
 		nullptr
 	);
@@ -87,7 +87,7 @@ void ArProcessAttach(HINSTANCE Instance)
 	// Call ModuleEntry on all loaded plugins
 	for (auto& entry : Internal::g_LdrModuleList)
 	{
-		Internal::MdiDispatchEntry(
+		Internal::MdpDispatchEntry(
 			&entry,
 			entry.ModuleInitialize
 		);

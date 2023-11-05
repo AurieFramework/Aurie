@@ -15,7 +15,7 @@ namespace Aurie
 		unsigned short image_arch = 0;
 
 		// Allocate the file into memory
-		last_status = Internal::PpiMapFileToMemory(
+		last_status = Internal::PppMapFileToMemory(
 			Path,
 			image_base,
 			image_size
@@ -28,7 +28,7 @@ namespace Aurie
 		}
 		
 		// Query the image architecture
-		last_status = Internal::PpiQueryImageArchitecture(
+		last_status = Internal::PppQueryImageArchitecture(
 			image_base,
 			image_arch
 		);
@@ -51,7 +51,7 @@ namespace Aurie
 		size_t image_size = 0;
 
 		// Map the file into memory, remember to free!
-		last_status = Internal::PpiMapFileToMemory(
+		last_status = Internal::PppMapFileToMemory(
 			ImagePath,
 			image_base,
 			image_size
@@ -65,7 +65,7 @@ namespace Aurie
 		}
 
 		uintptr_t export_offset = 0;
-		last_status = Internal::PpiGetExportOffset(
+		last_status = Internal::PppGetExportOffset(
 			image_base,
 			ImageExportName,
 			export_offset
@@ -90,7 +90,7 @@ namespace Aurie
 		uintptr_t export_offset = 0;
 		AurieStatus last_status = AURIE_SUCCESS;
 
-		last_status = Internal::PpiGetExportOffset(
+		last_status = Internal::PppGetExportOffset(
 			g_ArInitialImage->ImageBase.Pointer,
 			ExportName,
 			export_offset
@@ -103,13 +103,13 @@ namespace Aurie
 		IN unsigned short& ImageArchitecture
 	)
 	{
-		return Internal::PpiQueryImageArchitecture(
+		return Internal::PppQueryImageArchitecture(
 			g_ArInitialImage->ImageBase.Pointer,
 			ImageArchitecture
 		);
 	}
 
-	AurieStatus Internal::PpiMapFileToMemory(
+	AurieStatus Internal::PppMapFileToMemory(
 		IN const fs::path& FilePath,
 		OUT void*& BaseOfFile, 
 		OUT size_t& SizeOfFile
@@ -142,7 +142,7 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
-	AurieStatus Internal::PpiQueryImageArchitecture(
+	AurieStatus Internal::PppQueryImageArchitecture(
 		IN void* Image, 
 		OUT unsigned short& ImageArchitecture
 	)
@@ -150,7 +150,7 @@ namespace Aurie
 		AurieStatus last_status = AURIE_SUCCESS;
 		PIMAGE_NT_HEADERS nt_header = nullptr;
 
-		last_status = PpiGetNtHeader(
+		last_status = PppGetNtHeader(
 			Image, 
 			(void*&)nt_header
 		);
@@ -165,7 +165,7 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
-	EXPORTED void* Internal::PpiFindModuleExportByName(
+	EXPORTED void* Internal::PppFindModuleExportByName(
 		IN const AurieModule* Image,
 		IN const char* ImageExportName
 	)
@@ -173,7 +173,7 @@ namespace Aurie
 		AurieStatus last_status = AURIE_SUCCESS;
 
 		uintptr_t export_offset = 0;
-		last_status = Internal::PpiGetExportOffset(
+		last_status = Internal::PppGetExportOffset(
 			Image->ImageBase.Pointer,
 			ImageExportName,
 			export_offset
@@ -189,7 +189,7 @@ namespace Aurie
 		return reinterpret_cast<void*>(Image->ImageBase.Address + export_offset);
 	}
 
-	AurieStatus Internal::PpiGetNtHeader(
+	AurieStatus Internal::PppGetNtHeader(
 		IN void* Image, 
 		OUT void*& NtHeader
 	)
@@ -219,7 +219,7 @@ namespace Aurie
 
 	// https://github.com/Archie-osu/HattieDrv/blob/main/Driver/source/ioctl/pe/pe.cpp
 	// See HTGetSectionBoundsByName
-	AurieStatus Internal::PpiGetModuleSectionBounds(
+	AurieStatus Internal::PppGetModuleSectionBounds(
 		IN void* Image, 
 		IN const char* SectionName, 
 		OUT uint64_t& SectionOffset, 
@@ -229,7 +229,7 @@ namespace Aurie
 		AurieStatus last_status = AURIE_SUCCESS;
 
 		PIMAGE_NT_HEADERS nt_header = nullptr;
-		last_status = PpiGetNtHeader(Image, reinterpret_cast<void*&>(nt_header));
+		last_status = PppGetNtHeader(Image, reinterpret_cast<void*&>(nt_header));
 
 		// NT Header query failed, not a valid image?
 		if (!AurieSuccess(last_status))
@@ -262,7 +262,7 @@ namespace Aurie
 		return AURIE_FILE_PART_NOT_FOUND;
 	}
 
-	AurieStatus Internal::PpiGetExportOffset(
+	AurieStatus Internal::PppGetExportOffset(
 		IN void* Image, 
 		IN const char* ImageExportName, 
 		OUT uintptr_t& ExportOffset
@@ -271,7 +271,7 @@ namespace Aurie
 		AurieStatus last_status = AURIE_SUCCESS;
 
 		unsigned short target_image_arch = 0;
-		last_status = Internal::PpiQueryImageArchitecture(
+		last_status = Internal::PppQueryImageArchitecture(
 			Image,
 			target_image_arch
 		);
@@ -283,7 +283,7 @@ namespace Aurie
 		}
 
 		void* nt_headers = nullptr;
-		last_status = Internal::PpiGetNtHeader(
+		last_status = Internal::PppGetNtHeader(
 			Image,
 			nt_headers
 		);
@@ -322,7 +322,7 @@ namespace Aurie
 
 			// Get the export directory from the VA 
 			export_directory = reinterpret_cast<PIMAGE_EXPORT_DIRECTORY>(
-				reinterpret_cast<char*>(Image) + Internal::PpiRvaToFileOffset32(
+				reinterpret_cast<char*>(Image) + Internal::PppRvaToFileOffset32(
 					nt_headers_x86,
 					export_dir_address
 				)
@@ -354,7 +354,7 @@ namespace Aurie
 
 			// Get the export directory from the VA 
 			export_directory = reinterpret_cast<PIMAGE_EXPORT_DIRECTORY>(
-				reinterpret_cast<char*>(Image) + Internal::PpiRvaToFileOffset64(
+				reinterpret_cast<char*>(Image) + Internal::PppRvaToFileOffset64(
 					nt_headers_x64,
 					export_dir_address
 				)
@@ -375,7 +375,7 @@ namespace Aurie
 		// Get all our required arrays
 		DWORD* function_names = reinterpret_cast<DWORD*>(
 			reinterpret_cast<char*>(Image) +
-			PpiRvaToFileOffset(
+			PppRvaToFileOffset(
 				reinterpret_cast<PIMAGE_NT_HEADERS>(nt_headers),
 				export_directory->AddressOfNames
 			)
@@ -383,7 +383,7 @@ namespace Aurie
 
 		WORD* function_name_ordinals = reinterpret_cast<WORD*>(
 			reinterpret_cast<char*>(Image) +
-			PpiRvaToFileOffset(
+			PppRvaToFileOffset(
 				reinterpret_cast<PIMAGE_NT_HEADERS>(nt_headers),
 				export_directory->AddressOfNameOrdinals
 			)
@@ -391,7 +391,7 @@ namespace Aurie
 
 		DWORD* function_addresses = reinterpret_cast<DWORD*>(
 			reinterpret_cast<char*>(Image) +
-			PpiRvaToFileOffset(
+			PppRvaToFileOffset(
 				reinterpret_cast<PIMAGE_NT_HEADERS>(nt_headers),
 				export_directory->AddressOfFunctions
 			)
@@ -402,7 +402,7 @@ namespace Aurie
 		{
 			// Get the name of the export
 			const char* export_name = reinterpret_cast<char*>(Image) +
-				PpiRvaToFileOffset(
+				PppRvaToFileOffset(
 					reinterpret_cast<PIMAGE_NT_HEADERS>(nt_headers), 
 					function_names[n]
 			);
@@ -424,7 +424,7 @@ namespace Aurie
 		return AURIE_OBJECT_NOT_FOUND;
 	}
 
-	uint32_t Internal::PpiRvaToFileOffset(
+	uint32_t Internal::PppRvaToFileOffset(
 		IN PIMAGE_NT_HEADERS ImageHeaders, 
 		IN uint32_t Rva
 	)
@@ -446,23 +446,23 @@ namespace Aurie
 		return 0;
 	}
 
-	uint32_t Internal::PpiRvaToFileOffset64(
+	uint32_t Internal::PppRvaToFileOffset64(
 		IN PIMAGE_NT_HEADERS64 ImageHeaders,
 		IN uint32_t Rva
 	)
 	{
-		return PpiRvaToFileOffset(
+		return PppRvaToFileOffset(
 			reinterpret_cast<PIMAGE_NT_HEADERS>(ImageHeaders),
 			Rva
 		);
 	}
 
-	uint32_t Internal::PpiRvaToFileOffset32(
+	uint32_t Internal::PppRvaToFileOffset32(
 		IN PIMAGE_NT_HEADERS32 ImageHeaders,
 		IN uint32_t Rva
 	)
 	{
-		return PpiRvaToFileOffset(
+		return PppRvaToFileOffset(
 			reinterpret_cast<PIMAGE_NT_HEADERS>(ImageHeaders),
 			Rva
 		);

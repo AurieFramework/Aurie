@@ -17,7 +17,7 @@ namespace Aurie
 		IN size_t Size
 	)
 	{
-		AurieMemoryAllocation allocation = Internal::MmiAllocateMemory(
+		AurieMemoryAllocation allocation = Internal::MmpAllocateMemory(
 			Size,
 			Owner
 		);
@@ -40,7 +40,7 @@ namespace Aurie
 		IN PVOID AllocationBase
 	)
 	{
-		if (!Internal::MmiIsValidMemory(
+		if (!Internal::MmpIsAllocatedMemory(
 			Owner,
 			AllocationBase
 		))
@@ -48,7 +48,7 @@ namespace Aurie
 			return AURIE_INVALID_PARAMETER;
 		}
 
-		Internal::MmiFreeMemory(
+		Internal::MmpFreeMemory(
 			Owner,
 			AllocationBase
 		);
@@ -58,7 +58,7 @@ namespace Aurie
 
 	namespace Internal
 	{
-		AurieMemoryAllocation MmiAllocateMemory(
+		AurieMemoryAllocation MmpAllocateMemory(
 			IN const size_t AllocationSize, 
 			IN AurieModule* const OwnerModule
 		)
@@ -71,12 +71,12 @@ namespace Aurie
 			return allocation;
 		}
 
-		void MmiFreeMemory(
+		void MmpFreeMemory(
 			IN AurieModule* OwnerModule,
 			IN PVOID AllocationBase
 		)
 		{
-			MmiRemoveAllocationsFromTable(
+			MmpRemoveAllocationsFromTable(
 				OwnerModule,
 				AllocationBase
 			);
@@ -84,7 +84,7 @@ namespace Aurie
 			free(AllocationBase);
 		}
 
-		void MmiAddAllocationToTable(
+		void MmpAddAllocationToTable(
 			IN const AurieMemoryAllocation& Allocation
 		)
 		{
@@ -92,7 +92,7 @@ namespace Aurie
 			owner_module.MemoryAllocations.push_back(Allocation);
 		}
 
-		bool MmiIsValidMemory(
+		bool MmpIsAllocatedMemory(
 			IN AurieModule* Module, 
 			IN PVOID AllocationBase
 		)
@@ -107,7 +107,7 @@ namespace Aurie
 			) != Module->MemoryAllocations.end();
 		}
 
-		void MmiRemoveAllocationsFromTable(
+		void MmpRemoveAllocationsFromTable(
 			IN AurieModule* OwnerModule,
 			IN const PVOID AllocationBase
 		)

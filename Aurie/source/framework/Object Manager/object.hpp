@@ -5,9 +5,44 @@
 
 namespace Aurie
 {
-	EXPORTED AurieObjectType ObGetObjectType(
-		IN AurieObject* Object
+	EXPORTED AurieStatus ObCreateInterface(
+		IN AurieModule* Module,
+		IN AurieInterfaceBase* Interface,
+		IN const char* InterfaceName
 	);
+
+	EXPORTED bool ObInterfaceExists(
+		IN const char* InterfaceName
+	);
+
+	EXPORTED AurieStatus ObDestroyInterface(
+		IN const char* InterfaceName
+	);
+
+	namespace Internal
+	{
+		AurieStatus ObpAddInterfaceToTable(
+			IN AurieModule* Module,
+			IN AurieInterfaceTableEntry& Entry
+		);
+
+		AurieStatus ObpDestroyInterface(
+			IN AurieModule* Module,
+			IN AurieInterfaceBase* Interface,
+			IN bool Notify
+		);
+
+		AurieStatus ObpLookupInterfaceOwner(
+			IN const char* InterfaceName,
+			IN bool CaseInsensitive,
+			OUT AurieModule*& Module,
+			OUT AurieInterfaceTableEntry*& TableEntry
+		);
+
+		EXPORTED AurieObjectType ObpGetObjectType(
+			IN AurieObject* Object
+		);
+	}
 }
 
 #endif // AURIE_OBJECT_H_

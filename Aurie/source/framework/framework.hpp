@@ -8,11 +8,8 @@
 #define AURIE_FRAMEWORK_H_
 
 #include "shared.hpp"
+#include <Windows.h>
 
-#include "Memory Manager/memory.hpp"
-#include "Module Manager/module.hpp"
-#include "Object Manager/object.hpp"
-#include "PE Parser/pe.hpp"
 
 namespace Aurie
 {
@@ -27,9 +24,9 @@ namespace Aurie
 	// Describes the interface internally
 	struct AurieInterfaceTableEntry : AurieObject
 	{
-		AurieModule* OwnerModule;
-		const char* InterfaceName;
-		AurieInterfaceBase* Interface;
+		AurieModule* OwnerModule = nullptr;
+		const char* InterfaceName = nullptr;
+		AurieInterfaceBase* Interface = nullptr;
 
 		virtual AurieObjectType GetObjectType() override
 		{
@@ -39,14 +36,20 @@ namespace Aurie
 
 	struct AurieMemoryAllocation : AurieObject
 	{
-		PVOID AllocationBase;
-		size_t AllocationSize;
-		AurieModule* OwnerModule;
+		PVOID AllocationBase = nullptr;
+		size_t AllocationSize = 0;
+		AurieModule* OwnerModule = nullptr;
 
 		virtual AurieObjectType GetObjectType() override
 		{
 			return AURIE_OBJECT_ALLOCATION;
 		}
+	};
+
+	struct AurieHandle
+	{
+		AurieModule* Owner;
+		AurieObject* Object;
 	};
 
 	// A direct representation of a loaded object.
@@ -124,5 +127,9 @@ namespace Aurie
 	};
 }
 
+#include "Memory Manager/memory.hpp"
+#include "Module Manager/module.hpp"
+#include "Object Manager/object.hpp"
+#include "PE Parser/pe.hpp"
 
 #endif // AURIE_FRAMEWORK_H_

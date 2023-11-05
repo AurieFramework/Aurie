@@ -3,7 +3,7 @@
 
 namespace Aurie
 {
-	AurieStatus Internal::MdiCreateModule(
+	AurieStatus Internal::MdpCreateModule(
 		IN const fs::path& ImagePath, 
 		IN HMODULE ImageModule,
 		IN AurieEntry ModuleInitialize, 
@@ -23,7 +23,7 @@ namespace Aurie
 		temp_module.ModulePreinitialize = ModulePreinitialize;
 		temp_module.FrameworkInitialize = FrameworkInitialize;
 
-		last_status = MdiQueryModuleInformation(
+		last_status = MdpQueryModuleInformation(
 			ImageModule,
 			&temp_module.ImageBase.Pointer,
 			&temp_module.ImageSize,
@@ -40,7 +40,7 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
-	AurieStatus Internal::MdiMapImage(
+	AurieStatus Internal::MdpMapImage(
 		IN const fs::path& ImagePath, 
 		OUT HMODULE& ImageBase
 	)
@@ -82,6 +82,8 @@ namespace Aurie
 		if (!has_framework_init || !has_module_entry)
 			return AURIE_MODULE_INITIALIZATION_FAILED;
 
+		OutputDebugStringW((std::wstring(L"[Aurie : MdiLoadImage] > ") + ImagePath.wstring()).c_str());
+
 		// Load the image into memory and make sure we loaded it
 		HMODULE image_module = LoadLibraryW(ImagePath.wstring().c_str());
 
@@ -92,7 +94,7 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
-	AurieModule* Internal::MdiAddModuleToList(
+	AurieModule* Internal::MdpAddModuleToList(
 		IN const AurieModule& Module
 	)
 	{
@@ -100,7 +102,7 @@ namespace Aurie
 		return &g_LdrModuleList.back();
 	}
 
-	AurieStatus Internal::MdiQueryModuleInformation(
+	AurieStatus Internal::MdpQueryModuleInformation(
 		IN HMODULE Module, 
 		OPTIONAL OUT PVOID* ModuleBase,
 		OPTIONAL OUT uint32_t* SizeOfModule, 
@@ -132,17 +134,17 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
-	fs::path& Internal::MdiGetImagePath(IN AurieModule* Module)
+	fs::path& Internal::MdpGetImagePath(IN AurieModule* Module)
 	{
 		return Module->ImagePath;
 	}
 
-	AurieStatus Internal::MdiGetImageFolder(
+	AurieStatus Internal::MdpGetImageFolder(
 		IN AurieModule* Module, 
 		OUT fs::path& Path
 	)
 	{
-		fs::path module_path = Internal::MdiGetImagePath(Module);
+		fs::path module_path = Internal::MdpGetImagePath(Module);
 
 		if (!module_path.has_parent_path())
 			return AURIE_INVALID_PARAMETER;
@@ -151,7 +153,7 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
-	AurieStatus Internal::MdiGetNextModule(
+	AurieStatus Internal::MdpGetNextModule(
 		IN AurieModule* Module, 
 		OUT AurieModule*& NextModule
 	)
@@ -179,14 +181,14 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
-	PVOID Internal::MdiGetModuleBaseAddress(
+	PVOID Internal::MdpGetModuleBaseAddress(
 		IN AurieModule* Module
 	)
 	{
 		return Module->ImageBase.Pointer;
 	}
 
-	AurieStatus Internal::MdiDispatchEntry(
+	AurieStatus Internal::MdpDispatchEntry(
 		IN AurieModule* Module,
 		IN AurieEntry Entry
 	)
@@ -199,12 +201,12 @@ namespace Aurie
 			g_ArInitialImage,
 			PpGetFrameworkRoutine,
 			Entry,
-			MdiGetImagePath(Module),
+			MdpGetImagePath(Module),
 			Module
 		);
 	}
 
-	void Internal::MdiRecursiveMapFolder(
+	void Internal::MdpRecursiveMapFolder(
 		IN const fs::path& Folder, 
 		OUT OPTIONAL size_t* ModuleCount
 	)
@@ -235,7 +237,7 @@ namespace Aurie
 			*ModuleCount = loaded_count;
 	}
 
-	void Internal::MdiNonrecursiveMapFolder(
+	void Internal::MdpNonrecursiveMapFolder(
 		IN const fs::path& Folder, 
 		OUT OPTIONAL size_t* ModuleCount
 	)
@@ -275,7 +277,7 @@ namespace Aurie
 		HMODULE image_base = nullptr;
 
 		// Map the image
-		last_status = Internal::MdiMapImage(ImagePath, image_base);
+		last_status = Internal::MdpMapImage(ImagePath, image_base);
 
 		if (!AurieSuccess(last_status))
 			return last_status;
@@ -296,7 +298,7 @@ namespace Aurie
 
 		// Create the module object
 		AurieModule module_object = {};
-		last_status = Internal::MdiCreateModule(
+		last_status = Internal::MdpCreateModule(
 			ImagePath,
 			image_base,
 			module_init,
@@ -312,7 +314,7 @@ namespace Aurie
 			return last_status;
 
 		// Add it to our list of modules
-		Module = Internal::MdiAddModuleToList(module_object);
+		Module = Internal::MdpAddModuleToList(module_object);
 		return AURIE_SUCCESS;
 	}
 
@@ -333,11 +335,11 @@ namespace Aurie
 
 		if (Recursive)
 		{
-			Internal::MdiRecursiveMapFolder(FolderPath, nullptr);
+			Internal::MdpRecursiveMapFolder(FolderPath, nullptr);
 			return AURIE_SUCCESS;
 		}
 
-		Internal::MdiNonrecursiveMapFolder(FolderPath, nullptr);
+		Internal::MdpNonrecursiveMapFolder(FolderPath, nullptr);
 		return AURIE_SUCCESS;
 	}
 
@@ -346,7 +348,7 @@ namespace Aurie
 		OUT std::wstring& Filename
 	)
 	{
-		auto& image_path = Internal::MdiGetImagePath(Module);
+		auto& image_path = Internal::MdpGetImagePath(Module);
 
 		if (!image_path.has_filename())
 			return AURIE_INVALID_PARAMETER;

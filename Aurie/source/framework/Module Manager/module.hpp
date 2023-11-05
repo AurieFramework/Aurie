@@ -2,8 +2,6 @@
 #define AURIE_MODULE_H_
 
 #include "../framework.hpp"
-#include <Windows.h>
-#include <map>
 
 namespace Aurie
 {
@@ -33,7 +31,7 @@ namespace Aurie
 	{
 		// Creates an AurieModule object - for internal use only
 		// Keep in mind struct AurieModule should be opaque
-		AurieStatus MdiCreateModule(
+		AurieStatus MdpCreateModule(
 			IN const fs::path& ImagePath,
 			IN HMODULE ImageModule,
 			IN AurieEntry ModuleInitialize,
@@ -44,53 +42,53 @@ namespace Aurie
 		);
 
 		// Internal routine responsible for ensuring module compatibility
-		AurieStatus MdiMapImage(
+		AurieStatus MdpMapImage(
 			IN const fs::path& ImagePath,
 			OUT HMODULE& ImageBase
 		);
 
 		// Adds an AurieModule instance to the global list and returns a pointer to it
-		AurieModule* MdiAddModuleToList(
+		AurieModule* MdpAddModuleToList(
 			IN const AurieModule& Module
 		);
 
 		// Queries information about a module
-		EXPORTED AurieStatus MdiQueryModuleInformation(
+		EXPORTED AurieStatus MdpQueryModuleInformation(
 			IN HMODULE Module,
 			OPTIONAL OUT PVOID* ModuleBase,
 			OPTIONAL OUT uint32_t* SizeOfModule,
 			OPTIONAL OUT PVOID* EntryPoint
 		);
 
-		EXPORTED fs::path& MdiGetImagePath(
+		EXPORTED fs::path& MdpGetImagePath(
 			IN AurieModule* Module
 		);
 
-		EXPORTED AurieStatus MdiGetImageFolder(
+		EXPORTED AurieStatus MdpGetImageFolder(
 			IN AurieModule* Module,
 			OUT fs::path& Path
 		);
 
-		EXPORTED AurieStatus MdiGetNextModule(
+		EXPORTED AurieStatus MdpGetNextModule(
 			IN AurieModule* Module,
 			OUT AurieModule*& NextModule
 		);
 
-		EXPORTED PVOID MdiGetModuleBaseAddress(
+		EXPORTED PVOID MdpGetModuleBaseAddress(
 			IN AurieModule* Module
 		);
 
-		AurieStatus MdiDispatchEntry(
+		AurieStatus MdpDispatchEntry(
 			IN AurieModule* Module,
 			IN AurieEntry Entry
 		);
 
-		void MdiRecursiveMapFolder(
+		void MdpRecursiveMapFolder(
 			IN const fs::path& Folder,
 			OUT OPTIONAL size_t* ModuleCount
 		);
 
-		void MdiNonrecursiveMapFolder(
+		void MdpNonrecursiveMapFolder(
 			IN const fs::path& Folder,
 			OUT OPTIONAL size_t* ModuleCount
 		);

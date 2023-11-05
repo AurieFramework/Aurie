@@ -26,26 +26,26 @@ namespace Aurie
 
 	namespace Internal
 	{
-		AurieMemoryAllocation MmiAllocateMemory(
+		AurieMemoryAllocation MmpAllocateMemory(
 			IN const size_t AllocationSize,
 			IN AurieModule* const OwnerModule
 		);
 
-		void MmiFreeMemory(
+		void MmpFreeMemory(
 			IN AurieModule* OwnerModule,
 			IN PVOID AllocationBase
 		);
 		
-		void MmiAddAllocationToTable(
+		void MmpAddAllocationToTable(
 			IN const AurieMemoryAllocation& Allocation
 		);
 
-		EXPORTED bool MmiIsValidMemory(
+		EXPORTED bool MmpIsAllocatedMemory(
 			IN AurieModule* Module,
 			IN PVOID AllocationBase
 		);
 
-		void MmiRemoveAllocationsFromTable(
+		void MmpRemoveAllocationsFromTable(
 			IN AurieModule* OwnerModule,
 			IN const PVOID AllocationBase
 		);

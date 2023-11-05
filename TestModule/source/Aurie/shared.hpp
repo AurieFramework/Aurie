@@ -67,8 +67,8 @@ namespace Aurie
 		AURIE_INTERFACE_NOT_FOUND,
 		// The requested access to the object was denied.
 		AURIE_ACCESS_DENIED,
-		// A callback with the same priority is already registered.
-		AURIE_PRIORITY_COLLISION,
+		// An object with the same name / priority is already registered.
+		AURIE_OBJECT_ALREADY_EXISTS,
 		// One or more parameters were invalid.
 		AURIE_INVALID_PARAMETER,
 		// Insufficient memory is available.
