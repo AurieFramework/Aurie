@@ -189,13 +189,11 @@ namespace Aurie
 		// Universal API dispatchers made from broken YYTK updates
 		// This one is an adaptation of FunctionWrapper in YYTK's beta2 branch.
 		template <typename TRet, typename ...TArgs>
-		FORCEINLINE auto __AurieApiDispatch(const char* FunctionName, TArgs... Arguments)
+		FORCEINLINE auto __AurieApiDispatch(const char* FunctionName, TArgs&... Arguments)
 		{
 			using FN_DispatchedRoutine = TRet(*)(TArgs...);
 
-			return reinterpret_cast<FN_DispatchedRoutine>(g_PpGetFrameworkRoutine(FunctionName))(
-				Arguments...
-				);
+			return reinterpret_cast<FN_DispatchedRoutine>(g_PpGetFrameworkRoutine(FunctionName))(Arguments...);
 		}
 
 		// And this one is just a continuation of the first one, since some functions don't have parameters
@@ -215,9 +213,137 @@ namespace Aurie
 {
 	bool ElIsProcessSuspended()
 	{
-		using FunctionType = decltype(ElIsProcessSuspended);
+		using ResultType = std::function<decltype(ElIsProcessSuspended)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__);
+	}
 
-		return Internal::__AurieApiDispatch<std::function<FunctionType>::result_type>(__func__);
+	PVOID MmAllocatePersistentMemory(
+		IN size_t Size
+	)
+	{
+		using ResultType = std::function<decltype(MmAllocatePersistentMemory)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, Size);
+	}
+
+	PVOID MmAllocateMemory(
+		IN AurieModule* Owner,
+		IN size_t Size
+	)
+	{
+		using ResultType = std::function<decltype(MmAllocateMemory)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, Owner, Size);
+	}
+
+	AurieStatus MmFreePersistentMemory(
+		IN PVOID AllocationBase
+	)
+	{
+		using ResultType = std::function<decltype(MmFreePersistentMemory)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, AllocationBase);
+	}
+
+	AurieStatus MmFreeMemory(
+		IN AurieModule* Owner,
+		IN PVOID AllocationBase
+	)
+	{
+		using ResultType = std::function<decltype(MmFreeMemory)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, Owner, AllocationBase);
+	}
+
+	AurieStatus MdMapImage(
+		IN const fs::path& ImagePath,
+		OUT AurieModule*& Module
+	)
+	{
+		using ResultType = std::function<decltype(MdMapImage)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, ImagePath, Module);
+	}
+
+	bool MdIsImageInitialized(
+		IN AurieModule* Module
+	)
+	{
+		using ResultType = std::function<decltype(MdIsImageInitialized)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, Module);
+	}
+
+	AurieStatus MdMapFolder(
+		IN const fs::path& FolderPath,
+		IN bool Recursive
+	)
+	{
+		using ResultType = std::function<decltype(MdMapFolder)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, FolderPath, Recursive);
+	}
+
+	AurieStatus MdGetImageFilename(
+		IN AurieModule* Module,
+		OUT std::wstring& Filename
+	)
+	{
+		using ResultType = std::function<decltype(MdGetImageFilename)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, Module, Filename);
+	}
+
+	AurieStatus ObCreateInterface(
+		IN AurieModule* Module,
+		IN AurieInterfaceBase* Interface,
+		IN const char* InterfaceName
+	)
+	{
+		using ResultType = std::function<decltype(ObCreateInterface)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, Module, Interface, InterfaceName);
+	}
+
+	bool ObInterfaceExists(
+		IN const char* InterfaceName
+	)
+	{
+		using ResultType = std::function<decltype(ObInterfaceExists)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, InterfaceName);
+	}
+
+	AurieStatus ObDestroyInterface(
+		IN const char* InterfaceName
+	)
+	{
+		using ResultType = std::function<decltype(ObDestroyInterface)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, InterfaceName);
+	}
+
+	AurieStatus PpQueryImageArchitecture(
+		IN const fs::path& Path,
+		OUT unsigned short& ImageArchitecture
+	)
+	{
+		using ResultType = std::function<decltype(PpQueryImageArchitecture)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, Path, ImageArchitecture);
+	}
+
+	uintptr_t PpFindFileExportByName(
+		IN const fs::path& Path,
+		IN const char* ImageExportName
+	)
+	{
+		using ResultType = std::function<decltype(PpFindFileExportByName)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, Path, ImageExportName);
+	}
+
+	void* PpGetFrameworkRoutine(
+		IN const char* ExportName
+	)
+	{
+		using ResultType = std::function<decltype(PpGetFrameworkRoutine)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, ExportName);
+	}
+
+	AurieStatus PpGetCurrentArchitecture(
+		IN unsigned short& ImageArchitecture
+	)
+	{
+		using ResultType = std::function<decltype(PpGetCurrentArchitecture)>::result_type;
+		return Internal::__AurieApiDispatch<ResultType>(__func__, ImageArchitecture);
 	}
 }
 
