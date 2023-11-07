@@ -22,6 +22,8 @@ namespace Aurie
 			Owner
 		);
 
+		Internal::MmpAddAllocationToTable(allocation);
+
 		return allocation.AllocationBase;
 	}
 

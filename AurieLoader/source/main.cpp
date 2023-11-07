@@ -3,12 +3,13 @@
 #include "KInjector/KInjector.hpp"
 
 
-void MapFolder(
+size_t MapFolder(
 	IN HANDLE ProcessHandle,
 	IN const std::filesystem::path& Folder
 )
 {
 	std::error_code ec;
+	size_t module_count = 0;
 	for (const auto& entry : std::filesystem::directory_iterator(Folder, ec))
 	{
 		if (!entry.is_regular_file())
@@ -24,14 +25,24 @@ void MapFolder(
 			continue;
 
 		if (KInjector::Inject(ProcessHandle, entry.path().wstring().c_str()))
+		{
 			printf("[>] Library injected: '%S'", entry.path().filename().c_str());
+			module_count++;
+		}
 		else
+		{
 			printf("[>] Library injection failed: '%S'", entry.path().filename().c_str());
+		}
 	}
+
+	return module_count;
 }
 
 int wmain(int argc, wchar_t** argv)
 {
+	// Represents if the -aurie_nofreeze argument is present
+	bool no_process_freeze = false;
+
 	// The executable we're actually going to want to launch is 
 	// always called the same as our executable, but with a .bak appended to it,
 	// i.e. "Will You Snail.exe" will turn into "Will You Snail.exe.bak"
@@ -40,6 +51,14 @@ int wmain(int argc, wchar_t** argv)
 
 	for (int i = 1; i < argc; i++)
 	{
+		// Check for our argument (might add more later if needed)
+		if (!_wcsicmp(argv[i], L"-aurie_nofreeze"))
+		{
+			// Set the flag, and skip forwarding the argument to avoid potential detection by the target process
+			no_process_freeze = true;
+			continue;
+		}
+
 		// Append the full argument (might have spaces, so surround it with double-quotes)
 		process_command_line.append(L"\"");
 		process_command_line.append(argv[i]);
@@ -59,7 +78,7 @@ int wmain(int argc, wchar_t** argv)
 		nullptr,
 		nullptr,
 		false,
-		CREATE_SUSPENDED,
+		no_process_freeze ? 0 : CREATE_SUSPENDED,
 		nullptr,
 		nullptr,
 		&startup_info,
@@ -71,14 +90,28 @@ int wmain(int argc, wchar_t** argv)
 
 	printf("[>] Process created with PID %d\n", process_info.dwProcessId);
 
-	std::cin.ignore();
+	// If we're holding shift, we pause so that the debugger can be attached to the game.
+	if (GetAsyncKeyState(VK_SHIFT) & 1)
+	{
+		printf("[!] Shift key pressed, waiting for input...\n");
+		std::cin.ignore();
+	}
 
-	MapFolder(process_info.hProcess, std::filesystem::current_path() / "mods" / "native");
+	size_t module_count = MapFolder(
+		process_info.hProcess, 
+		std::filesystem::current_path() / "mods" / "native"
+	);
+
+	printf("[>] MapFolder mapped %lld modules\n", module_count);
+
+	// If no modules were mapped, we can just resume the process.
+	if (module_count == 0)
+		ResumeThread(process_info.hThread);
 
 	CloseHandle(process_info.hProcess);
 	CloseHandle(process_info.hThread);
 
-	printf("[<] Leaving...\n");
+	printf("[<] Execution complete\n");
 	Sleep(1000);
 
 	return 0;
