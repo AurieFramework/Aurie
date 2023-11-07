@@ -101,13 +101,16 @@ namespace Aurie
 			uintptr_t Address;
 		} ImageEntrypoint = {};
 
-		// AurieInitialize
+		// The initialize routine for the module
 		AurieEntry ModuleInitialize = nullptr;
 
-		// AuriePreInitialize (optional)
+		// The optional preinitialize routine for the module
 		AurieEntry ModulePreinitialize = nullptr;
 
-		// __aurie_fwk_init address
+		// An unload routine for the module
+		AurieEntry ModuleUnload = nullptr;
+
+		// The __AurieFrameworkInit function
 		AurieLoaderEntry FrameworkInitialize = nullptr;
 
 		// Interfaces exposed by the module

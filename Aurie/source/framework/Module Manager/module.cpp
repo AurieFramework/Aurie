@@ -193,7 +193,7 @@ namespace Aurie
 		IN AurieEntry Entry
 	)
 	{
-		// Ignore initialization attempts for the initial module
+		// Ignore dispatch attempts for the initial module
 		if (Module == g_ArInitialImage)
 			return AURIE_SUCCESS;
 

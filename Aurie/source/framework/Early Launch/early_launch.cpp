@@ -201,7 +201,9 @@ namespace Aurie
 			);
 		}
 
-		NTSTATUS ElpResumeProcess(IN HANDLE ProcessHandle)
+		NTSTATUS ElpResumeProcess(
+			IN HANDLE ProcessHandle
+		)
 		{
 			using FN_NtResumeProcess = NTSTATUS(NTAPI*)(
 				IN HANDLE ProcessHandle

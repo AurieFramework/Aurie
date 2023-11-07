@@ -26,12 +26,12 @@ size_t MapFolder(
 
 		if (KInjector::Inject(ProcessHandle, entry.path().wstring().c_str()))
 		{
-			printf("[>] Library injected: '%S'", entry.path().filename().c_str());
+			printf("[>] Library injected: '%S'\n", entry.path().filename().c_str());
 			module_count++;
 		}
 		else
 		{
-			printf("[>] Library injection failed: '%S'", entry.path().filename().c_str());
+			printf("[>] Library injection failed: '%S'\n", entry.path().filename().c_str());
 		}
 	}
 
@@ -42,6 +42,9 @@ int wmain(int argc, wchar_t** argv)
 {
 	// Represents if the -aurie_nofreeze argument is present
 	bool no_process_freeze = false;
+
+	// Represents if the -aurie_wait_for_input argument is present
+	bool wait_for_input = false;
 
 	// The executable we're actually going to want to launch is 
 	// always called the same as our executable, but with a .bak appended to it,
@@ -56,6 +59,12 @@ int wmain(int argc, wchar_t** argv)
 		{
 			// Set the flag, and skip forwarding the argument to avoid potential detection by the target process
 			no_process_freeze = true;
+			continue;
+		}
+
+		if (!_wcsicmp(argv[i], L"-aurie_wait_for_input"))
+		{
+			wait_for_input = true;
 			continue;
 		}
 
@@ -90,10 +99,11 @@ int wmain(int argc, wchar_t** argv)
 
 	printf("[>] Process created with PID %d\n", process_info.dwProcessId);
 
-	// If we're holding shift, we pause so that the debugger can be attached to the game.
-	if (GetAsyncKeyState(VK_SHIFT) & 1)
+	// If the flag is provided, we pause so that the debugger can be attached to the game
+	// I use this for debugging to attach the debugger before AurieLoader injects, probably not useful otherwise
+	if (wait_for_input)
 	{
-		printf("[!] Shift key pressed, waiting for input...\n");
+		printf("[!] -aurie_wait_for_input flag provided, waiting for input...\n");
 		std::cin.ignore();
 	}
 
@@ -111,7 +121,7 @@ int wmain(int argc, wchar_t** argv)
 	CloseHandle(process_info.hProcess);
 	CloseHandle(process_info.hThread);
 
-	printf("[<] Execution complete\n");
+	printf("[>] Execution complete\n");
 	Sleep(1000);
 
 	return 0;

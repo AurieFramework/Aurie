@@ -8,6 +8,41 @@
 
 #include "framework/framework.hpp"
 
+
+// Unload routine, frees everything properly
+void ArProcessDetach(HINSTANCE Instance)
+{
+	using namespace Aurie;
+
+	// Unload all modules except the initial image
+	// First calls the ModuleUnload functions (if they're set up)
+	for (auto& entry : Internal::g_LdrModuleList)
+	{
+		// Skip the initial image
+		if (&entry == g_ArInitialImage)
+			continue;
+		
+		Internal::MdpDispatchEntry(
+			&entry,
+			entry.ModuleUnload
+		);
+
+		FreeLibrary(entry.ImageBase.Module);
+	}
+
+	// Free persistent memory
+	for (auto& allocation : g_ArInitialImage->MemoryAllocations)
+	{
+		Internal::MmpFreeMemory(
+			g_ArInitialImage,
+			allocation.AllocationBase
+		);
+	}
+
+	g_ArInitialImage = nullptr;
+	Internal::g_LdrModuleList.clear();
+}
+
 // Called upon framework initialization (DLL_PROCESS_ATTACH) event.
 // This is the first function that runs.
 void ArProcessAttach(HINSTANCE Instance)
@@ -102,17 +137,23 @@ void ArProcessAttach(HINSTANCE Instance)
 	// Call ModuleEntry on all loaded plugins
 	for (auto& entry : Internal::g_LdrModuleList)
 	{
+		// Ignore modules that are already initialized?
+		if (MdIsImageInitialized(&entry))
+			continue;
+
 		Internal::MdpDispatchEntry(
 			&entry,
 			entry.ModuleInitialize
 		);
 	}
-}
 
-void ArProcessDetach(HINSTANCE Instance)
-{
-	UNREFERENCED_PARAMETER(Instance);
-	// TODO: Loop all modules, call their unload functions, free memory allocations, free their modules...
+	while (!GetAsyncKeyState(VK_END))
+	{
+		Sleep(1);
+	}
+
+	ArProcessDetach(Instance);
+	FreeLibraryAndExitThread(Instance, 0);
 }
 
 BOOL WINAPI DllMain(
@@ -149,19 +190,8 @@ BOOL WINAPI DllMain(
 			if (lpvReserved)
 				return TRUE;
 
-			HANDLE created_thread = CreateThread(
-				nullptr,
-				0,
-				reinterpret_cast<LPTHREAD_START_ROUTINE>(ArProcessDetach),
-				hinstDLL,
-				0,
-				nullptr
-			);
+			ArProcessDetach(hinstDLL);
 
-			if (!created_thread)
-				return FALSE;
-
-			CloseHandle(created_thread);
 			break;
 		}
 	}
