@@ -188,6 +188,37 @@ namespace Aurie
 		return Module->ImageBase.Pointer;
 	}
 
+	// The ignoring of return values here is on purpose, we just have to power through
+	// and unload / free what we can.
+	AurieStatus Internal::MdpUnmapImage(
+		IN AurieModule* Module
+	)
+	{
+		// Call the unload entry, ignore the return value
+		MdpDispatchEntry(
+			Module,
+			Module->ModuleUnload
+		);
+
+		// Invalidate all interfaces
+		Module->InterfaceTable.clear();
+
+		// Free all allocated memory
+		for (auto& memory_allocation : Module->MemoryAllocations)
+		{
+			MmpFreeMemory(
+				memory_allocation.OwnerModule,
+				memory_allocation.AllocationBase
+			);
+		}
+		
+		// Free the module, then remove it from our list
+		FreeLibrary(Module->ImageBase.Module);
+		g_LdrModuleList.remove(*Module);
+
+		return AURIE_SUCCESS;
+	}
+
 	AurieStatus Internal::MdpDispatchEntry(
 		IN AurieModule* Module,
 		IN AurieEntry Entry
@@ -356,6 +387,16 @@ namespace Aurie
 		Filename = image_path.filename().wstring();
 
 		return AURIE_SUCCESS;
+	}
+
+	EXPORTED AurieStatus MdUnmapImage(
+		IN AurieModule* Module
+	)
+	{
+		if (Module == g_ArInitialImage)
+			return AURIE_ACCESS_DENIED;
+
+		return Internal::MdpUnmapImage(Module);
 	}
 }
 

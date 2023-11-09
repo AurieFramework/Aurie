@@ -27,6 +27,17 @@ void ArProcessDetach(HINSTANCE Instance)
 			entry.ModuleUnload
 		);
 
+		// Free all the memory allocations for the module
+		for (auto& allocation : entry.MemoryAllocations)
+		{
+			Internal::MmpFreeMemory(
+				&entry,
+				allocation.AllocationBase
+			);
+		}
+
+		entry.MemoryAllocations.clear();
+
 		FreeLibrary(entry.ImageBase.Module);
 	}
 
@@ -141,10 +152,15 @@ void ArProcessAttach(HINSTANCE Instance)
 		if (MdIsImageInitialized(&entry))
 			continue;
 
-		Internal::MdpDispatchEntry(
+		AurieStatus last_status = Internal::MdpDispatchEntry(
 			&entry,
 			entry.ModuleInitialize
 		);
+
+		if (!AurieSuccess(last_status))
+		{
+
+		}
 	}
 
 	while (!GetAsyncKeyState(VK_END))

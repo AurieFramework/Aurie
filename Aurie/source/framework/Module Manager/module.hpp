@@ -27,6 +27,10 @@ namespace Aurie
 		OUT std::wstring& Filename
 	);
 
+	EXPORTED AurieStatus MdUnmapImage(
+		IN AurieModule* Module
+	);
+
 	namespace Internal
 	{
 		// Creates an AurieModule object - for internal use only
@@ -75,6 +79,10 @@ namespace Aurie
 		);
 
 		EXPORTED PVOID MdpGetModuleBaseAddress(
+			IN AurieModule* Module
+		);
+
+		AurieStatus MdpUnmapImage(
 			IN AurieModule* Module
 		);
 
