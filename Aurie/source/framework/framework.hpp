@@ -77,6 +77,10 @@ namespace Aurie
 				// If the Aurie Framework is injected into a running process, this function still runs first,
 				// although it obviously runs after the process entrypoint already ran.
 				bool IsPreloaded : 1;
+
+				// If this bit is set, the module is marked for deletion and will be unloaded by the next
+				// call to Aurie::Internal::MdpPurgeMarkedModules
+				bool MarkedForPurge : 1;
 			};
 		} Flags = {};
 

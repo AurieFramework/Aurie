@@ -10,7 +10,7 @@
 
 
 // Unload routine, frees everything properly
-void ArProcessDetach(HINSTANCE Instance)
+void ArProcessDetach(HINSTANCE)
 {
 	using namespace Aurie;
 
@@ -22,23 +22,12 @@ void ArProcessDetach(HINSTANCE Instance)
 		if (&entry == g_ArInitialImage)
 			continue;
 		
-		Internal::MdpDispatchEntry(
+		// Unmap the image (but don't remove it from the list)
+		Internal::MdpUnmapImage(
 			&entry,
-			entry.ModuleUnload
+			false,
+			true
 		);
-
-		// Free all the memory allocations for the module
-		for (auto& allocation : entry.MemoryAllocations)
-		{
-			Internal::MmpFreeMemory(
-				&entry,
-				allocation.AllocationBase
-			);
-		}
-
-		entry.MemoryAllocations.clear();
-
-		FreeLibrary(entry.ImageBase.Module);
 	}
 
 	// Free persistent memory
@@ -46,10 +35,15 @@ void ArProcessDetach(HINSTANCE Instance)
 	{
 		Internal::MmpFreeMemory(
 			g_ArInitialImage,
-			allocation.AllocationBase
+			allocation.AllocationBase,
+			false
 		);
 	}
 
+	// Remove all the allocations, they're now invalid
+	g_ArInitialImage->MemoryAllocations.clear();
+
+	// Null the initial image, and clear the module list
 	g_ArInitialImage = nullptr;
 	Internal::g_LdrModuleList.clear();
 }
@@ -133,11 +127,19 @@ void ArProcessAttach(HINSTANCE Instance)
 	// Call ModulePreload on all loaded plugins
 	for (auto& entry : Internal::g_LdrModuleList)
 	{
-		Internal::MdpDispatchEntry(
+		AurieStatus last_status = Internal::MdpDispatchEntry(
 			&entry,
 			entry.ModulePreinitialize
 		);
+
+		// Mark mods failed for loading for the purge
+		if (!AurieSuccess(last_status))
+			Internal::MdpMarkModuleForPurge(&entry);
 	}
+
+	// Purge all the modules that failed loading
+	// We can't do this in the for loop because of iterators...
+	Internal::MdpPurgeMarkedModules();
 
 	// Resume our process
 	if (ElIsProcessSuspended())
@@ -157,11 +159,14 @@ void ArProcessAttach(HINSTANCE Instance)
 			entry.ModuleInitialize
 		);
 
+		// Mark mods failed for loading for the purge
 		if (!AurieSuccess(last_status))
-		{
-
-		}
+			Internal::MdpMarkModuleForPurge(&entry);
 	}
+
+	// Purge all the modules that failed loading
+	// We can't do this in the for loop because of iterators...
+	Internal::MdpPurgeMarkedModules();
 
 	while (!GetAsyncKeyState(VK_END))
 	{

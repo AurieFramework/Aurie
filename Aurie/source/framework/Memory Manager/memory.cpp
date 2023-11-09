@@ -52,7 +52,8 @@ namespace Aurie
 
 		Internal::MmpFreeMemory(
 			Owner,
-			AllocationBase
+			AllocationBase,
+			true
 		);
 
 		return AURIE_SUCCESS;
@@ -75,14 +76,18 @@ namespace Aurie
 
 		void MmpFreeMemory(
 			IN AurieModule* OwnerModule,
-			IN PVOID AllocationBase
+			IN PVOID AllocationBase,
+			IN bool RemoveTableEntry
 		)
 		{
-			MmpRemoveAllocationsFromTable(
-				OwnerModule,
-				AllocationBase
-			);
-
+			if (RemoveTableEntry)
+			{
+				MmpRemoveAllocationsFromTable(
+					OwnerModule,
+					AllocationBase
+				);
+			}
+			
 			free(AllocationBase);
 		}
 

@@ -33,7 +33,8 @@ namespace Aurie
 
 		void MmpFreeMemory(
 			IN AurieModule* OwnerModule,
-			IN PVOID AllocationBase
+			IN PVOID AllocationBase,
+			IN bool RemoveTableEntry
 		);
 		
 		void MmpAddAllocationToTable(

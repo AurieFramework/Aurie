@@ -40,6 +40,40 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
+	bool Internal::MdpIsModuleMarkedForPurge(
+		IN AurieModule* Module
+	)
+	{
+		return Module->Flags.MarkedForPurge;
+	}
+
+	void Internal::MdpMarkModuleForPurge(
+		IN AurieModule* Module
+	)
+	{
+		Module->Flags.MarkedForPurge = true;
+	}
+
+	void Internal::MdpPurgeMarkedModules()
+	{
+		// Loop through all the modules marked for purge
+		for (auto& module : g_LdrModuleList)
+		{
+			// Unmap the module, but don't call the unload routine, and don't remove it from the list
+			if (MdpIsModuleMarkedForPurge(&module))
+				MdpUnmapImage(&module, false, false);
+		}
+
+		// Remove the now unloaded modules from our list
+		// Note we can't do this in the for loop, since that'd invalidate the iterators
+		g_LdrModuleList.remove_if(
+			[](AurieModule& Module) -> bool
+			{
+				return MdpIsModuleMarkedForPurge(&Module);
+			}
+		);
+	}
+
 	AurieStatus Internal::MdpMapImage(
 		IN const fs::path& ImagePath, 
 		OUT HMODULE& ImageBase
@@ -191,32 +225,47 @@ namespace Aurie
 	// The ignoring of return values here is on purpose, we just have to power through
 	// and unload / free what we can.
 	AurieStatus Internal::MdpUnmapImage(
-		IN AurieModule* Module
+		IN AurieModule* Module, 
+		IN bool RemoveFromList, 
+		IN bool CallUnloadRoutine
 	)
 	{
-		// Call the unload entry, ignore the return value
-		MdpDispatchEntry(
-			Module,
-			Module->ModuleUnload
-		);
+		AurieStatus last_status = AURIE_SUCCESS;
+
+		// Call the unload entry if needed
+		if (CallUnloadRoutine)
+		{
+			last_status = MdpDispatchEntry(
+				Module,
+				Module->ModuleUnload
+			);
+		}
 
 		// Invalidate all interfaces
+		// Note these can't be freed, they're allocated by the owner module
 		Module->InterfaceTable.clear();
 
-		// Free all allocated memory
+		// Free all memory allocated by the module (except persistent memory)
 		for (auto& memory_allocation : Module->MemoryAllocations)
 		{
 			MmpFreeMemory(
 				memory_allocation.OwnerModule,
-				memory_allocation.AllocationBase
+				memory_allocation.AllocationBase,
+				false
 			);
 		}
-		
-		// Free the module, then remove it from our list
-		FreeLibrary(Module->ImageBase.Module);
-		g_LdrModuleList.remove(*Module);
 
-		return AURIE_SUCCESS;
+		// Remove all the allocation entries, they're now invalid
+		Module->MemoryAllocations.clear();
+
+		// Free the module
+		FreeLibrary(Module->ImageBase.Module);
+
+		// Remove the module from our list if needed
+		if (RemoveFromList)
+			g_LdrModuleList.remove(*Module);
+
+		return last_status;
 	}
 
 	AurieStatus Internal::MdpDispatchEntry(
@@ -396,7 +445,7 @@ namespace Aurie
 		if (Module == g_ArInitialImage)
 			return AURIE_ACCESS_DENIED;
 
-		return Internal::MdpUnmapImage(Module);
+		return Internal::MdpUnmapImage(Module, true, true);
 	}
 }
 

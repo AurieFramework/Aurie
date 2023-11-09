@@ -44,6 +44,16 @@ namespace Aurie
 			IN uint8_t BitFlags,
 			OUT AurieModule& Module
 		);
+		
+		bool MdpIsModuleMarkedForPurge(
+			IN AurieModule* Module
+		);
+
+		void MdpMarkModuleForPurge(
+			IN AurieModule* Module
+		);
+
+		void MdpPurgeMarkedModules();
 
 		// Internal routine responsible for ensuring module compatibility
 		AurieStatus MdpMapImage(
@@ -83,7 +93,9 @@ namespace Aurie
 		);
 
 		AurieStatus MdpUnmapImage(
-			IN AurieModule* Module
+			IN AurieModule* Module,
+			IN bool RemoveFromList,
+			IN bool CallUnloadRoutine
 		);
 
 		AurieStatus MdpDispatchEntry(
