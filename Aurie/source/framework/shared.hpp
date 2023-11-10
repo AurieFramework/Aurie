@@ -268,6 +268,32 @@ namespace Aurie
 		return AURIE_API_CALL(MmSigscanRegion, RegionBase, RegionSize, Pattern, PatternMask);
 	}
 
+	AurieStatus MmCreateHook(
+		IN AurieModule* Module,
+		IN const char* HookIdentifier,
+		IN PVOID SourceFunction,
+		IN PVOID TargetFunction
+	)
+	{
+		return AURIE_API_CALL(MmCreateHook, Module, HookIdentifier, SourceFunction, TargetFunction);
+	}
+
+	AurieStatus MmHookExists(
+		IN AurieModule* Module,
+		IN const char* HookIdentifier
+	)
+	{
+		return AURIE_API_CALL(MmHookExists, Module, HookIdentifier);
+	}
+
+	AurieStatus MmRemoveHook(
+		IN AurieModule* Module,
+		IN const char* HookIdentifier
+	)
+	{
+		return AURIE_API_CALL(MmRemoveHook, Module, HookIdentifier);
+	}
+
 	namespace Internal
 	{
 		bool MmpIsAllocatedMemory(

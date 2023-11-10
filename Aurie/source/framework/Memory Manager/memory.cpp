@@ -133,7 +133,6 @@ namespace Aurie
 		{
 			PVOID trampoline = nullptr;
 			MH_STATUS minhook_status = MH_OK;
-			AurieStatus last_status = AURIE_SUCCESS;
 
 			// Create the hook with our module's ID
 			minhook_status = MH_CreateHookEx(
