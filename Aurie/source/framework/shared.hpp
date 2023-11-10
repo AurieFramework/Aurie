@@ -395,10 +395,11 @@ namespace Aurie
 	}
 
 	AurieStatus ObDestroyInterface(
+		IN AurieModule* Module,
 		IN const char* InterfaceName
 	)
 	{
-		return AURIE_API_CALL(ObDestroyInterface, InterfaceName);
+		return AURIE_API_CALL(ObDestroyInterface, Module, InterfaceName);
 	}
 
 	AurieStatus ObGetInterface(

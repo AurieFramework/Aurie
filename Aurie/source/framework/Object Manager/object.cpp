@@ -41,33 +41,33 @@ namespace Aurie
 		);
 	}
 
-	AurieStatus ObDestroyInterface(
-		IN const char* InterfaceName
-	)
-	{
-		AurieModule* owner_module = nullptr;
-		AurieInterfaceTableEntry* table_entry = nullptr;
-		AurieStatus last_status = AURIE_SUCCESS;
-
-		last_status = Internal::ObpLookupInterfaceOwner(
-			InterfaceName,
-			true,
-			owner_module,
-			table_entry
-		);
-
-		if (!AurieSuccess(last_status))
-			return last_status;
-
-		return Internal::ObpDestroyInterface(
-			owner_module,
-			table_entry->Interface,
-			true
-		);
-	}
-
 	namespace Internal
 	{
+		AurieStatus ObpDestroyInterfaceByName(
+			IN const char* InterfaceName
+		)
+		{
+			AurieModule* owner_module = nullptr;
+			AurieInterfaceTableEntry* table_entry = nullptr;
+			AurieStatus last_status = AURIE_SUCCESS;
+
+			last_status = ObpLookupInterfaceOwner(
+				InterfaceName,
+				true,
+				owner_module,
+				table_entry
+			);
+
+			if (!AurieSuccess(last_status))
+				return last_status;
+
+			return ObpDestroyInterface(
+				owner_module,
+				table_entry->Interface,
+				true
+			);
+		}
+
 		AurieObjectType ObpGetObjectType(
 			IN AurieObject* Object
 		)
@@ -166,6 +166,36 @@ namespace Aurie
 			return last_status;
 
 		Interface = interface_entry->Interface;
+		return AURIE_SUCCESS;
+	}
+
+	AurieStatus ObDestroyInterface(
+		IN AurieModule* Module,
+		IN const char* InterfaceName
+	)
+	{
+		AurieModule* owner_module = nullptr;
+		AurieInterfaceTableEntry* table_entry = nullptr;
+
+		AurieStatus last_status = Internal::ObpLookupInterfaceOwner(
+			InterfaceName,
+			true,
+			owner_module,
+			table_entry
+		);
+
+		if (!AurieSuccess(last_status))
+			return last_status;
+
+		if (owner_module != Module)
+			return AURIE_ACCESS_DENIED;
+
+		last_status = Internal::ObpDestroyInterface(
+			Module,
+			table_entry->Interface,
+			true
+		);
+
 		return AURIE_SUCCESS;
 	}
 }

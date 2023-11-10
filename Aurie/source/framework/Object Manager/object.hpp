@@ -16,6 +16,7 @@ namespace Aurie
 	);
 
 	EXPORTED AurieStatus ObDestroyInterface(
+		IN AurieModule* Module,
 		IN const char* InterfaceName
 	);
 
@@ -42,6 +43,10 @@ namespace Aurie
 			IN bool CaseInsensitive,
 			OUT AurieModule*& Module,
 			OUT AurieInterfaceTableEntry*& TableEntry
+		);
+
+		AurieStatus ObpDestroyInterfaceByName(
+			IN const char* InterfaceName
 		);
 
 		EXPORTED AurieObjectType ObpGetObjectType(
