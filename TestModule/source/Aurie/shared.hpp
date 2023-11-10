@@ -139,6 +139,7 @@ namespace Aurie
 }
 
 #ifndef AURIE_INCLUDE_PRIVATE
+#include <functional>
 #include <Windows.h>
 
 BOOL WINAPI DllMain(
@@ -185,44 +186,43 @@ namespace Aurie
 
 			return AURIE_SUCCESS;
 		}
-
-		// Universal API dispatchers made from broken YYTK updates
-		// This one is an adaptation of FunctionWrapper in YYTK's beta2 branch.
-		template <typename TRet, typename ...TArgs>
-		FORCEINLINE auto __AurieApiDispatch(const char* FunctionName, TArgs&... Arguments)
+		
+		template <typename TFunction>
+		class AurieApiDispatcher
 		{
-			using FN_DispatchedRoutine = TRet(*)(TArgs...);
+		private:
+			using ReturnType = std::function<TFunction>::result_type;
+		public:
+			template <typename ...TArgs>
+			ReturnType operator()(const char* FunctionName, TArgs&... Args)
+			{
+				auto Func = reinterpret_cast<TFunction*>(g_PpGetFrameworkRoutine(FunctionName));
+				return Func(Args...);
+			}
 
-			return reinterpret_cast<FN_DispatchedRoutine>(g_PpGetFrameworkRoutine(FunctionName))(Arguments...);
-		}
-
-		// And this one is just a continuation of the first one, since some functions don't have parameters
-		template <typename TRet>
-		FORCEINLINE auto __AurieApiDispatch(const char* FunctionName)
-		{
-			using FN_DispatchedRoutine = TRet(*)();
-
-			return reinterpret_cast<FN_DispatchedRoutine>(g_PpGetFrameworkRoutine(FunctionName))();
-		}
+			ReturnType operator()(const char* FunctionName)
+			{
+				auto Func = reinterpret_cast<TFunction*>(g_PpGetFrameworkRoutine(FunctionName));
+				return Func();
+			}
+		};
 	}
 }
 
-#include <functional>
-// API definitions here
+#define AURIE_API_CALL(Function, ...) ::Aurie::Internal::AurieApiDispatcher<decltype(Function)>()(#Function, __VA_ARGS__)
+
 namespace Aurie
 {
 	bool ElIsProcessSuspended()
 	{
-		using ResultType = std::function<decltype(ElIsProcessSuspended)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__);
+		return AURIE_API_CALL(ElIsProcessSuspended);
 	}
 
 	PVOID MmAllocatePersistentMemory(
 		IN size_t Size
 	)
 	{
-		using ResultType = std::function<decltype(MmAllocatePersistentMemory)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, Size);
+		return AURIE_API_CALL(MmAllocatePersistentMemory, Size);
 	}
 
 	PVOID MmAllocateMemory(
@@ -230,16 +230,14 @@ namespace Aurie
 		IN size_t Size
 	)
 	{
-		using ResultType = std::function<decltype(MmAllocateMemory)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, Owner, Size);
+		return AURIE_API_CALL(MmAllocateMemory, Owner, Size);
 	}
 
 	AurieStatus MmFreePersistentMemory(
 		IN PVOID AllocationBase
 	)
 	{
-		using ResultType = std::function<decltype(MmFreePersistentMemory)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, AllocationBase);
+		return AURIE_API_CALL(MmFreePersistentMemory, AllocationBase);
 	}
 
 	AurieStatus MmFreeMemory(
@@ -247,8 +245,48 @@ namespace Aurie
 		IN PVOID AllocationBase
 	)
 	{
-		using ResultType = std::function<decltype(MmFreeMemory)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, Owner, AllocationBase);
+		return AURIE_API_CALL(MmFreeMemory, Owner, AllocationBase);
+	}
+
+	size_t MmSigscanModule(
+		IN const wchar_t* ModuleName,
+		IN const unsigned char* Pattern,
+		IN const char* PatternMask
+	)
+	{
+		return AURIE_API_CALL(MmSigscanModule, ModuleName, Pattern, PatternMask);
+	}
+
+	size_t MmSigscanRegion(
+		IN const unsigned char* RegionBase,
+		IN const size_t RegionSize,
+		IN const unsigned char* Pattern,
+		IN const char* PatternMask
+	)
+	{
+		return AURIE_API_CALL(MmSigscanRegion, RegionBase, RegionSize, Pattern, PatternMask);
+	}
+
+	namespace Internal
+	{
+		bool MmpIsAllocatedMemory(
+			IN AurieModule* Module,
+			IN PVOID AllocationBase
+		)
+		{
+			return AURIE_API_CALL(MmpIsAllocatedMemory, Module, AllocationBase);
+		}
+
+		AurieStatus MmpSigscanRegion(
+			IN const unsigned char* RegionBase,
+			IN const size_t RegionSize,
+			IN const unsigned char* Pattern,
+			IN const char* PatternMask,
+			OUT uintptr_t& PatternBase
+		)
+		{
+			return AURIE_API_CALL(MmpSigscanRegion, RegionBase, RegionSize, Pattern, PatternMask, PatternBase);
+		}
 	}
 
 	AurieStatus MdMapImage(
@@ -256,16 +294,14 @@ namespace Aurie
 		OUT AurieModule*& Module
 	)
 	{
-		using ResultType = std::function<decltype(MdMapImage)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, ImagePath, Module);
+		return AURIE_API_CALL(MdMapImage, ImagePath, Module);
 	}
 
 	bool MdIsImageInitialized(
 		IN AurieModule* Module
 	)
 	{
-		using ResultType = std::function<decltype(MdIsImageInitialized)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, Module);
+		return AURIE_API_CALL(MdIsImageInitialized, Module);
 	}
 
 	AurieStatus MdMapFolder(
@@ -273,8 +309,7 @@ namespace Aurie
 		IN bool Recursive
 	)
 	{
-		using ResultType = std::function<decltype(MdMapFolder)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, FolderPath, Recursive);
+		return AURIE_API_CALL(MdMapFolder, FolderPath, Recursive);
 	}
 
 	AurieStatus MdGetImageFilename(
@@ -282,8 +317,65 @@ namespace Aurie
 		OUT std::wstring& Filename
 	)
 	{
-		using ResultType = std::function<decltype(MdGetImageFilename)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, Module, Filename);
+		return AURIE_API_CALL(MdGetImageFilename, Module, Filename);
+	}
+
+	AurieStatus MdUnmapImage(
+		IN AurieModule* Module
+	)
+	{
+		return AURIE_API_CALL(MdUnmapImage, Module);
+	}
+
+	namespace Internal
+	{
+		AurieStatus MdpQueryModuleInformation(
+			IN HMODULE Module,
+			OPTIONAL OUT PVOID* ModuleBase,
+			OPTIONAL OUT uint32_t* SizeOfModule,
+			OPTIONAL OUT PVOID* EntryPoint
+		)
+		{
+			return AURIE_API_CALL(MdpQueryModuleInformation, Module, ModuleBase, SizeOfModule, EntryPoint);
+		}
+
+		fs::path& MdpGetImagePath(
+			IN AurieModule* Module
+		)
+		{
+			return AURIE_API_CALL(MdpGetImagePath, Module);
+		}
+
+		AurieStatus MdpGetImageFolder(
+			IN AurieModule* Module,
+			OUT fs::path& Path
+		)
+		{
+			return AURIE_API_CALL(MdpGetImageFolder, Module, Path);
+		}
+
+		AurieStatus MdpGetNextModule(
+			IN AurieModule* Module,
+			OUT AurieModule*& NextModule
+		)
+		{
+			return AURIE_API_CALL(MdpGetNextModule, Module, NextModule);
+		}
+
+		PVOID MdpGetModuleBaseAddress(
+			IN AurieModule* Module
+		)
+		{
+			return AURIE_API_CALL(MdpGetModuleBaseAddress, Module);
+		}
+
+		AurieStatus MdpLookupModuleByPath(
+			IN const fs::path& ModulePath,
+			OUT AurieModule*& Module
+		)
+		{
+			return AURIE_API_CALL(MdpLookupModuleByPath, ModulePath, Module);
+		}
 	}
 
 	AurieStatus ObCreateInterface(
@@ -292,24 +384,39 @@ namespace Aurie
 		IN const char* InterfaceName
 	)
 	{
-		using ResultType = std::function<decltype(ObCreateInterface)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, Module, Interface, InterfaceName);
+		return AURIE_API_CALL(ObCreateInterface, Module, Interface, InterfaceName);
 	}
 
 	bool ObInterfaceExists(
 		IN const char* InterfaceName
 	)
 	{
-		using ResultType = std::function<decltype(ObInterfaceExists)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, InterfaceName);
+		return AURIE_API_CALL(ObInterfaceExists, InterfaceName);
 	}
 
 	AurieStatus ObDestroyInterface(
 		IN const char* InterfaceName
 	)
 	{
-		using ResultType = std::function<decltype(ObDestroyInterface)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, InterfaceName);
+		return AURIE_API_CALL(ObDestroyInterface, InterfaceName);
+	}
+
+	AurieStatus ObGetInterface(
+		IN const char* InterfaceName,
+		OUT AurieInterfaceBase*& Interface
+	)
+	{
+		return AURIE_API_CALL(ObGetInterface, InterfaceName, Interface);
+	}
+
+	namespace Internal
+	{
+		AurieObjectType ObpGetObjectType(
+			IN AurieObject* Object
+		)
+		{
+			return AURIE_API_CALL(ObpGetObjectType, Object);
+		}
 	}
 
 	AurieStatus PpQueryImageArchitecture(
@@ -317,8 +424,7 @@ namespace Aurie
 		OUT unsigned short& ImageArchitecture
 	)
 	{
-		using ResultType = std::function<decltype(PpQueryImageArchitecture)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, Path, ImageArchitecture);
+		return AURIE_API_CALL(PpQueryImageArchitecture, Path, ImageArchitecture);
 	}
 
 	uintptr_t PpFindFileExportByName(
@@ -326,24 +432,66 @@ namespace Aurie
 		IN const char* ImageExportName
 	)
 	{
-		using ResultType = std::function<decltype(PpFindFileExportByName)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, Path, ImageExportName);
+		return AURIE_API_CALL(PpFindFileExportByName, Path, ImageExportName);
 	}
 
 	void* PpGetFrameworkRoutine(
 		IN const char* ExportName
 	)
 	{
-		using ResultType = std::function<decltype(PpGetFrameworkRoutine)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, ExportName);
+		return AURIE_API_CALL(PpGetFrameworkRoutine, ExportName);
 	}
 
 	AurieStatus PpGetCurrentArchitecture(
 		IN unsigned short& ImageArchitecture
 	)
 	{
-		using ResultType = std::function<decltype(PpGetCurrentArchitecture)>::result_type;
-		return Internal::__AurieApiDispatch<ResultType>(__func__, ImageArchitecture);
+		return AURIE_API_CALL(PpGetCurrentArchitecture, ImageArchitecture);
+	}
+
+	namespace Internal
+	{
+		void* PpiFindModuleExportByName(
+			IN const AurieModule* Image,
+			IN const char* ImageExportName
+		)
+		{
+			return AURIE_API_CALL(PpiFindModuleExportByName, Image, ImageExportName);
+		}
+
+		AurieStatus PpiQueryImageArchitecture(
+			IN void* Image,
+			OUT unsigned short& ImageArchitecture
+		)
+		{
+			return AURIE_API_CALL(PpiQueryImageArchitecture, Image, ImageArchitecture);
+		}
+
+		AurieStatus PpiGetNtHeader(
+			IN void* Image,
+			OUT void*& NtHeader
+		)
+		{
+			return AURIE_API_CALL(PpiGetNtHeader, Image, NtHeader);
+		}
+
+		AurieStatus PpiGetModuleSectionBounds(
+			IN void* Image,
+			IN const char* SectionName,
+			OUT uint64_t& SectionBase,
+			OUT size_t& SectionSize
+		)
+		{
+			return AURIE_API_CALL(PpiGetModuleSectionBounds, Image, SectionName, SectionBase, SectionSize);
+		}
+
+		uint32_t PpiRvaToFileOffset(
+			IN PIMAGE_NT_HEADERS ImageHeaders,
+			IN uint32_t Rva
+		)
+		{
+			return AURIE_API_CALL(PpiRvaToFileOffset, ImageHeaders, Rva);
+		}
 	}
 }
 

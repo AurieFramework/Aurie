@@ -30,15 +30,16 @@ EXPORTED AurieStatus ModuleInitialize(
 	printf("- ModulePath: %S\n", ModulePath.wstring().c_str());
 	printf("- g_ArInitialImage: %p\n", g_ArInitialImage);
 
-	PVOID memory = MmAllocateMemory(Module, 16);
-	printf("[>] MmAllocateMemory returns %p\n", memory);
-
-	last_status = MmFreeMemory(Module, memory);
+	PVOID current_nt_header = nullptr;
+	last_status = Internal::PpiGetNtHeader(
+		Internal::MdpGetModuleBaseAddress(Module),
+		current_nt_header
+	);
 
 	if (AurieSuccess(last_status))
-		printf("[>] MmFreeMemory succeeds!\n");
+		printf("[>] Internal::PpiGetNtHeader succeeds (current_nt_header %p)!\n", current_nt_header);
 	else
-		printf("[!] MmFreeMemory fails!\n");
+		printf("[!] Internal::PpiGetNtHeader fails!\n");
 
 	return AURIE_SUCCESS;
 }
