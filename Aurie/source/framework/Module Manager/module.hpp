@@ -92,6 +92,11 @@ namespace Aurie
 			IN AurieModule* Module
 		);
 
+		EXPORTED AurieStatus MdpLookupModuleByPath(
+			IN const fs::path& ModulePath,
+			OUT AurieModule*& Module
+		);
+
 		AurieStatus MdpUnmapImage(
 			IN AurieModule* Module,
 			IN bool RemoveFromList,

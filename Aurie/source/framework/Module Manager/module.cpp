@@ -116,7 +116,7 @@ namespace Aurie
 		if (!has_framework_init || !has_module_entry)
 			return AURIE_MODULE_INITIALIZATION_FAILED;
 
-		OutputDebugStringW((std::wstring(L"[Aurie : MdiLoadImage] > ") + ImagePath.wstring()).c_str());
+		if (MdpLookupModuleByPath())
 
 		// Load the image into memory and make sure we loaded it
 		HMODULE image_module = LoadLibraryW(ImagePath.wstring().c_str());
@@ -220,6 +220,24 @@ namespace Aurie
 	)
 	{
 		return Module->ImageBase.Pointer;
+	}
+
+	EXPORTED AurieStatus Internal::MdpLookupModuleByPath(
+		IN const fs::path& ModulePath,
+		OUT AurieModule*& Module
+	)
+	{
+		auto iterator = std::find_if(
+			g_LdrModuleList.begin(),
+			g_LdrModuleList.end(),
+			[ModulePath](const AurieModule& Module) -> bool
+			{
+				return Module.ImagePath == ModulePath;
+			}
+		);
+
+		if (iterator == g_LdrModuleList.end())
+			return AURIE_OBJECT_NOT_FOUND;
 	}
 
 	// The ignoring of return values here is on purpose, we just have to power through
