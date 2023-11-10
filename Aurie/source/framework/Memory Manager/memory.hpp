@@ -24,11 +24,29 @@ namespace Aurie
 		IN PVOID AllocationBase
 	);
 
+	EXPORTED size_t MmSigscanModule(
+		IN const wchar_t* ModuleName,
+		IN const unsigned char* Pattern,
+		IN const char* PatternMask
+	);
+
+	EXPORTED size_t MmSigscanRegion(
+		IN const unsigned char* RegionBase,
+		IN const size_t RegionSize,
+		IN const unsigned char* Pattern,
+		IN const char* PatternMask
+	);
+
 	namespace Internal
 	{
 		AurieMemoryAllocation MmpAllocateMemory(
 			IN const size_t AllocationSize,
 			IN AurieModule* const OwnerModule
+		);
+
+		AurieStatus MmpVerifyCallback(
+			IN HMODULE Module,
+			IN PVOID CallbackRoutine
 		);
 
 		void MmpFreeMemory(
@@ -44,6 +62,14 @@ namespace Aurie
 		EXPORTED bool MmpIsAllocatedMemory(
 			IN AurieModule* Module,
 			IN PVOID AllocationBase
+		);
+
+		EXPORTED AurieStatus MmpSigscanRegion(
+			IN const unsigned char* RegionBase,
+			IN const size_t RegionSize,
+			IN const unsigned char* Pattern,
+			IN const char* PatternMask,
+			OUT uintptr_t& PatternBase
 		);
 
 		void MmpRemoveAllocationsFromTable(

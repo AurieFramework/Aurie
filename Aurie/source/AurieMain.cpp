@@ -135,6 +135,8 @@ void ArProcessAttach(HINSTANCE Instance)
 		// Mark mods failed for loading for the purge
 		if (!AurieSuccess(last_status))
 			Internal::MdpMarkModuleForPurge(&entry);
+		else
+			entry.Flags.IsPreloaded = true;
 	}
 
 	// Purge all the modules that failed loading
@@ -162,6 +164,8 @@ void ArProcessAttach(HINSTANCE Instance)
 		// Mark mods failed for loading for the purge
 		if (!AurieSuccess(last_status))
 			Internal::MdpMarkModuleForPurge(&entry);
+		else
+			entry.Flags.IsInitialized = true;
 	}
 
 	// Purge all the modules that failed loading

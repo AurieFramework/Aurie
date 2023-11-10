@@ -80,7 +80,6 @@ namespace Aurie
 			IN AurieInterfaceTableEntry& Entry
 		)
 		{
-			// TODO: Check if the VTable entries point to the module that's being passed in?
 			Module->InterfaceTable.push_back(Entry);
 
 			return AURIE_SUCCESS;
@@ -145,6 +144,29 @@ namespace Aurie
 			// We didn't find any interface with that name.
 			return AURIE_OBJECT_NOT_FOUND;
 		}
+	}
+
+	AurieStatus ObGetInterface(
+		IN const char* InterfaceName,
+		OUT AurieInterfaceBase*& Interface
+	)
+	{
+		AurieStatus last_status = AURIE_SUCCESS;
+		AurieModule* owner_module = nullptr;
+		AurieInterfaceTableEntry* interface_entry = nullptr;
+
+		last_status = Internal::ObpLookupInterfaceOwner(
+			InterfaceName,
+			true,
+			owner_module,
+			interface_entry
+		);
+
+		if (!AurieSuccess(last_status))
+			return last_status;
+
+		Interface = interface_entry->Interface;
+		return AURIE_SUCCESS;
 	}
 }
 

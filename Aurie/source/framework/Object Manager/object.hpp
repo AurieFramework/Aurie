@@ -19,6 +19,11 @@ namespace Aurie
 		IN const char* InterfaceName
 	);
 
+	EXPORTED AurieStatus ObGetInterface(
+		IN const char* InterfaceName,
+		OUT AurieInterfaceBase*& Interface
+	);
+
 	namespace Internal
 	{
 		AurieStatus ObpAddInterfaceToTable(

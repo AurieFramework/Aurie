@@ -114,9 +114,17 @@ namespace Aurie
 		bool has_module_entry = PpFindFileExportByName(ImagePath, "ModuleInitialize") != 0;
 
 		if (!has_framework_init || !has_module_entry)
-			return AURIE_MODULE_INITIALIZATION_FAILED;
+			return AURIE_INVALID_SIGNATURE;
 
-		if (MdpLookupModuleByPath())
+		AurieModule* potential_loaded_copy = nullptr;
+		last_status = MdpLookupModuleByPath(
+			ImagePath,
+			potential_loaded_copy
+		);
+
+		// If there's a module that's already loaded from the same path, deny loading it twice
+		if (AurieSuccess(last_status))
+			return AURIE_OBJECT_ALREADY_EXISTS;
 
 		// Load the image into memory and make sure we loaded it
 		HMODULE image_module = LoadLibraryW(ImagePath.wstring().c_str());
@@ -238,6 +246,9 @@ namespace Aurie
 
 		if (iterator == g_LdrModuleList.end())
 			return AURIE_OBJECT_NOT_FOUND;
+
+		Module = &(*iterator);
+		return AURIE_SUCCESS;
 	}
 
 	// The ignoring of return values here is on purpose, we just have to power through
@@ -388,6 +399,15 @@ namespace Aurie
 		AurieEntry module_init = reinterpret_cast<AurieEntry>((char*)image_base + module_init_offset);
 		AurieEntry module_preload = reinterpret_cast<AurieEntry>((char*)image_base + module_preload_offset);
 		AurieLoaderEntry fwk_init = reinterpret_cast<AurieLoaderEntry>((char*)image_base + framework_init_offset);
+
+		// Verify image integrity
+		last_status = Internal::MmpVerifyCallback(image_base, module_init);
+		if (!AurieSuccess(last_status))
+			return last_status;
+
+		last_status = Internal::MmpVerifyCallback(image_base, fwk_init);
+		if (!AurieSuccess(last_status))
+			return last_status;
 
 		// MdiMapImage checks for __aurie_fwk_init and ModuleInitialize, but doesn't check ModulePreinitialize since it's optional
 		// If the offsets are null, the thing wasn't found, and we shouldn't try to call it
