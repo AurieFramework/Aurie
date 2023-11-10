@@ -48,6 +48,7 @@ namespace Aurie
 	struct AurieList;
 	struct AurieObject;
 	struct AurieMemoryAllocation;
+	struct AurieHook;
 
 	// Forward declarations (not opaque)
 	struct AurieInterfaceBase;

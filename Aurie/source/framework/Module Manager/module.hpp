@@ -40,6 +40,7 @@ namespace Aurie
 			IN HMODULE ImageModule,
 			IN AurieEntry ModuleInitialize,
 			IN AurieEntry ModulePreinitialize,
+			IN AurieEntry ModuleUnload,
 			IN AurieLoaderEntry FrameworkInitialize,
 			IN uint8_t BitFlags,
 			OUT AurieModule& Module

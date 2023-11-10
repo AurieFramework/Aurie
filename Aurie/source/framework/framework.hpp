@@ -52,12 +52,6 @@ namespace Aurie
 		}
 	};
 
-	struct AurieHandle
-	{
-		AurieModule* Owner;
-		AurieObject* Object;
-	};
-
 	// A direct representation of a loaded object.
 	// Contains internal resources such as the interface table.
 	// This structure should be opaque to modules as the contents may change at any time.
@@ -126,6 +120,9 @@ namespace Aurie
 		// the allocation is put into g_ArInitialImage of the framework module.
 		std::list<AurieMemoryAllocation> MemoryAllocations;
 
+		// Functions hooked by the module by Mm*Hook functions
+		std::list<AurieHook> Hooks;
+
 		virtual AurieObjectType GetObjectType() override
 		{
 			return AURIE_OBJECT_MODULE;
@@ -136,6 +133,21 @@ namespace Aurie
 			return (this->ImageBase.Address == Other.ImageBase.Address) &&
 				(this->ImageSize == Other.ImageSize) &&
 				(this->ImagePath == Other.ImagePath);
+		}
+	};
+
+	struct AurieHook : AurieObject
+	{
+		AurieModule* Owner;
+		const char* Identifier;
+
+		PVOID SourceFunction;
+		PVOID TargetFunction;
+		PVOID Trampoline;
+
+		virtual AurieObjectType GetObjectType() override
+		{
+			return AURIE_OBJECT_HOOK;
 		}
 	};
 

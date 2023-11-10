@@ -1,5 +1,6 @@
 #include "module.hpp"
 #include <Psapi.h>
+#include <MinHook.h>
 
 namespace Aurie
 {
@@ -8,6 +9,7 @@ namespace Aurie
 		IN HMODULE ImageModule,
 		IN AurieEntry ModuleInitialize, 
 		IN AurieEntry ModulePreinitialize,
+		IN AurieEntry ModuleUnload,
 		IN AurieLoaderEntry FrameworkInitialize,
 		IN uint8_t BitFlags,
 		OUT AurieModule& Module
@@ -22,6 +24,7 @@ namespace Aurie
 		temp_module.ModuleInitialize = ModuleInitialize;
 		temp_module.ModulePreinitialize = ModulePreinitialize;
 		temp_module.FrameworkInitialize = FrameworkInitialize;
+		temp_module.ModuleUnload = ModuleUnload;
 
 		last_status = MdpQueryModuleInformation(
 			ImageModule,
@@ -254,8 +257,8 @@ namespace Aurie
 	// The ignoring of return values here is on purpose, we just have to power through
 	// and unload / free what we can.
 	AurieStatus Internal::MdpUnmapImage(
-		IN AurieModule* Module, 
-		IN bool RemoveFromList, 
+		IN AurieModule* Module,
+		IN bool RemoveFromList,
 		IN bool CallUnloadRoutine
 	)
 	{
@@ -284,6 +287,15 @@ namespace Aurie
 			);
 		}
 
+		// Remove all hooks created by the module
+		if (MH_RemoveHookEx(
+			MmpGetModuleHookId(Module),
+			MH_ALL_HOOKS
+		) != MH_OK)
+		{
+			last_status = AURIE_EXTERNAL_ERROR;
+		}
+		
 		// Remove all the allocation entries, they're now invalid
 		Module->MemoryAllocations.clear();
 
@@ -395,9 +407,11 @@ namespace Aurie
 		uintptr_t framework_init_offset = PpFindFileExportByName(ImagePath, "__AurieFrameworkInit");
 		uintptr_t module_init_offset = PpFindFileExportByName(ImagePath, "ModuleInitialize");
 		uintptr_t module_preload_offset = PpFindFileExportByName(ImagePath, "ModulePreinitialize");
+		uintptr_t module_unload_offset = PpFindFileExportByName(ImagePath, "ModuleUnload");
 
 		AurieEntry module_init = reinterpret_cast<AurieEntry>((char*)image_base + module_init_offset);
 		AurieEntry module_preload = reinterpret_cast<AurieEntry>((char*)image_base + module_preload_offset);
+		AurieEntry module_unload = reinterpret_cast<AurieEntry>((char*)image_base + module_unload_offset);
 		AurieLoaderEntry fwk_init = reinterpret_cast<AurieLoaderEntry>((char*)image_base + framework_init_offset);
 
 		// Verify image integrity
@@ -414,6 +428,9 @@ namespace Aurie
 		if (!module_preload_offset)
 			module_preload = nullptr;
 
+		if (!module_unload_offset)
+			module_unload = nullptr;
+
 		// Create the module object
 		AurieModule module_object = {};
 		last_status = Internal::MdpCreateModule(
@@ -421,6 +438,7 @@ namespace Aurie
 			image_base,
 			module_init,
 			module_preload,
+			module_unload,
 			fwk_init,
 			0,
 			module_object
@@ -486,5 +504,3 @@ namespace Aurie
 		return Internal::MdpUnmapImage(Module, true, true);
 	}
 }
-
-
