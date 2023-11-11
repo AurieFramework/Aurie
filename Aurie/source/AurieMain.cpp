@@ -6,6 +6,8 @@
 #include <Windows.h>
 #include <winternl.h>
 
+#include <MinHook.h>
+
 #include "framework/framework.hpp"
 
 
@@ -13,6 +15,9 @@
 void ArProcessDetach(HINSTANCE)
 {
 	using namespace Aurie;
+
+	// Uninitialize minhook, ignore retval
+	MH_Uninitialize();
 
 	// Unload all modules except the initial image
 	// First calls the ModuleUnload functions (if they're set up)
@@ -53,6 +58,17 @@ void ArProcessDetach(HINSTANCE)
 void ArProcessAttach(HINSTANCE Instance)
 {
 	using namespace Aurie;
+
+	// Init minhook
+	if (MH_Initialize() != MH_OK)
+	{
+		return (void)MessageBoxA(
+			nullptr,
+			"Failed to initialize hooking library!",
+			"Aurie Framework",
+			MB_OK | MB_TOPMOST | MB_ICONERROR | MB_SETFOREGROUND
+		);
+	}
 
 	// Query the image path
 	DWORD process_name_size = MAX_PATH;

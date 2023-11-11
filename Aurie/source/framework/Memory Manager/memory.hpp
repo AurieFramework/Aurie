@@ -49,6 +49,11 @@ namespace Aurie
 		IN const char* HookIdentifier
 	);
 
+	EXPORTED PVOID MmGetHookTrampoline(
+		IN AurieModule* Module,
+		IN const char* HookIdentifier
+	);
+
 	EXPORTED AurieStatus MmRemoveHook(
 		IN AurieModule* Module,
 		IN const char* HookIdentifier

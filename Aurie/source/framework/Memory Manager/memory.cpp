@@ -339,7 +339,7 @@ namespace Aurie
 			return 0;
 
 		return MmSigscanRegion(
-			reinterpret_cast<const unsigned char*>(text_section_base),
+			reinterpret_cast<const unsigned char*>(module_handle) + text_section_base,
 			text_section_size,
 			Pattern,
 			PatternMask
@@ -434,5 +434,26 @@ namespace Aurie
 			Module,
 			*hook_object
 		);
+	}
+
+	PVOID MmGetHookTrampoline(
+		IN AurieModule* Module, 
+		IN const char* HookIdentifier
+	)
+	{
+		AurieStatus last_status = AURIE_SUCCESS;
+
+		// Make sure the hook exists
+		AurieHook* hook_object = nullptr;
+		last_status = Internal::MmpLookupHookByName(
+			Module,
+			HookIdentifier,
+			hook_object
+		);
+
+		if (!AurieSuccess(last_status))
+			return nullptr;
+
+		return hook_object->Trampoline;
 	}
 }
