@@ -189,7 +189,7 @@ namespace Aurie
 		OUT fs::path& Path
 	)
 	{
-		fs::path module_path = Internal::MdpGetImagePath(Module);
+		fs::path& module_path = Internal::MdpGetImagePath(Module);
 
 		if (!module_path.has_parent_path())
 			return AURIE_INVALID_PARAMETER;
