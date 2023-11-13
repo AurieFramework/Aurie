@@ -215,12 +215,34 @@ namespace Aurie
 			ReturnType operator()(const char* FunctionName, TArgs&... Args)
 			{
 				auto Func = reinterpret_cast<TFunction*>(g_PpGetFrameworkRoutine(FunctionName));
+				if (!Func)
+				{
+					std::string error_string = "Tried to call function ";
+					error_string.append(FunctionName);
+					error_string.append(", but PpGetFrameworkRoutine returns nullptr!\n\n");
+					error_string.append("Is your Aurie installation up-to-date?");
+
+					MessageBoxA(0, error_string.c_str(), "Aurie API Dispatcher", MB_OK | MB_ICONERROR);
+					exit(0);
+				}
+
 				return Func(Args...);
 			}
 
 			ReturnType operator()(const char* FunctionName)
 			{
 				auto Func = reinterpret_cast<TFunction*>(g_PpGetFrameworkRoutine(FunctionName));
+				if (!Func)
+				{
+					std::string error_string = "Tried to call function ";
+					error_string.append(FunctionName);
+					error_string.append(", but PpGetFrameworkRoutine returns nullptr!\n\n");
+					error_string.append("Is your Aurie installation up-to-date?");
+
+					MessageBoxA(0, error_string.c_str(), "Aurie API Dispatcher", MB_OK | MB_ICONERROR);
+					exit(0);
+				}
+
 				return Func();
 			}
 		};
@@ -507,6 +529,14 @@ namespace Aurie
 	)
 	{
 		return AURIE_API_CALL(PpGetCurrentArchitecture, ImageArchitecture);
+	}
+
+	inline AurieStatus PpGetImageSubsystem(
+		IN PVOID Image,
+		OUT unsigned short& ImageSubsystem
+	)
+	{
+		return AURIE_API_CALL(PpGetImageSubsystem, Image, ImageSubsystem);
 	}
 
 	namespace Internal

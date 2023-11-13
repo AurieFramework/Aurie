@@ -24,6 +24,11 @@ namespace Aurie
 		IN unsigned short& ImageArchitecture
 	);
 
+	EXPORTED AurieStatus PpGetImageSubsystem(
+		IN PVOID Image,
+		OUT unsigned short& ImageSubsystem
+	);
+
 	namespace Internal
 	{
 		// Finds an export by name

@@ -83,7 +83,7 @@ namespace Aurie
 		return export_offset;
 	}
 
-	EXPORTED void* PpGetFrameworkRoutine(
+	void* PpGetFrameworkRoutine(
 		IN const char* ExportName
 	)
 	{
@@ -93,6 +93,26 @@ namespace Aurie
 		);
 
 		return reinterpret_cast<void*>(framework_routine);
+	}
+
+	AurieStatus PpGetImageSubsystem(
+		IN PVOID Image, 
+		OUT unsigned short& ImageSubsystem
+	)
+	{
+		AurieStatus last_status = AURIE_SUCCESS;
+		PIMAGE_NT_HEADERS nt_header = nullptr;
+
+		last_status = Internal::PpiGetNtHeader(
+			Image, 
+			(void*&)nt_header
+		);
+
+		if (!AurieSuccess(last_status))
+			return last_status;
+
+		ImageSubsystem = nt_header->OptionalHeader.Subsystem;
+		return AURIE_SUCCESS;
 	}
 
 	AurieStatus PpGetCurrentArchitecture(

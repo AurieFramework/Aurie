@@ -17,6 +17,49 @@ namespace Aurie
 		return entrypoint_thread_information.WaitReason == Suspended;
 	}
 
+	HWND ElWaitForCurrentProcessWindow()
+	{
+		struct ElProcessWindowInformation
+		{
+			HANDLE ProcessHandle;
+			HWND ProcessWindow;
+		} window_information = { GetCurrentProcess(), nullptr};
+
+		auto enum_windows_callback = [](IN HWND Window, IN LPARAM Parameter) -> BOOL
+			{
+				auto window_information = reinterpret_cast<ElProcessWindowInformation*>(Parameter);
+				DWORD window_process_id = 0;
+
+				// Make sure we know who the window belongs to
+				if (!GetWindowThreadProcessId(Window, &window_process_id))
+					return true;
+
+				// Make sure the window belongs to our process
+				if (window_process_id != GetProcessId(window_information->ProcessHandle))
+					return true;
+
+				// Skip console windows, in case we have one.
+				// This function is only meant to be called if the subsystem  
+				// of the current process is IMAGE_SUBSYSTEM_WINDOWS_GUI.
+				if (Window == GetConsoleWindow())
+					return true;
+
+				// Skip any invisible windows
+				if (!IsWindowVisible(Window))
+					return true;
+
+				window_information->ProcessWindow = Window;
+				return false;
+			};
+
+		while (!window_information.ProcessWindow)
+		{
+			EnumWindows(enum_windows_callback, reinterpret_cast<LPARAM>(&window_information));
+		}
+
+		return window_information.ProcessWindow;
+	}
+
 	bool ElForEachThread(
 		IN std::function<bool(const THREADENTRY32& ThreadEntry)> Callback
 	)

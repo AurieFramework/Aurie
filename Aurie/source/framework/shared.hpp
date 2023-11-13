@@ -531,6 +531,14 @@ namespace Aurie
 		return AURIE_API_CALL(PpGetCurrentArchitecture, ImageArchitecture);
 	}
 
+	inline AurieStatus PpGetImageSubsystem(
+		IN PVOID Image,
+		OUT unsigned short& ImageSubsystem
+	)
+	{
+		return AURIE_API_CALL(PpGetImageSubsystem, Image, ImageSubsystem);
+	}
+
 	namespace Internal
 	{
 		inline void* PpiFindModuleExportByName(

@@ -9,6 +9,8 @@ namespace Aurie
 {
 	EXPORTED bool ElIsProcessSuspended();
 
+	HWND ElWaitForCurrentProcessWindow();
+
 	bool ElForEachThread(
 		IN std::function<bool(const THREADENTRY32& ThreadEntry)> Callback
 	);
