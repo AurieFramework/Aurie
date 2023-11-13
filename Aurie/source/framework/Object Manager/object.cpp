@@ -16,6 +16,14 @@ namespace Aurie
 		table_entry.InterfaceName = InterfaceName;
 		table_entry.OwnerModule = Module;
 
+		// Make sure the interface knows it's being set up,
+		// and that it succeeds at doing so. We don't want an
+		// uninitialized, half-broken interface exposed!
+
+		AurieStatus last_status = Interface->Create();
+		if (!AurieSuccess(last_status))
+			return last_status;
+
 		return Internal::ObpAddInterfaceToTable(
 			Module,
 			table_entry
