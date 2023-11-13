@@ -83,6 +83,45 @@ namespace Aurie
 			return Object->GetObjectType();
 		}
 
+		void ObpSetModuleOperationCallback(
+			IN AurieModule* Module, 
+			IN AurieModuleCallback CallbackRoutine
+		)
+		{
+			Module->ModuleOperationCallback = CallbackRoutine;
+		}
+
+		void ObpDispatchModuleOperationCallbacks(
+			IN AurieModule* AffectedModule, 
+			IN AurieEntry Routine, 
+			IN bool IsFutureCall
+		)
+		{
+			// Determine the operation type
+			// Yes I know, this is ugly, if you know a better solution
+			// feel free to PR / tell me.
+			AurieModuleOperationType current_operation_type = AURIE_OPERATION_UNKNOWN;
+
+			if (Routine == AffectedModule->ModulePreinitialize)
+				current_operation_type = AURIE_OPERATION_PREINITIALIZE;
+			else if (Routine == AffectedModule->ModuleInitialize)
+				current_operation_type = AURIE_OPERATION_INITIALIZE;
+			else if (Routine == AffectedModule->ModuleUnload)
+				current_operation_type = AURIE_OPERATION_UNLOAD;
+			
+			for (auto& loaded_module : g_LdrModuleList)
+			{
+				if (!loaded_module.ModuleOperationCallback)
+					continue;
+
+				loaded_module.ModuleOperationCallback(
+					AffectedModule,
+					current_operation_type,
+					IsFutureCall
+				);
+			}
+		}
+
 		AurieStatus ObpAddInterfaceToTable(
 			IN AurieModule* Module, 
 			IN AurieInterfaceTableEntry& Entry

@@ -123,6 +123,9 @@ namespace Aurie
 		// Functions hooked by the module by Mm*Hook functions
 		std::list<AurieHook> Hooks;
 
+		// If set, notifies the plugin of any module actions
+		AurieModuleCallback ModuleOperationCallback = nullptr;
+
 		virtual AurieObjectType GetObjectType() override
 		{
 			return AURIE_OBJECT_MODULE;

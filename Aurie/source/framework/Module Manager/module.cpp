@@ -288,6 +288,7 @@ namespace Aurie
 	{
 		AurieStatus last_status = AURIE_SUCCESS;
 
+
 		// Call the unload entry if needed
 		if (CallUnloadRoutine)
 		{
@@ -342,13 +343,19 @@ namespace Aurie
 		if (Module == g_ArInitialImage)
 			return AURIE_SUCCESS;
 
-		return Module->FrameworkInitialize(
+		ObpDispatchModuleOperationCallbacks(Module, Entry, true);
+
+		AurieStatus module_status = Module->FrameworkInitialize(
 			g_ArInitialImage,
 			PpGetFrameworkRoutine,
 			Entry,
 			MdpGetImagePath(Module),
 			Module
 		);
+
+		ObpDispatchModuleOperationCallbacks(Module, Entry, false);
+
+		return module_status;
 	}
 
 	void Internal::MdpMapFolder(
@@ -503,7 +510,7 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
-	bool MdIsImagePreloadInitialized(
+	bool MdIsImagePreinitialized(
 		IN AurieModule* Module
 	)
 	{

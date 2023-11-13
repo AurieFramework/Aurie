@@ -13,7 +13,7 @@ namespace Aurie
 		OUT AurieModule*& Module
 	);
 
-	EXPORTED bool MdIsImagePreloadInitialized(
+	EXPORTED bool MdIsImagePreinitialized(
 		IN AurieModule* Module
 	);
 

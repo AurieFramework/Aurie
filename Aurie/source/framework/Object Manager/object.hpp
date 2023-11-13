@@ -27,6 +27,17 @@ namespace Aurie
 
 	namespace Internal
 	{
+		EXPORTED void ObpSetModuleOperationCallback(
+			IN AurieModule* Module,
+			IN AurieModuleCallback CallbackRoutine
+		);
+
+		void ObpDispatchModuleOperationCallbacks(
+			IN AurieModule* AffectedModule,
+			IN AurieEntry Routine,
+			IN bool IsFutureCall
+		);
+
 		AurieStatus ObpAddInterfaceToTable(
 			IN AurieModule* Module,
 			IN AurieInterfaceTableEntry& Entry

@@ -100,6 +100,17 @@ namespace Aurie
 		AURIE_OBJECT_HOOK = 4
 	};
 
+	enum AurieModuleOperationType : uint32_t
+	{
+		AURIE_OPERATION_UNKNOWN = 0,
+		// The call is a ModulePreinitialize call
+		AURIE_OPERATION_PREINITIALIZE = 1,
+		// The call is a ModuleInitialize call
+		AURIE_OPERATION_INITIALIZE = 2,
+		// The call is a ModuleUnload call
+		AURIE_OPERATION_UNLOAD = 3
+	};
+
 	constexpr inline bool AurieSuccess(const AurieStatus Status) noexcept
 	{
 		return Status == AURIE_SUCCESS;
@@ -136,6 +147,12 @@ namespace Aurie
 		IN OPTIONAL AurieEntry Routine,
 		IN OPTIONAL const fs::path& Path,
 		IN OPTIONAL AurieModule* SelfModule
+		);
+
+	using AurieModuleCallback = void(*)(
+		IN const AurieModule* const AffectedModule,
+		IN const AurieModuleOperationType OperationType,
+		IN const bool IsFutureCall
 		);
 }
 
@@ -324,11 +341,11 @@ namespace Aurie
 		return AURIE_API_CALL(MdMapImage, ImagePath, Module);
 	}
 
-	inline bool MdIsImagePreloadInitialized(
+	inline bool MdIsImagePreinitialized(
 		IN AurieModule* Module
 	)
 	{
-		return AURIE_API_CALL(MdIsImagePreloadInitialized, Module);
+		return AURIE_API_CALL(MdIsImagePreinitialized, Module);
 	}
 
 	inline bool MdIsImageInitialized(
@@ -446,6 +463,14 @@ namespace Aurie
 
 	namespace Internal
 	{
+		inline void ObpSetModuleOperationCallback(
+			IN AurieModule* Module,
+			IN AurieModuleCallback CallbackRoutine
+		)
+		{
+			return AURIE_API_CALL(ObpSetModuleOperationCallback, Module, CallbackRoutine);
+		}
+
 		inline AurieObjectType ObpGetObjectType(
 			IN AurieObject* Object
 		)
