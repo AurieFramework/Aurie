@@ -166,6 +166,10 @@ void ArProcessAttach(HINSTANCE Instance)
 	{
 		Internal::ElpResumeProcess(GetCurrentProcess());
 	}
+
+	// Wait until the current process has finished initializating
+	// This is done to make sure game structures are ready by the point we call PluginEntry
+	WaitForInputIdle(GetCurrentProcess(), INFINITE);
 		
 	// Call ModuleEntry on all loaded plugins
 	for (auto& entry : Internal::g_LdrModuleList)

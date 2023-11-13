@@ -13,6 +13,10 @@ namespace Aurie
 		OUT AurieModule*& Module
 	);
 
+	EXPORTED bool MdIsImagePreloadInitialized(
+		IN AurieModule* Module
+	);
+
 	// Checks whether an image is initialized or not
 	EXPORTED bool MdIsImageInitialized(
 		IN AurieModule* Module

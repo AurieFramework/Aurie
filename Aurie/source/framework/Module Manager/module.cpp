@@ -503,7 +503,14 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
-	EXPORTED AurieStatus MdUnmapImage(
+	bool MdIsImagePreloadInitialized(
+		IN AurieModule* Module
+	)
+	{
+		return Module->Flags.IsPreloaded;
+	}
+
+	AurieStatus MdUnmapImage(
 		IN AurieModule* Module
 	)
 	{

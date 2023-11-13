@@ -324,6 +324,13 @@ namespace Aurie
 		return AURIE_API_CALL(MdMapImage, ImagePath, Module);
 	}
 
+	inline bool MdIsImagePreloadInitialized(
+		IN AurieModule* Module
+	)
+	{
+		return AURIE_API_CALL(MdIsImagePreloadInitialized, Module);
+	}
+
 	inline bool MdIsImageInitialized(
 		IN AurieModule* Module
 	)
