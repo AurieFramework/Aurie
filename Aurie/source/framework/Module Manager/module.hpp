@@ -2,6 +2,8 @@
 #define AURIE_MODULE_H_
 
 #include "../framework.hpp"
+#include <vector>
+#include <functional>
 
 namespace Aurie
 {
@@ -62,6 +64,13 @@ namespace Aurie
 			OUT HMODULE& ImageBase
 		);
 
+		void MdpBuildModuleList(
+			IN const fs::path& BaseFolder,
+			IN bool Recursive,
+			IN std::function<bool(const fs::directory_entry& Entry)> Predicate,
+			OUT std::vector<fs::path>& Files
+		);
+
 		// Adds an AurieModule instance to the global list and returns a pointer to it
 		AurieModule* MdpAddModuleToList(
 			IN const AurieModule& Module
@@ -109,14 +118,10 @@ namespace Aurie
 			IN AurieEntry Entry
 		);
 
-		void MdpRecursiveMapFolder(
+		void MdpMapFolder(
 			IN const fs::path& Folder,
-			OUT OPTIONAL size_t* ModuleCount
-		);
-
-		void MdpNonrecursiveMapFolder(
-			IN const fs::path& Folder,
-			OUT OPTIONAL size_t* ModuleCount
+			IN bool Recursive,
+			OPTIONAL OUT size_t* NumberOfMappedModules
 		);
 
 		inline std::list<AurieModule> g_LdrModuleList;

@@ -139,6 +139,30 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
+	void Internal::MdpBuildModuleList(
+		IN const fs::path& BaseFolder, 
+		IN bool Recursive, 
+		IN std::function<bool(const fs::directory_entry& Entry)> Predicate,
+		OUT std::vector<fs::path>& Files
+	)
+	{
+		std::error_code ec;
+		Files.clear();
+
+		if (Recursive)
+		{
+			for (auto& entry : fs::recursive_directory_iterator(BaseFolder, ec))
+				if (Predicate(entry))
+					Files.push_back(entry.path());
+
+			return;
+		}
+
+		for (auto& entry : fs::recursive_directory_iterator(BaseFolder, ec))
+			if (Predicate(entry))
+				Files.push_back(entry.path());	
+	}
+
 	AurieModule* Internal::MdpAddModuleToList(
 		IN const AurieModule& Module
 	)
@@ -327,66 +351,52 @@ namespace Aurie
 		);
 	}
 
-	void Internal::MdpRecursiveMapFolder(
+	void Internal::MdpMapFolder(
 		IN const fs::path& Folder, 
-		OUT OPTIONAL size_t* ModuleCount
+		IN bool Recursive,
+		OPTIONAL OUT size_t* NumberOfMappedModules
 	)
 	{
+		std::vector<fs::path> modules_to_map;
+
+		MdpBuildModuleList(
+			Folder,
+			Recursive,
+			[](const fs::directory_entry& entry) -> bool
+			{
+				if (!entry.is_regular_file())
+					return false;
+
+				if (!entry.path().has_filename())
+					return false;
+
+				if (!entry.path().filename().has_extension())
+					return false;
+
+				if (entry.path().filename().extension().compare(L".dll"))
+					return false;
+
+				return true;
+			},
+			modules_to_map
+		);
+
+		std::sort(
+			modules_to_map.begin(),
+			modules_to_map.end()
+		);
+
 		size_t loaded_count = 0;
-		std::error_code ec;
-		for (const auto& entry : fs::recursive_directory_iterator(Folder, ec))
+		for (auto& module : modules_to_map)
 		{
-			if (!entry.is_regular_file())
-				continue;
-
-			if (!entry.path().has_filename())
-				continue;
-
-			if (!entry.path().filename().has_extension())
-				continue;
-
-			if (entry.path().filename().extension().compare(L".dll"))
-				continue;
-
 			AurieModule* loaded_module = nullptr;
 
-			if (AurieSuccess(MdMapImage(entry.path(), loaded_module)))
+			if (AurieSuccess(MdMapImage(module, loaded_module)))
 				loaded_count++;
 		}
 
-		if (ModuleCount)
-			*ModuleCount = loaded_count;
-	}
-
-	void Internal::MdpNonrecursiveMapFolder(
-		IN const fs::path& Folder, 
-		OUT OPTIONAL size_t* ModuleCount
-	)
-	{
-		size_t loaded_count = 0;
-		std::error_code ec;
-		for (const auto& entry : fs::recursive_directory_iterator(Folder, ec))
-		{
-			if (!entry.is_regular_file())
-				continue;
-
-			if (!entry.path().has_filename())
-				continue;
-
-			if (!entry.path().filename().has_extension())
-				continue;
-
-			if (entry.path().filename().extension().compare(L".dll"))
-				continue;
-
-			AurieModule* loaded_module = nullptr;
-
-			if (AurieSuccess(MdMapImage(entry.path(), loaded_module)))
-				loaded_count++;
-		}
-
-		if (ModuleCount)
-			*ModuleCount = loaded_count;
+		if (NumberOfMappedModules)
+			*NumberOfMappedModules = loaded_count;
 	}
 
 	AurieStatus MdMapImage(
@@ -469,13 +479,12 @@ namespace Aurie
 		if (!fs::exists(FolderPath))
 			return AURIE_FILE_NOT_FOUND;
 
-		if (Recursive)
-		{
-			Internal::MdpRecursiveMapFolder(FolderPath, nullptr);
-			return AURIE_SUCCESS;
-		}
+		Internal::MdpMapFolder(
+			FolderPath,
+			Recursive,
+			nullptr
+		);
 
-		Internal::MdpNonrecursiveMapFolder(FolderPath, nullptr);
 		return AURIE_SUCCESS;
 	}
 

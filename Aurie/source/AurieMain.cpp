@@ -136,8 +136,9 @@ void ArProcessAttach(HINSTANCE Instance)
 	folder_path = folder_path / "mods" / "aurie";
 
 	// Load everything from %APPDIR%\\mods\\aurie
-	Internal::MdpRecursiveMapFolder(
+	Internal::MdpMapFolder(
 		folder_path,
+		true,
 		nullptr
 	);
 
