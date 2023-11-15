@@ -325,6 +325,14 @@ namespace Aurie
 		return AURIE_API_CALL(MmHookExists, Module, HookIdentifier);
 	}
 
+	inline PVOID MmGetHookTrampoline(
+		IN AurieModule* Module,
+		IN const char* HookIdentifier
+	)
+	{
+		return AURIE_API_CALL(MmGetHookTrampoline, Module, HookIdentifier);
+	}
+
 	inline AurieStatus MmRemoveHook(
 		IN AurieModule* Module,
 		IN const char* HookIdentifier
