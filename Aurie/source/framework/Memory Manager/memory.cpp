@@ -243,6 +243,11 @@ namespace Aurie
 		OUT PVOID& Trampoline
 	)
 	{
+		UNREFERENCED_PARAMETER(Module);
+		UNREFERENCED_PARAMETER(HookIdentifier);
+		UNREFERENCED_PARAMETER(SourceFunction);
+		UNREFERENCED_PARAMETER(DestinationFunction);
+		UNREFERENCED_PARAMETER(Trampoline);
 		return AURIE_NOT_IMPLEMENTED;
 	}
 
