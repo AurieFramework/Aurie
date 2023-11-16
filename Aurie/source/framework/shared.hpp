@@ -10,6 +10,7 @@
 // Includes
 #include <cstdint>
 #include <filesystem>
+#include <list>
 
 // Defines
 #ifndef FORCEINLINE
