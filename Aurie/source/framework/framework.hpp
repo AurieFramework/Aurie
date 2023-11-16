@@ -142,12 +142,12 @@ namespace Aurie
 
 	struct AurieHook : AurieObject
 	{
-		AurieModule* Owner;
-		const char* Identifier;
+		AurieModule* Owner = nullptr;
+		const char* Identifier = nullptr;
 
-		PVOID SourceFunction;
-		PVOID TargetFunction;
-		PVOID Trampoline;
+		PVOID SourceFunction = nullptr;
+		PVOID TargetFunction = nullptr;
+		PVOID Trampoline = nullptr;
 
 		virtual AurieObjectType GetObjectType() override
 		{

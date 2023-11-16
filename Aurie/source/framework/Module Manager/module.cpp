@@ -1,6 +1,5 @@
 #include "module.hpp"
 #include <Psapi.h>
-#include <MinHook.h>
 
 namespace Aurie
 {
@@ -288,7 +287,6 @@ namespace Aurie
 	{
 		AurieStatus last_status = AURIE_SUCCESS;
 
-
 		// Call the unload entry if needed
 		if (CallUnloadRoutine)
 		{
@@ -296,6 +294,12 @@ namespace Aurie
 				Module,
 				Module->ModuleUnload
 			);
+		}
+
+		for (auto& module_interface : Module->InterfaceTable)
+		{
+			if (module_interface.Interface)
+				module_interface.Interface->Destroy();
 		}
 
 		// Invalidate all interfaces
@@ -312,15 +316,6 @@ namespace Aurie
 			);
 		}
 
-		// Remove all hooks created by the module
-		if (MH_RemoveHookEx(
-			MmpGetModuleHookId(Module),
-			MH_ALL_HOOKS
-		) != MH_OK)
-		{
-			last_status = AURIE_EXTERNAL_ERROR;
-		}
-		
 		// Remove all the allocation entries, they're now invalid
 		Module->MemoryAllocations.clear();
 
