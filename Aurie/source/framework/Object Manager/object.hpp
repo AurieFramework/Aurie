@@ -46,7 +46,8 @@ namespace Aurie
 		AurieStatus ObpDestroyInterface(
 			IN AurieModule* Module,
 			IN AurieInterfaceBase* Interface,
-			IN bool Notify
+			IN bool Notify,
+			IN bool RemoveFromList
 		);
 
 		AurieStatus ObpLookupInterfaceOwner(

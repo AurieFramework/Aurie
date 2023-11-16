@@ -77,7 +77,7 @@ namespace Aurie
 
 		// Adds an AurieModule instance to the global list and returns a pointer to it
 		AurieModule* MdpAddModuleToList(
-			IN const AurieModule& Module
+			IN AurieModule&& Module
 		);
 
 		// Queries information about a module

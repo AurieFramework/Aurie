@@ -26,6 +26,8 @@
     <ClInclude Include="source\framework\Object Manager\object.hpp" />
     <ClInclude Include="source\framework\PE Parser\pe.hpp" />
     <ClInclude Include="source\framework\framework.hpp" />
+    <ClInclude Include="source\include\SafetyHook\safetyhook.hpp" />
+    <ClInclude Include="source\include\Zydis\Zydis.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\AurieMain.cpp" />
@@ -34,6 +36,8 @@
     <ClCompile Include="source\framework\Module Manager\module.cpp" />
     <ClCompile Include="source\framework\Object Manager\object.cpp" />
     <ClCompile Include="source\framework\PE Parser\pe.cpp" />
+    <ClCompile Include="source\include\SafetyHook\safetyhook.cpp" />
+    <ClCompile Include="source\include\Zydis\Zydis.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -92,9 +96,9 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);AURIE_INCLUDE_PRIVATE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>AURIE_INCLUDE_PRIVATE;ZYDIS_STATIC_BUILD;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -109,9 +113,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);AURIE_INCLUDE_PRIVATE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>AURIE_INCLUDE_PRIVATE;ZYDIS_STATIC_BUILD;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
@@ -126,9 +130,9 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);AURIE_INCLUDE_PRIVATE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>AURIE_INCLUDE_PRIVATE;ZYDIS_STATIC_BUILD;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -143,9 +147,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);AURIE_INCLUDE_PRIVATE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>AURIE_INCLUDE_PRIVATE;ZYDIS_STATIC_BUILD;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>

@@ -37,6 +37,14 @@ namespace Aurie
 		IN const char* PatternMask
 	);
 
+	EXPORTED AurieStatus MmCreateHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier,
+		IN PVOID SourceFunction,
+		IN PVOID DestinationFunction,
+		OUT PVOID& Trampoline
+	);
+
 	namespace Internal
 	{
 		AurieMemoryAllocation MmpAllocateMemory(
@@ -75,11 +83,6 @@ namespace Aurie
 		void MmpRemoveAllocationsFromTable(
 			IN AurieModule* OwnerModule,
 			IN const PVOID AllocationBase
-		);
-
-		void MmpRemoveHookFromTable(
-			IN AurieModule* OwnerModule,
-			IN const AurieHook& Hook
 		);
 	}
 }

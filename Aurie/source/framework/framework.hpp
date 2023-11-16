@@ -17,6 +17,7 @@
 #include <Windows.h>
 #include <winternl.h>
 #include <list>
+#include <SafetyHook/safetyhook.hpp>
 
 namespace Aurie
 {
@@ -143,11 +144,8 @@ namespace Aurie
 	struct AurieHook : AurieObject
 	{
 		AurieModule* Owner = nullptr;
-		const char* Identifier = nullptr;
-
-		PVOID SourceFunction = nullptr;
-		PVOID TargetFunction = nullptr;
-		PVOID Trampoline = nullptr;
+		std::string Identifier;
+		SafetyHookInline HookInstance;
 
 		virtual AurieObjectType GetObjectType() override
 		{

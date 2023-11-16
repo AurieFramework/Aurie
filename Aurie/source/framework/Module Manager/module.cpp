@@ -37,7 +37,7 @@ namespace Aurie
 			return last_status;
 		}
 
-		Module = temp_module;
+		Module = std::move(temp_module);
 
 		return AURIE_SUCCESS;
 	}
@@ -163,11 +163,10 @@ namespace Aurie
 	}
 
 	AurieModule* Internal::MdpAddModuleToList(
-		IN const AurieModule& Module
+		IN AurieModule&& Module
 	)
 	{
-		g_LdrModuleList.push_back(Module);
-		return &g_LdrModuleList.back();
+		return &g_LdrModuleList.emplace_back(std::move(Module));
 	}
 
 	AurieStatus Internal::MdpQueryModuleInformation(
@@ -202,7 +201,9 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
-	fs::path& Internal::MdpGetImagePath(IN AurieModule* Module)
+	fs::path& Internal::MdpGetImagePath(
+		IN AurieModule* Module
+	)
 	{
 		return Module->ImagePath;
 	}
@@ -274,6 +275,7 @@ namespace Aurie
 			return AURIE_OBJECT_NOT_FOUND;
 
 		Module = &(*iterator);
+		
 		return AURIE_SUCCESS;
 	}
 
@@ -462,7 +464,7 @@ namespace Aurie
 			return last_status;
 
 		// Add it to our list of modules
-		Module = Internal::MdpAddModuleToList(module_object);
+		Module = Internal::MdpAddModuleToList(std::move(module_object));
 		return AURIE_SUCCESS;
 	}
 

@@ -106,10 +106,7 @@ namespace Aurie
 			IN const AurieMemoryAllocation& Allocation
 		)
 		{
-			AurieModule& owner_module = *Allocation.OwnerModule;
-			owner_module.MemoryAllocations.push_back(Allocation);
-
-			return &(owner_module.MemoryAllocations.back());
+			return &Allocation.OwnerModule->MemoryAllocations.emplace_back(Allocation);
 		}
 
 		bool MmpIsAllocatedMemory(
@@ -159,7 +156,7 @@ namespace Aurie
 					return AURIE_SUCCESS;
 				}
 			}
-
+			
 			return AURIE_OBJECT_NOT_FOUND;
 		}
 
@@ -172,21 +169,6 @@ namespace Aurie
 				[AllocationBase](const AurieMemoryAllocation& Allocation)
 				{
 					return Allocation.AllocationBase == AllocationBase;
-				}
-			);
-		}
-
-		void MmpRemoveHookFromTable(
-			IN AurieModule* OwnerModule, 
-			IN const AurieHook& Hook
-		)
-		{
-			OwnerModule->Hooks.remove_if(
-				[Hook](const AurieHook& ModuleHook)
-				{
-					return 
-						ModuleHook.SourceFunction == Hook.SourceFunction && 
-						ModuleHook.TargetFunction == Hook.TargetFunction;
 				}
 			);
 		}
@@ -251,6 +233,17 @@ namespace Aurie
 			return 0;
 
 		return pattern_base;
+	}
+
+	AurieStatus MmCreateHook(
+		IN AurieModule* Module, 
+		IN std::string_view HookIdentifier, 
+		IN PVOID SourceFunction, 
+		IN PVOID DestinationFunction, 
+		OUT PVOID& Trampoline
+	)
+	{
+		return AURIE_NOT_IMPLEMENTED;
 	}
 
 }

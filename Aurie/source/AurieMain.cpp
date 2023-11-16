@@ -46,7 +46,6 @@ void ArProcessDetach(HINSTANCE)
 	// Null the initial image, and clear the module list
 	g_ArInitialImage = nullptr;
 	Internal::g_LdrModuleList.clear();
-
 }
 
 // Called upon framework initialization (DLL_PROCESS_ATTACH) event.
@@ -97,7 +96,7 @@ void ArProcessAttach(HINSTANCE Instance)
 	}
 
 	g_ArInitialImage = Internal::MdpAddModuleToList(
-		initial_module
+		std::move(initial_module)
 	);
 
 	// Get the current folder (where the main executable is)

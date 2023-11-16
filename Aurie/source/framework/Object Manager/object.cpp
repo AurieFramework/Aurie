@@ -72,6 +72,7 @@ namespace Aurie
 			return ObpDestroyInterface(
 				owner_module,
 				table_entry->Interface,
+				true,
 				true
 			);
 		}
@@ -135,20 +136,25 @@ namespace Aurie
 		AurieStatus ObpDestroyInterface(
 			IN AurieModule* Module, 
 			IN AurieInterfaceBase* Interface,
-			IN bool Notify)
+			IN bool Notify,
+			IN bool RemoveFromList
+		)
 		{
 			if (Notify)
 			{
 				Interface->Destroy();
 			}
 
-			Module->InterfaceTable.remove_if(
-				[Interface](const AurieInterfaceTableEntry& entry) -> bool
-				{
-					// Remove all interface entries with this one interface
-					return entry.Interface == Interface;
-				}
-			);
+			if (RemoveFromList)
+			{
+				Module->InterfaceTable.remove_if(
+					[Interface](const AurieInterfaceTableEntry& Entry) -> bool
+					{
+						// Remove all interface entries with this one interface
+						return Entry.Interface == Interface;
+					}
+				);
+			}
 
 			return AURIE_SUCCESS;
 		}
@@ -240,6 +246,7 @@ namespace Aurie
 		last_status = Internal::ObpDestroyInterface(
 			Module,
 			table_entry->Interface,
+			true,
 			true
 		);
 
