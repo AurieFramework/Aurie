@@ -16,6 +16,7 @@
 #define WIN32_NO_STATUS
 #include <Windows.h>
 #include <winternl.h>
+#include <list>
 
 namespace Aurie
 {

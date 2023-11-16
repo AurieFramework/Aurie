@@ -171,9 +171,9 @@ namespace Aurie
 			IN const AurieHook& Hook
 		)
 		{
-			MH_STATUS minhook_status = MH_RemoveHookEx(
+			MH_STATUS minhook_status = MH_RemoveHook(
 				MmpGetModuleHookId(Module),
-				Hook.TargetFunction
+				Hook.SourceFunction
 			);
 
 			if (minhook_status != MH_OK)
@@ -208,28 +208,6 @@ namespace Aurie
 		)
 		{
 			return Module->ImageBase.Address;
-		}
-
-		AurieStatus MmpLookupHookByName(
-			IN AurieModule* Module, 
-			IN const char* HookIdentifier,
-			OUT AurieHook*& HookObject
-		)
-		{
-			auto iterator = std::find_if(
-				Module->Hooks.begin(),
-				Module->Hooks.end(),
-				[HookIdentifier](AurieHook& HookObject) -> bool
-				{
-					return !_stricmp(HookObject.Identifier, HookIdentifier);
-				}
-			);
-
-			if (iterator == Module->Hooks.end())
-				return AURIE_OBJECT_NOT_FOUND;
-
-			HookObject = &(*iterator);
-			return AURIE_SUCCESS;
 		}
 
 		bool MmpIsAllocatedMemory(
