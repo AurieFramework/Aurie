@@ -289,6 +289,10 @@ namespace Aurie
 	{
 		AurieStatus last_status = AURIE_SUCCESS;
 
+		// We don't have to do anything else, since SafetyHook will handle everything for us.
+		// Truly a GOATed library, thank you @localcc for telling me about it love ya
+		Module->Hooks.clear();
+
 		// Call the unload entry if needed
 		if (CallUnloadRoutine)
 		{

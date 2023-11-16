@@ -147,6 +147,13 @@ namespace Aurie
 		std::string Identifier;
 		SafetyHookInline HookInstance;
 
+		bool operator==(const AurieHook& Other) const
+		{
+			return
+				this->HookInstance.destination() == Other.HookInstance.destination() &&
+				this->HookInstance.target() == Other.HookInstance.target();
+		}
+
 		virtual AurieObjectType GetObjectType() override
 		{
 			return AURIE_OBJECT_HOOK;

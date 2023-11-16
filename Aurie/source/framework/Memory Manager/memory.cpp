@@ -172,6 +172,97 @@ namespace Aurie
 				}
 			);
 		}
+
+		AurieHook* MmpAddHookToTable(
+			IN AurieModule* OwnerModule, 
+			IN AurieHook&& Hook
+		)
+		{
+			return &OwnerModule->Hooks.emplace_back(std::move(Hook));
+		}
+
+		AurieStatus MmpRemoveHook(
+			IN AurieModule* Module, 
+			IN std::string_view HookIdentifier,
+			IN bool RemoveFromTable
+		)
+		{
+			AurieHook* hook_object = nullptr;
+			AurieStatus last_status = AURIE_SUCCESS;
+
+			last_status = MmpLookupHookByName(
+				Module,
+				HookIdentifier,
+				hook_object
+			);
+
+			if (!AurieSuccess(last_status))
+				return last_status;
+
+			hook_object->HookInstance = {};
+
+			if (RemoveFromTable)
+			{
+				MmpRemoveHookFromTable(
+					Module,
+					hook_object
+				);
+			}
+
+			return AURIE_SUCCESS;
+		}
+
+		void MmpRemoveHookFromTable(
+			IN AurieModule* Module, 
+			IN AurieHook* Hook
+		)
+		{
+			std::erase_if(
+				Module->Hooks,
+				[Hook](const AurieHook& Entry) -> bool
+				{
+					return Entry == *Hook;
+				}
+			);
+		}
+
+		AurieStatus MmpLookupHookByName(
+			IN AurieModule* Module, 
+			IN std::string_view HookIdentifier, 
+			OUT AurieHook*& Hook
+		)
+		{
+			auto iterator = std::find_if(
+				Module->Hooks.begin(),
+				Module->Hooks.end(),
+				[HookIdentifier](AurieHook& Object) -> bool
+				{
+					return Object.Identifier == HookIdentifier;
+				}
+			);
+
+			if (iterator == std::end(Module->Hooks))
+				return AURIE_OBJECT_NOT_FOUND;
+
+			Hook = &(*iterator);
+
+			return AURIE_SUCCESS;
+		}
+
+		AurieHook* MmpCreateHook(
+			IN AurieModule* Module, 
+			IN std::string_view HookIdentifier, 
+			IN PVOID SourceFunction, 
+			IN PVOID DestinationFunction
+		)
+		{
+			AurieHook hook = {};
+			hook.Owner = Module;
+			hook.Identifier = HookIdentifier;
+			hook.HookInstance = safetyhook::create_inline(SourceFunction, DestinationFunction);
+
+			return MmpAddHookToTable(Module, std::move(hook));
+		}
 	}
 
 	size_t MmSigscanModule(
@@ -240,15 +331,78 @@ namespace Aurie
 		IN std::string_view HookIdentifier, 
 		IN PVOID SourceFunction, 
 		IN PVOID DestinationFunction, 
-		OUT PVOID& Trampoline
+		OUT OPTIONAL PVOID* Trampoline
 	)
 	{
-		UNREFERENCED_PARAMETER(Module);
-		UNREFERENCED_PARAMETER(HookIdentifier);
-		UNREFERENCED_PARAMETER(SourceFunction);
-		UNREFERENCED_PARAMETER(DestinationFunction);
-		UNREFERENCED_PARAMETER(Trampoline);
-		return AURIE_NOT_IMPLEMENTED;
+		if (AurieSuccess(MmHookExists(Module, HookIdentifier)))
+			return AURIE_OBJECT_ALREADY_EXISTS;
+
+		// Creates and enables the actual hook
+		AurieHook* created_hook = Internal::MmpCreateHook(
+			Module,
+			HookIdentifier,
+			SourceFunction,
+			DestinationFunction
+		);
+
+		if (!created_hook)
+			return AURIE_INSUFFICIENT_MEMORY;
+
+		// If the hook is invalid, we're probably passing invalid parameters to it.
+		if (!created_hook->HookInstance)
+			return AURIE_INVALID_PARAMETER;
+
+		if (Trampoline)
+			*Trampoline = created_hook->HookInstance.original<PVOID>();
+		
+		return AURIE_SUCCESS;
+	}
+
+	AurieStatus MmHookExists(
+		IN AurieModule* Module, 
+		IN std::string_view HookIdentifier
+	)
+	{
+		AurieHook* object = nullptr;
+
+		return Internal::MmpLookupHookByName(
+			Module,
+			HookIdentifier,
+			object
+		);
+	}
+
+	AurieStatus MmRemoveHook(
+		IN AurieModule* Module, 
+		IN std::string_view HookIdentifier
+	)
+	{
+		// The internal routine checks for the hook's existance, 
+		// so we can just call it without performing any other checks.
+		return Internal::MmpRemoveHook(
+			Module,
+			HookIdentifier,
+			true
+		);
+	}
+
+	void* MmGetHookTrampoline(
+		IN AurieModule* Module, 
+		IN std::string_view HookIdentifier
+	)
+	{
+		AurieHook* hook_object = nullptr;
+
+		AurieStatus last_status = Internal::MmpLookupHookByName(
+			Module,
+			HookIdentifier,
+			hook_object
+		);
+
+		if (!AurieSuccess(last_status))
+			return nullptr;
+
+		return hook_object->HookInstance.original<PVOID>();
 	}
 
 }

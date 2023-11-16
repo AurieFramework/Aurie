@@ -309,9 +309,10 @@ namespace Aurie
 
 	inline AurieStatus MmCreateHook(
 		IN AurieModule* Module,
-		IN const char* HookIdentifier,
+		IN std::string_view HookIdentifier,
 		IN PVOID SourceFunction,
-		IN PVOID TargetFunction
+		IN PVOID DestinationFunction,
+		OUT OPTIONAL PVOID* Trampoline
 	)
 	{
 		return AURIE_API_CALL(MmCreateHook, Module, HookIdentifier, SourceFunction, TargetFunction);
@@ -319,7 +320,7 @@ namespace Aurie
 
 	inline AurieStatus MmHookExists(
 		IN AurieModule* Module,
-		IN const char* HookIdentifier
+		IN std::string_view HookIdentifier
 	)
 	{
 		return AURIE_API_CALL(MmHookExists, Module, HookIdentifier);
@@ -327,7 +328,7 @@ namespace Aurie
 
 	inline PVOID MmGetHookTrampoline(
 		IN AurieModule* Module,
-		IN const char* HookIdentifier
+		IN std::string_view HookIdentifier
 	)
 	{
 		return AURIE_API_CALL(MmGetHookTrampoline, Module, HookIdentifier);
@@ -335,7 +336,7 @@ namespace Aurie
 
 	inline AurieStatus MmRemoveHook(
 		IN AurieModule* Module,
-		IN const char* HookIdentifier
+		IN std::string_view HookIdentifier
 	)
 	{
 		return AURIE_API_CALL(MmRemoveHook, Module, HookIdentifier);

@@ -42,7 +42,22 @@ namespace Aurie
 		IN std::string_view HookIdentifier,
 		IN PVOID SourceFunction,
 		IN PVOID DestinationFunction,
-		OUT PVOID& Trampoline
+		OUT OPTIONAL PVOID* Trampoline
+	);
+
+	EXPORTED AurieStatus MmHookExists(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier
+	);
+
+	EXPORTED AurieStatus MmRemoveHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier
+	);
+
+	EXPORTED PVOID MmGetHookTrampoline(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier
 	);
 
 	namespace Internal
@@ -83,6 +98,35 @@ namespace Aurie
 		void MmpRemoveAllocationsFromTable(
 			IN AurieModule* OwnerModule,
 			IN const PVOID AllocationBase
+		);
+
+		AurieHook* MmpAddHookToTable(
+			IN AurieModule* OwnerModule,
+			IN AurieHook&& Hook
+		);
+
+		AurieStatus MmpRemoveHook(
+			IN AurieModule* Module,
+			IN std::string_view HookIdentifier,
+			IN bool RemoveFromTable
+		);
+
+		void MmpRemoveHookFromTable(
+			IN AurieModule* Module,
+			IN AurieHook* Hook
+		);
+
+		AurieStatus MmpLookupHookByName(
+			IN AurieModule* Module,
+			IN std::string_view HookIdentifier,
+			OUT AurieHook*& Hook
+		);
+
+		AurieHook* MmpCreateHook(
+			IN AurieModule* Module,
+			IN std::string_view HookIdentifier,
+			IN PVOID SourceFunction,
+			IN PVOID DestinationFunction
 		);
 	}
 }
