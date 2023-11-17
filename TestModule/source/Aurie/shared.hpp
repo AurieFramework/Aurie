@@ -174,9 +174,9 @@ namespace Aurie
 			);
 
 		EXPORTED inline int WINAPI DllMain(
-			HINSTANCE hinstDLL,  // handle to DLL module
-			DWORD fdwReason,     // reason for calling function
-			LPVOID lpvReserved   // reserved
+			HINSTANCE,  // handle to DLL module
+			DWORD,		// reason for calling function
+			LPVOID		// reserved
 		)
 		{
 			return TRUE;
