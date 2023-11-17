@@ -2,19 +2,22 @@
 
 namespace Aurie
 {
-	bool ElIsProcessSuspended()
+	AurieStatus ElIsProcessSuspended(
+		OUT bool& Suspended
+	)
 	{
 		SYSTEM_THREAD_INFORMATION entrypoint_thread_information = {};
 
 		// Make sure we got the entrypoint thread
 		if (!ElGetEntrypointThread(entrypoint_thread_information))
-			return false;
+			return AURIE_EXTERNAL_ERROR;
 
 		// We're checking if the entrypoint thread is waiting because it's suspended
 		if (entrypoint_thread_information.ThreadState != Waiting)
-			return false;
+			return AURIE_EXTERNAL_ERROR;
 
-		return entrypoint_thread_information.WaitReason == Suspended;
+		Suspended = (entrypoint_thread_information.WaitReason == KWAIT_REASON::Suspended);
+		return AURIE_SUCCESS;
 	}
 
 	HWND ElWaitForCurrentProcessWindow()

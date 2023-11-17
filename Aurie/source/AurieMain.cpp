@@ -145,8 +145,9 @@ void ArProcessAttach(HINSTANCE Instance)
 	// We can't do this in the for loop because of iterators...
 	Internal::MdpPurgeMarkedModules();
 
-	// Resume our process
-	if (ElIsProcessSuspended())
+	// Resume our process if needed
+	bool is_process_suspended = false;
+	if (!AurieSuccess(ElIsProcessSuspended(is_process_suspended)) || is_process_suspended)
 	{
 		Internal::ElpResumeProcess(GetCurrentProcess());
 	}

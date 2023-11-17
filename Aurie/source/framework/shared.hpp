@@ -253,9 +253,11 @@ namespace Aurie
 
 namespace Aurie
 {
-	inline bool ElIsProcessSuspended()
+	inline AurieStatus ElIsProcessSuspended(
+		OUT bool& Suspended
+	)
 	{
-		return AURIE_API_CALL(ElIsProcessSuspended);
+		return AURIE_API_CALL(ElIsProcessSuspended, Suspended);
 	}
 
 	inline PVOID MmAllocatePersistentMemory(
@@ -315,7 +317,7 @@ namespace Aurie
 		OUT OPTIONAL PVOID* Trampoline
 	)
 	{
-		return AURIE_API_CALL(MmCreateHook, Module, HookIdentifier, SourceFunction, TargetFunction);
+		return AURIE_API_CALL(MmCreateHook, Module, HookIdentifier, SourceFunction, DestinationFunction, Trampoline);
 	}
 
 	inline AurieStatus MmHookExists(

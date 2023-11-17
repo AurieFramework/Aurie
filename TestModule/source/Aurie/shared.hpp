@@ -253,9 +253,11 @@ namespace Aurie
 
 namespace Aurie
 {
-	inline bool ElIsProcessSuspended()
+	inline AurieStatus ElIsProcessSuspended(
+		OUT bool& Suspended
+	)
 	{
-		return AURIE_API_CALL(ElIsProcessSuspended);
+		return AURIE_API_CALL(ElIsProcessSuspended, Suspended);
 	}
 
 	inline PVOID MmAllocatePersistentMemory(

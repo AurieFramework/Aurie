@@ -13,7 +13,10 @@ EXPORTED AurieStatus ModulePreinitialize(
 	freopen_s(&fDummy, "CONOUT$", "w", stderr);
 	freopen_s(&fDummy, "CONOUT$", "w", stdout);
 
-	printf("[TestModule] ModulePreload. ElIsProcessSuspended returns %d\n", ElIsProcessSuspended());
+
+	bool is_game_suspended = false;
+	ElIsProcessSuspended(is_game_suspended);
+	printf("[TestModule] ModulePreload. ElIsProcessSuspended returns %d\n", is_game_suspended);
 
 	return AURIE_SUCCESS;
 }

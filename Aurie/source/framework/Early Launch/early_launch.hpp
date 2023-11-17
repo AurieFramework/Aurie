@@ -7,7 +7,9 @@
 
 namespace Aurie
 {
-	EXPORTED bool ElIsProcessSuspended();
+	EXPORTED AurieStatus ElIsProcessSuspended(
+		OUT bool& Suspended
+	);
 
 	HWND ElWaitForCurrentProcessWindow();
 
