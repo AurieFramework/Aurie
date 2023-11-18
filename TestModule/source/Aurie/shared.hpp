@@ -48,7 +48,7 @@
 #endif // AURIE_FWK_MINOR
 
 #ifndef AURIE_FWK_PATCH
-#define AURIE_FWK_PATCH 0
+#define AURIE_FWK_PATCH 1
 #endif // AURIE_FWK_PATCH
 
 
@@ -163,9 +163,9 @@ namespace Aurie
 		);
 
 	using AurieModuleCallback = void(*)(
-		IN const AurieModule* const AffectedModule,
-		IN const AurieModuleOperationType OperationType,
-		IN const bool IsFutureCall
+		IN AurieModule* AffectedModule,
+		IN AurieModuleOperationType OperationType,
+		IN bool IsFutureCall
 		);
 }
 
