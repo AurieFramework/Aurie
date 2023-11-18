@@ -5,6 +5,12 @@
 
 namespace Aurie
 {
+	EXPORTED void MmGetFrameworkVersion(
+		OUT OPTIONAL short* Major,
+		OUT OPTIONAL short* Minor,
+		OUT OPTIONAL short* Patch
+	);
+
 	// Allocates memory that may be freed only after the Aurie Framework gets unloaded.
 	EXPORTED PVOID MmAllocatePersistentMemory(
 		IN size_t Size

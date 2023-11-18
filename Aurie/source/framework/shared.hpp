@@ -39,6 +39,19 @@
 #define OPTIONAL
 #endif
 
+#ifndef AURIE_FWK_MAJOR
+#define AURIE_FWK_MAJOR 1
+#endif // AURIE_FWK_MAJOR
+
+#ifndef AURIE_FWK_MINOR
+#define AURIE_FWK_MINOR 0
+#endif // AURIE_FWK_MINOR
+
+#ifndef AURIE_FWK_PATCH
+#define AURIE_FWK_PATCH 0
+#endif // AURIE_FWK_PATCH
+
+
 namespace Aurie
 {
 	namespace fs = ::std::filesystem;
@@ -258,6 +271,15 @@ namespace Aurie
 	)
 	{
 		return AURIE_API_CALL(ElIsProcessSuspended, Suspended);
+	}
+
+	inline void MmGetFrameworkVersion(
+		OUT OPTIONAL short* Major,
+		OUT OPTIONAL short* Minor,
+		OUT OPTIONAL short* Patch
+	)
+	{
+		return AURIE_API_CALL(MmGetFrameworkVersion, Major, Minor, Patch);
 	}
 
 	inline PVOID MmAllocatePersistentMemory(

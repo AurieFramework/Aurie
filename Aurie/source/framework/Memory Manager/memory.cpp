@@ -405,4 +405,20 @@ namespace Aurie
 		return hook_object->HookInstance.original<PVOID>();
 	}
 
+	EXPORTED void MmGetFrameworkVersion(
+		OUT OPTIONAL short* Major, 
+		OUT OPTIONAL short* Minor, 
+		OUT OPTIONAL short* Patch
+	)
+	{
+		if (Major)
+			*Major = AURIE_FWK_MAJOR;
+
+		if (Minor)
+			*Minor = AURIE_FWK_MINOR;
+
+		if (Patch)
+			*Patch = AURIE_FWK_PATCH;
+	}
+
 }

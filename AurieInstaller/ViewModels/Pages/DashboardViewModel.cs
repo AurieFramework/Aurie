@@ -6,13 +6,15 @@
 using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
 using System.Windows.Input;
 
 namespace AurieInstaller.ViewModels.Pages
 {
     public partial class DashboardViewModel : ObservableObject
     {
-        private readonly string m_IFEOPath = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options";
+        private static readonly string m_IFEOPath = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options";
 
         internal static void ThrowError(string Message)
         {
@@ -35,15 +37,43 @@ namespace AurieInstaller.ViewModels.Pages
             return runner_selection_dialog;
         }
 
-        internal RegistryKey? GetIFEOKey(bool WriteAccess)
+        internal static RegistryKey? GetIFEOKey(bool WriteAccess)
         {
             return Registry.LocalMachine.OpenSubKey(m_IFEOPath, WriteAccess);
         }
 
-        internal RegistryKey? GetRunnerKey(string RunnerName, bool WriteAccess)
+        internal static RegistryKey? GetRunnerKey(string RunnerName, bool WriteAccess)
         {
             using RegistryKey? ifeo = GetIFEOKey(WriteAccess);
             return ifeo?.CreateSubKey(RunnerName, true);
+        }
+
+        internal static List<RegistryKey> GetAurieInstallerKeys()
+        {
+            List<RegistryKey> keys = new();
+
+            using (RegistryKey? ifeo = GetIFEOKey(false))
+            {
+                if (ifeo is null)
+                {
+                    ThrowError("Failed to get runner IFEO key!");
+                    return keys;
+                }
+
+                foreach (string subkey in ifeo.GetSubKeyNames())
+                {
+                    RegistryKey? key = ifeo.OpenSubKey(subkey, false);
+                    if (key is null)
+                        continue;
+
+                    if (!key.GetValueNames().Contains("IsAurieInstallerKey"))
+                        continue;
+
+                    keys.Add(key);
+                }
+            }
+
+            return keys;
         }
 
         [RelayCommand]
@@ -72,6 +102,18 @@ namespace AurieInstaller.ViewModels.Pages
 
                     string registry_runner_path = runner_path.Replace('\\', '_');
 
+                    if (!runner_key.GetValueNames().Contains("IsAurieInstallerKey"))
+                    {
+                        MessageBox.Show(
+                            "The Aurie Framework registry key is corrupt.\nReinstall the framework and try again.",
+                            "Key is corrupt.",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error
+                        );
+
+                        return;
+                    }
+
                     if (!runner_key.GetSubKeyNames().Contains(registry_runner_path))
                     {
                         MessageBox.Show(
@@ -85,6 +127,13 @@ namespace AurieInstaller.ViewModels.Pages
                     }
 
                     runner_key.DeleteSubKeyTree(registry_runner_path);
+
+                    // If there's no more stuff registered for this runner key, remove the runner key completely
+                    if (runner_key.GetSubKeyNames().Length == 0)
+                    {
+                        using RegistryKey? ifeo = GetIFEOKey(true);
+                        ifeo?.DeleteSubKeyTree(runner_name);
+                    }
                 }
 
                 MessageBox.Show(
@@ -126,6 +175,7 @@ namespace AurieInstaller.ViewModels.Pages
                     }
 
                     // Set up the UseFilter registry key
+                    runner_key.SetValue("IsAurieInstallerKey", 1, RegistryValueKind.DWord);
                     runner_key.SetValue("UseFilter", 1, RegistryValueKind.DWord);
 
                     string registry_runner_path = runner_path.Replace('\\', '_');
@@ -151,7 +201,19 @@ namespace AurieInstaller.ViewModels.Pages
                             return;
                         }
 
-                        filter_subkey.SetValue("Debugger", @"E:\Code\GitHub\Aurie\x64\Debug\AurieLoader.exe");
+                        // Craft the path to %GAMEFOLDER%\\mods
+                        // TODO: Create an entry in %localappdata% that has the loader so that
+                        // one loader can be reused for multiple games.
+                        string loader_path = Directory.GetParent(runner_path)?.FullName ?? "";
+                        if (loader_path.Equals(string.Empty))
+                        {
+                            ThrowError("Failed to get game folder!");
+                            return;
+                        }
+
+                        loader_path = Path.Combine(loader_path, "mods", "AurieLoader.exe");
+
+                        filter_subkey.SetValue("Debugger", loader_path);
                         filter_subkey.SetValue("FilterFullPath", runner_path);
                     }
                 }

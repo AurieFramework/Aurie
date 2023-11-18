@@ -16,7 +16,7 @@ EXPORTED AurieStatus ModulePreinitialize(
 
 	bool is_game_suspended = false;
 	ElIsProcessSuspended(is_game_suspended);
-	printf("[TestModule] ModulePreload. ElIsProcessSuspended returns %d\n", is_game_suspended);
+	printf("[TestModule] ModulePreload. ElIsProcessSuspended returns %s\n", is_game_suspended ? "true" : "false");
 
 	return AURIE_SUCCESS;
 }
@@ -28,7 +28,7 @@ EXPORTED AurieStatus ModuleInitialize(
 {
 	AurieStatus last_status = AURIE_SUCCESS;
 
-	printf("Hello from the first Aurie Framework module!\n");
+	printf("Hello from the test Aurie Framework module!\n");
 	printf("- AurieModule: %p\n", Module);
 	printf("- ModulePath: %S\n", ModulePath.wstring().c_str());
 	printf("- g_ArInitialImage: %p\n", g_ArInitialImage);
