@@ -49,9 +49,7 @@ int wmain(int argc, wchar_t** argv)
 	// The executable we're actually going to want to launch is 
 	// always called the same as our executable, but with a .bak appended to it,
 	// i.e. "Will You Snail.exe" will turn into "Will You Snail.exe.bak"
-	std::wstring process_command_line = argv[0];
-	process_command_line.append(L".bak");
-
+	std::wstring process_command_line;
 	for (int i = 1; i < argc; i++)
 	{
 		// Check for our argument (might add more later if needed)
@@ -81,13 +79,18 @@ int wmain(int argc, wchar_t** argv)
 	STARTUPINFOW startup_info = {};
 	PROCESS_INFORMATION process_info = {};
 
+	// Craft the creation flags for our process
+	DWORD creation_flags = DEBUG_ONLY_THIS_PROCESS;
+	if (!no_process_freeze)
+		creation_flags |= CREATE_SUSPENDED;
+
 	BOOL process_created = CreateProcessW(
 		nullptr,
 		const_cast<LPWSTR>(process_command_line.data()),
 		nullptr,
 		nullptr,
 		false,
-		no_process_freeze ? 0 : CREATE_SUSPENDED,
+		creation_flags,
 		nullptr,
 		nullptr,
 		&startup_info,
@@ -98,6 +101,8 @@ int wmain(int argc, wchar_t** argv)
 		return GetLastError();
 
 	printf("[>] Process created with PID %d\n", process_info.dwProcessId);
+
+	DebugActiveProcessStop(process_info.dwProcessId);
 
 	// If the flag is provided, we pause so that the debugger can be attached to the game
 	// I use this for debugging to attach the debugger before AurieLoader injects, probably not useful otherwise
