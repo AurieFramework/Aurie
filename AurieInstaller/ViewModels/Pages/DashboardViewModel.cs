@@ -204,16 +204,21 @@ namespace AurieInstaller.ViewModels.Pages
                         // Craft the path to %GAMEFOLDER%\\mods
                         // TODO: Create an entry in %localappdata% that has the loader so that
                         // one loader can be reused for multiple games.
-                        string loader_path = Directory.GetParent(runner_path)?.FullName ?? "";
-                        if (loader_path.Equals(string.Empty))
+                        string runner_directory = Directory.GetParent(runner_path)?.FullName ?? "";
+                        if (runner_directory.Equals(string.Empty))
                         {
                             ThrowError("Failed to get game folder!");
                             return;
                         }
 
-                        loader_path = Path.Combine(loader_path, "mods", "AurieLoader.exe");
+                        // Create the mods directory
+                        Directory.CreateDirectory(Path.Combine(runner_directory, "mods"));
 
-                        filter_subkey.SetValue("Debugger", loader_path);
+                        // Create subdirectories
+                        Directory.CreateDirectory(Path.Combine(runner_directory, "mods", "Aurie"));
+                        Directory.CreateDirectory(Path.Combine(runner_directory, "mods", "Native"));
+
+                        filter_subkey.SetValue("Debugger", Path.Combine(runner_directory, "mods", "AurieLoader.exe"));
                         filter_subkey.SetValue("FilterFullPath", runner_path);
                     }
                 }
