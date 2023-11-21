@@ -48,6 +48,7 @@ namespace Aurie
 			IN AurieEntry ModulePreinitialize,
 			IN AurieEntry ModuleUnload,
 			IN AurieLoaderEntry FrameworkInitialize,
+			IN AurieModuleCallback ModuleOperationCallback,
 			IN uint8_t BitFlags,
 			OUT AurieModule& Module
 		);

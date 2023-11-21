@@ -82,6 +82,7 @@ void ArProcessAttach(HINSTANCE Instance)
 			nullptr,
 			nullptr,
 			nullptr,
+			nullptr,
 			0,
 			initial_module
 		)

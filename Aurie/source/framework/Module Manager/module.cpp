@@ -10,6 +10,7 @@ namespace Aurie
 		IN AurieEntry ModulePreinitialize,
 		IN AurieEntry ModuleUnload,
 		IN AurieLoaderEntry FrameworkInitialize,
+		IN AurieModuleCallback ModuleOperationCallback,
 		IN uint8_t BitFlags,
 		OUT AurieModule& Module
 	)
@@ -23,6 +24,7 @@ namespace Aurie
 		temp_module.ModuleInitialize = ModuleInitialize;
 		temp_module.ModulePreinitialize = ModulePreinitialize;
 		temp_module.FrameworkInitialize = FrameworkInitialize;
+		temp_module.ModuleOperationCallback = ModuleOperationCallback;
 		temp_module.ModuleUnload = ModuleUnload;
 
 		last_status = MdpQueryModuleInformation(
@@ -302,13 +304,17 @@ namespace Aurie
 			);
 		}
 
+		// Remove the module's operation callback
+		Module->ModuleOperationCallback = nullptr;
+
+		// Destory all interfaces created by the module
 		for (auto& module_interface : Module->InterfaceTable)
 		{
 			if (module_interface.Interface)
 				module_interface.Interface->Destroy();
 		}
 
-		// Invalidate all interfaces
+		// Wipe them off the interface table
 		// Note these can't be freed, they're allocated by the owner module
 		Module->InterfaceTable.clear();
 
@@ -344,7 +350,11 @@ namespace Aurie
 		if (Module == g_ArInitialImage)
 			return AURIE_SUCCESS;
 
-		ObpDispatchModuleOperationCallbacks(Module, Entry, true);
+		ObpDispatchModuleOperationCallbacks(
+			Module, 
+			Entry, 
+			true
+		);
 
 		AurieStatus module_status = Module->FrameworkInitialize(
 			g_ArInitialImage,
@@ -354,7 +364,11 @@ namespace Aurie
 			Module
 		);
 
-		ObpDispatchModuleOperationCallbacks(Module, Entry, false);
+		ObpDispatchModuleOperationCallbacks(
+			Module, 
+			Entry, 
+			false
+		);
 
 		return module_status;
 	}
@@ -424,6 +438,8 @@ namespace Aurie
 		// Find all the required functions
 		uintptr_t framework_init_offset = PpFindFileExportByName(ImagePath, "__AurieFrameworkInit");
 		uintptr_t module_init_offset = PpFindFileExportByName(ImagePath, "ModuleInitialize");
+
+		uintptr_t module_callback_offset = PpFindFileExportByName(ImagePath, "ModuleOperationCallback");
 		uintptr_t module_preload_offset = PpFindFileExportByName(ImagePath, "ModulePreinitialize");
 		uintptr_t module_unload_offset = PpFindFileExportByName(ImagePath, "ModuleUnload");
 
@@ -431,6 +447,7 @@ namespace Aurie
 		AurieEntry module_preload = reinterpret_cast<AurieEntry>((char*)image_base + module_preload_offset);
 		AurieEntry module_unload = reinterpret_cast<AurieEntry>((char*)image_base + module_unload_offset);
 		AurieLoaderEntry fwk_init = reinterpret_cast<AurieLoaderEntry>((char*)image_base + framework_init_offset);
+		AurieModuleCallback module_callback = reinterpret_cast<AurieModuleCallback>((char*)image_base + module_callback_offset);
 
 		// Verify image integrity
 		last_status = Internal::MmpVerifyCallback(image_base, module_init);
@@ -449,6 +466,9 @@ namespace Aurie
 		if (!module_unload_offset)
 			module_unload = nullptr;
 
+		if (!module_callback_offset)
+			module_callback = nullptr;
+
 		// Create the module object
 		AurieModule module_object = {};
 		last_status = Internal::MdpCreateModule(
@@ -458,6 +478,7 @@ namespace Aurie
 			module_preload,
 			module_unload,
 			fwk_init,
+			module_callback,
 			0,
 			module_object
 		);
