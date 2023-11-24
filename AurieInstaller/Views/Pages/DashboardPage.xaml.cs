@@ -4,7 +4,10 @@
 // All Rights Reserved.
 
 using AurieInstaller.ViewModels.Pages;
+using System.Drawing;
 using Wpf.Ui.Controls;
+using System.Windows.Media;
+using Brushes = System.Windows.Media.Brushes;
 
 namespace AurieInstaller.Views.Pages
 {
@@ -18,6 +21,24 @@ namespace AurieInstaller.Views.Pages
             DataContext = this;
 
             InitializeComponent();
+            Loaded += DashboardPage_Loaded;
+        }
+
+        private void DashboardPage_Loaded(object sender, System.Windows.RoutedEventArgs e)
+        {
+            Console.WriteLine("Setting installButton...");
+            ViewModel.SetInstallButton(installButton);
+
+            Console.WriteLine("Setting runnerBox...");
+            ViewModel.SetRunnerBox(runnerBox);
+
+            Console.WriteLine("Setting playButton...");
+            ViewModel.SetPlayButton(playButton);
+        }
+
+        private void runnerBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            ViewModel.OnRunnerChange(sender, e);
         }
     }
 }

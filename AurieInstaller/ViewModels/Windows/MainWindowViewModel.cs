@@ -30,7 +30,7 @@ namespace AurieInstaller.ViewModels.Windows
         {
             new NavigationViewItem()
             {
-                Content = "About",
+                Content = "Settings",
                 Icon = new SymbolIcon { Symbol = SymbolRegular.Settings24 },
                 TargetPageType = typeof(Views.Pages.SettingsPage)
             }

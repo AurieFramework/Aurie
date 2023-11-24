@@ -3,6 +3,7 @@
 // Copyright (C) Leszek Pomianowski and WPF UI Contributors.
 // All Rights Reserved.
 
+using System.IO;
 using Wpf.Ui.Controls;
 
 namespace AurieInstaller.ViewModels.Pages
@@ -62,6 +63,30 @@ namespace AurieInstaller.ViewModels.Pages
 
                     break;
             }
+        }
+
+        [RelayCommand]
+        private void OnDeleteConfig()
+        {
+            const string SettingsFileName = "aurie-config.json";
+            string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Aurie");
+            string SettingsFilePath = Path.Combine(AppDataPath, SettingsFileName);
+
+            if (File.Exists(SettingsFilePath))
+            {
+                File.Delete(SettingsFilePath);
+                Console.WriteLine("Config file deleted!");
+            }
+            else
+            {
+                Console.WriteLine("Config file doesn't exist!");
+            }
+            System.Windows.MessageBox.Show(
+                "The Aurie Framework config file was deleted successfully.",
+                "Success!",
+                System.Windows.MessageBoxButton.OK,
+                MessageBoxImage.Information
+            );
         }
     }
 }

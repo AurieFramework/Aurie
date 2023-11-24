@@ -20,32 +20,51 @@
         <helpers:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
     </Page.Resources>
 
-    <StackPanel>
-        <TextBlock
-            FontSize="20"
-            FontWeight="Medium"
-            Text="Personalization" />
-        <TextBlock Margin="0,12,0,0" Text="Theme" />
-        <RadioButton
-            Margin="0,12,0,0"
-            Command="{Binding ViewModel.ChangeThemeCommand, Mode=OneWay}"
-            CommandParameter="theme_light"
-            Content="Light"
-            GroupName="themeSelect"
-            IsChecked="{Binding ViewModel.CurrentTheme, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Light, Mode=OneWay}" />
-        <RadioButton
-            Margin="0,8,0,0"
-            Command="{Binding ViewModel.ChangeThemeCommand, Mode=OneWay}"
-            CommandParameter="theme_dark"
-            Content="Dark"
-            GroupName="themeSelect"
-            IsChecked="{Binding ViewModel.CurrentTheme, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Dark, Mode=OneWay}" />
+    <Grid VerticalAlignment="Top">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
 
-        <TextBlock
-            Margin="0,24,0,0"
-            FontSize="20"
-            FontWeight="Medium"
-            Text="About AurieInstaller" />
-        <TextBlock Margin="0,12,0,0" Text="{Binding ViewModel.AppVersion, Mode=OneWay}" />
-    </StackPanel>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock
+                FontSize="20"
+                FontWeight="Medium"
+                Text="Personalization" />
+            <TextBlock Margin="0,12,0,0" Text="Theme" />
+            <RadioButton
+                Margin="0,12,0,0"
+                Command="{Binding ViewModel.ChangeThemeCommand, Mode=OneWay}"
+                CommandParameter="theme_light"
+                Content="Light"
+                GroupName="themeSelect"
+                IsChecked="{Binding ViewModel.CurrentTheme, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Light, Mode=OneWay}" />
+            <RadioButton
+                Margin="0,8,0,0"
+                Command="{Binding ViewModel.ChangeThemeCommand, Mode=OneWay}"
+                CommandParameter="theme_dark"
+                Content="Dark"
+                GroupName="themeSelect"
+                IsChecked="{Binding ViewModel.CurrentTheme, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Dark, Mode=OneWay}" />
+            <TextBlock
+                Margin="0,24,0,0"
+                FontSize="20"
+                FontWeight="Medium"
+                Text="About AurieInstaller" />
+            <TextBlock Margin="0,12,0,0" Text="{Binding ViewModel.AppVersion, Mode=OneWay}" />
+        </StackPanel>
+
+        <ui:Button
+            Grid.Column="1"
+            Grid.Row="0"
+            Content="Delete Config"
+            Background="DarkRed"
+            MouseOverBackground="#B20000"
+            Command="{Binding ViewModel.DeleteConfigCommand, Mode=OneWay}"
+            Icon="Fluent24" Margin="75,165,0,0" VerticalAlignment="Top"/>
+    </Grid>
 </Page>
