@@ -110,6 +110,11 @@ namespace Aurie
 			else if (Routine == AffectedModule->ModuleUnload)
 				current_operation_type = AURIE_OPERATION_UNLOAD;
 			
+			AurieOperationInfo operation_information = ObpCreateOperationInfo(
+				AffectedModule,
+				IsFutureCall
+			);
+
 			for (auto& loaded_module : g_LdrModuleList)
 			{
 				if (!loaded_module.ModuleOperationCallback)
@@ -118,7 +123,7 @@ namespace Aurie
 				loaded_module.ModuleOperationCallback(
 					AffectedModule,
 					current_operation_type,
-					IsFutureCall
+					&operation_information
 				);
 			}
 		}
@@ -131,6 +136,19 @@ namespace Aurie
 			Module->InterfaceTable.push_back(Entry);
 
 			return AURIE_SUCCESS;
+		}
+
+		AurieOperationInfo ObpCreateOperationInfo(
+			IN AurieModule* Module,
+			IN bool IsFutureCall
+		)
+		{
+			AurieOperationInfo operation_information = {};
+
+			operation_information.IsFutureCall = IsFutureCall;
+			operation_information.ModuleBaseAddress = MdpGetModuleBaseAddress(Module);
+
+			return operation_information;
 		}
 
 		AurieStatus ObpDestroyInterface(

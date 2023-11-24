@@ -43,6 +43,11 @@ namespace Aurie
 			IN AurieInterfaceTableEntry& Entry
 		);
 
+		AurieOperationInfo ObpCreateOperationInfo(
+			IN AurieModule* Module,
+			IN bool IsFutureCall
+		);
+
 		AurieStatus ObpDestroyInterface(
 			IN AurieModule* Module,
 			IN AurieInterfaceBase* Interface,
