@@ -34,6 +34,12 @@ namespace AurieInstaller.Views.Pages
 
             Console.WriteLine("Setting playButton...");
             ViewModel.SetPlayButton(playButton);
+
+            Console.WriteLine("Setting snackbarPresenter...");
+            ViewModel.SetSnackbarPresenter(snackbarPresenter);
+
+            Console.WriteLine("Setting progressBar...");
+            ViewModel.SetProgressBar(progressBar);
         }
 
         private void runnerBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
