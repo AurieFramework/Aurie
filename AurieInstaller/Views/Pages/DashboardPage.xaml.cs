@@ -26,10 +26,12 @@ namespace AurieInstaller.Views.Pages
 
         private void DashboardPage_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
-            Console.WriteLine("Setting runnerBox...");
-            ViewModel.SetRunnerBox(runnerBox);
             Console.WriteLine("Setting installButton...");
             ViewModel.SetInstallButton(installButton);
+
+            Console.WriteLine("Setting runnerBox...");
+            ViewModel.SetRunnerBox(runnerBox);
+
             Console.WriteLine("Setting playButton...");
             ViewModel.SetPlayButton(playButton);
         }
@@ -37,35 +39,6 @@ namespace AurieInstaller.Views.Pages
         private void runnerBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             ViewModel.OnRunnerChange(sender, e);
-        }
-
-        private void InstallButton_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            Console.WriteLine("Button entered!");
-            bool canInstall = ViewModel.CanInstall;
-            Console.WriteLine(canInstall);
-            if (canInstall)
-            {
-                ((Button)sender).Background = Brushes.DarkGreen;
-            }
-            else
-            {
-                ((Button)sender).Background = Brushes.DarkRed;
-            }
-        }
-
-        private void InstallButton_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            Console.WriteLine("Button left!");
-            bool canInstall = ViewModel.CanInstall;
-            if (canInstall)
-            {
-                ((Button)sender).Background = Brushes.Green;
-            }
-            else
-            {
-                ((Button)sender).Background = Brushes.Red;
-            }
         }
     }
 }
