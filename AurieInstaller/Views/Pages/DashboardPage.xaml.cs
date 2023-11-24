@@ -30,6 +30,8 @@ namespace AurieInstaller.Views.Pages
             ViewModel.SetInstallButton(installButton);
             Console.WriteLine("Setting runnerBox...");
             ViewModel.SetRunnerBox(runnerBox);
+            Console.WriteLine("Setting playButton...");
+            ViewModel.SetPlayButton(playButton);
         }
 
         private void runnerBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

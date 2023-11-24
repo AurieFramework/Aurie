@@ -58,5 +58,15 @@
             HorizontalAlignment="Center"
             Icon="Fluent24"
             Margin="0,10,0,0"/>
+
+        <ui:Button
+            Grid.Row="1"
+            x:Name="playButton"
+            Content="Play Game"
+            Foreground="White"
+            IsEnabled="False"
+            Command="{Binding ViewModel.PlayButtonCommand, Mode=OneWay}"
+            Icon="Fluent24"
+            Margin="10,10,0,0" VerticalAlignment="Top" Grid.Column="1" HorizontalAlignment="Center"/>
     </Grid>
 </Page>

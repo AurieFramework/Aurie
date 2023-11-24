@@ -16,6 +16,7 @@ using System.Windows.Controls;
 using System.Drawing;
 using System.Windows.Media;
 using Brushes = System.Windows.Media.Brushes;
+using System.Diagnostics;
 
 namespace AurieInstaller.ViewModels.Pages
 {
@@ -66,6 +67,7 @@ namespace AurieInstaller.ViewModels.Pages
         private static readonly string m_IFEOPath = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options";
         private ComboBox? runnerBox;
         private Button? installButton;
+        private Button? playButton;
         private readonly SettingsManager settingsManager = new();
         private AppSettings settings = SettingsManager.LoadSettings();
         private bool canInstall = true;
@@ -125,6 +127,20 @@ namespace AurieInstaller.ViewModels.Pages
             if (installButton != null)
             {
                 Console.WriteLine("installButton found!");
+            }
+        }
+
+        public void SetPlayButton(Button playButton)
+        {
+            this.playButton = playButton;
+            if (playButton != null)
+            {
+                Console.WriteLine("playButton found!");
+                playButton.IsEnabled = false;
+                if (runnerBox.Items.Count > 0)
+                {
+                    playButton.IsEnabled = true;
+                }
             }
         }
 
@@ -236,6 +252,7 @@ namespace AurieInstaller.ViewModels.Pages
                 settings.AddedRunners.Add(newRunner);
             }
             runnerBox.IsEnabled = true;
+            playButton.IsEnabled = true;
             runnerBox.SelectedItem = runner_name;
             settings.CurrentSelectedRunner = runner_name;
 
@@ -439,6 +456,17 @@ namespace AurieInstaller.ViewModels.Pages
             catch (Exception ex)
             {
                 ThrowError("Failed to access the required registry keys!\n" + ex.Message);
+            }
+        }
+
+        [RelayCommand]
+        private void OnPlayButton()
+        {
+            string runnerPath = GetRunnerPathFromName(settings.CurrentSelectedRunner);
+            if (runnerPath != null)
+            {
+                Console.WriteLine($"Starting {settings.CurrentSelectedRunner}...");
+                Process.Start(runnerPath);
             }
         }
     }
