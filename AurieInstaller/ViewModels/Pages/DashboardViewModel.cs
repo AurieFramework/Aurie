@@ -104,7 +104,6 @@ namespace AurieInstaller.ViewModels.Pages
                 runnerBox.SelectedItem = null;
                 runnerBox.Text = "Select a runner...";
                 runnerBox.IsEnabled = false;
-                installButton.IsEnabled = false;
                 foreach (RunnerData runner in settings.AddedRunners)
                 {
                     runnerBox.Items.Add(runner.Name);
@@ -127,6 +126,11 @@ namespace AurieInstaller.ViewModels.Pages
             if (installButton != null)
             {
                 Console.WriteLine("installButton found!");
+                installButton.Visibility = Visibility.Hidden;
+                if (runnerBox.Items.Count > 0)
+                {
+                    installButton.Visibility = Visibility.Visible;
+                }
             }
         }
 
@@ -136,10 +140,10 @@ namespace AurieInstaller.ViewModels.Pages
             if (playButton != null)
             {
                 Console.WriteLine("playButton found!");
-                playButton.IsEnabled = false;
+                playButton.Visibility = Visibility.Hidden;
                 if (runnerBox.Items.Count > 0)
                 {
-                    playButton.IsEnabled = true;
+                    playButton.Visibility = Visibility.Visible;
                 }
             }
         }
@@ -252,7 +256,8 @@ namespace AurieInstaller.ViewModels.Pages
                 settings.AddedRunners.Add(newRunner);
             }
             runnerBox.IsEnabled = true;
-            playButton.IsEnabled = true;
+            installButton.Visibility = Visibility.Visible;
+            playButton.Visibility = Visibility.Visible;
             runnerBox.SelectedItem = runner_name;
             settings.CurrentSelectedRunner = runner_name;
 
@@ -287,7 +292,6 @@ namespace AurieInstaller.ViewModels.Pages
                     {
                         canInstall = false;
                         installButton.Content = "Uninstall Aurie";
-                        installButton.IsEnabled = true;
                         installButton.Background = Brushes.Red;
                         Console.WriteLine($"{selectedRunnerName} already has Aurie installed!");
                         return;
@@ -296,7 +300,6 @@ namespace AurieInstaller.ViewModels.Pages
                     {
                         canInstall = true;
                         installButton.Content = "Install Aurie";
-                        installButton.IsEnabled = true;
                         installButton.Background = Brushes.Green;
                         Console.WriteLine($"{selectedRunnerName} doesn't have Aurie installed yet!");
                         return;
@@ -425,7 +428,6 @@ namespace AurieInstaller.ViewModels.Pages
                             );
                             canInstall = false;
                             installButton.Content = "Uninstall Aurie";
-                            installButton.IsEnabled = true;
                             installButton.Background = Brushes.Red;
                         }
                     }
@@ -448,7 +450,6 @@ namespace AurieInstaller.ViewModels.Pages
                         );
                         canInstall = true;
                         installButton.Content = "Install Aurie";
-                        installButton.IsEnabled = true;
                         installButton.Background = Brushes.Green;
                     }
                 }

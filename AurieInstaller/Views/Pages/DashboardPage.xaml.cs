@@ -26,10 +26,10 @@ namespace AurieInstaller.Views.Pages
 
         private void DashboardPage_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
-            Console.WriteLine("Setting installButton...");
-            ViewModel.SetInstallButton(installButton);
             Console.WriteLine("Setting runnerBox...");
             ViewModel.SetRunnerBox(runnerBox);
+            Console.WriteLine("Setting installButton...");
+            ViewModel.SetInstallButton(installButton);
             Console.WriteLine("Setting playButton...");
             ViewModel.SetPlayButton(playButton);
         }
