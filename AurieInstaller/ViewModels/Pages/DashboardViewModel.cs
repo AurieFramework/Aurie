@@ -468,14 +468,49 @@ namespace AurieInstaller.ViewModels.Pages
             }
         }
 
+        static void RunCommand(string directory, string command, string arguments)
+        {
+            ProcessStartInfo processStartInfo = new ProcessStartInfo
+            {
+                FileName = command,
+                Arguments = arguments,
+                WorkingDirectory = directory,
+                UseShellExecute = true,
+                CreateNoWindow = true
+            };
+
+            using (Process process = new Process())
+            {
+                process.StartInfo = processStartInfo;
+                process.Start();
+            }
+        }
+
         [RelayCommand]
         private void OnPlayButton()
         {
             string runnerPath = GetRunnerPathFromName(settings.CurrentSelectedRunner);
+
+            string winePrefix = Environment.GetEnvironmentVariable("WINEPREFIX");
+
             if (runnerPath != null)
             {
-                Console.WriteLine($"Starting {settings.CurrentSelectedRunner}...");
-                Process.Start(runnerPath);
+                if (winePrefix != null)
+                {
+                    Console.WriteLine("Running on Wine");
+                    string directory = Path.GetDirectoryName(runnerPath);
+
+                    string loader = $"mods\\AurieLoader.exe";
+                    string arguments = $"{runnerPath} --debug";
+
+                    RunCommand(directory, loader, arguments);
+                }
+                else
+                {
+                    Console.WriteLine("Not running on Wine");
+                    Console.WriteLine($"Starting {settings.CurrentSelectedRunner}...");
+                    Process.Start(runnerPath);
+                }
             }
         }
     }
