@@ -79,6 +79,7 @@
                 Text="Downloading AurieCore.dll..."
                 TextTrimming="CharacterEllipsis"
                 VerticalAlignment="Bottom"
+                FontSize="12"
                 Width="180"
                 Margin="0,0,10,10"
                 />

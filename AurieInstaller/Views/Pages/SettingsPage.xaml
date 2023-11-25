@@ -65,6 +65,6 @@
             Background="DarkRed"
             MouseOverBackground="#B20000"
             Command="{Binding ViewModel.DeleteConfigCommand, Mode=OneWay}"
-            Icon="Fluent24" Margin="75,0,0,0" VerticalAlignment="Top"/>
+            Icon="Fluent24" Margin="70,0,0,0" VerticalAlignment="Top"/>
     </Grid>
 </Page>
