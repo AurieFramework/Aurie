@@ -12,6 +12,22 @@ namespace AurieInstaller.ViewModels.Pages
     {
         private bool _isInitialized = false;
 
+        private static ISnackbarService? _snackbarService;
+
+        public ISnackbarService SnackbarService {
+            get => _snackbarService;
+            set
+            {
+                _snackbarService = value;
+                OnPropertyChanged(nameof(SnackbarService));
+            }
+        }
+
+        public static SnackbarPresenter GetSnackbarPresenter()
+        {
+            return _snackbarService.GetSnackbarPresenter();
+        }
+
         [ObservableProperty]
         private string _appVersion = String.Empty;
 
@@ -29,7 +45,7 @@ namespace AurieInstaller.ViewModels.Pages
         private void InitializeViewModel()
         {
             CurrentTheme = Wpf.Ui.Appearance.Theme.GetAppTheme();
-            AppVersion = $"AurieInstaller - {GetAssemblyVersion()}";
+            AppVersion = $"AurieManager - {GetAssemblyVersion()}";
 
             _isInitialized = true;
         }
@@ -66,7 +82,7 @@ namespace AurieInstaller.ViewModels.Pages
         }
 
         [RelayCommand]
-        private void OnDeleteConfig()
+        private async void OnDeleteConfig()
         {
             const string SettingsFileName = "aurie-config.json";
             string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Aurie");
@@ -81,12 +97,15 @@ namespace AurieInstaller.ViewModels.Pages
             {
                 Console.WriteLine("Config file doesn't exist!");
             }
-            System.Windows.MessageBox.Show(
-                "The Aurie Framework config file was deleted successfully.",
-                "Success!",
-                System.Windows.MessageBoxButton.OK,
-                MessageBoxImage.Information
-            );
+            await GetSnackbarPresenter().HideCurrent();
+            Snackbar snackbar = new(GetSnackbarPresenter()) {
+                MinHeight = 0,
+                Content = "The Aurie config file was deleted successfully!",
+                Timeout = System.TimeSpan.FromSeconds(5),
+                Appearance = ControlAppearance.Success,
+                VerticalContentAlignment = VerticalAlignment.Center
+            };
+            snackbar.Show();
         }
     }
 }

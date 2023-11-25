@@ -54,7 +54,7 @@
                 Margin="0,24,0,0"
                 FontSize="20"
                 FontWeight="Medium"
-                Text="About AurieInstaller" />
+                Text="About AurieManager" />
             <TextBlock Margin="0,12,0,0" Text="{Binding ViewModel.AppVersion, Mode=OneWay}" />
         </StackPanel>
 
@@ -62,9 +62,8 @@
             Grid.Column="1"
             Grid.Row="0"
             Content="Delete Config"
-            Background="DarkRed"
-            MouseOverBackground="#B20000"
+            BorderBrush="Red"
             Command="{Binding ViewModel.DeleteConfigCommand, Mode=OneWay}"
-            Icon="Fluent24" Margin="75,165,0,0" VerticalAlignment="Top"/>
+            Icon="Fluent24" Margin="70,0,0,0" VerticalAlignment="Top"/>
     </Grid>
 </Page>
