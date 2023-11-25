@@ -21,6 +21,7 @@ using Wpf.Ui.Controls;
 using Button = Wpf.Ui.Controls.Button;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
+using TextBlock = Wpf.Ui.Controls.TextBlock;
 
 namespace AurieInstaller.ViewModels.Pages
 {
@@ -75,6 +76,7 @@ namespace AurieInstaller.ViewModels.Pages
         private static SnackbarPresenter? snackbarPresenter;
         private SnackbarService snackbarService = new();
         private ProgressBar? progressBar;
+        private TextBlock? fileNameText;
         private readonly SettingsManager settingsManager = new();
         private AppSettings settings = SettingsManager.LoadSettings();
         private bool canInstall = true;
@@ -174,6 +176,16 @@ namespace AurieInstaller.ViewModels.Pages
                 {
                     playButton.Visibility = Visibility.Visible;
                 }
+            }
+        }
+
+        public void SetFileNameText(TextBlock fileNameText)
+        {
+            this.fileNameText = fileNameText;
+            if (fileNameText != null)
+            {
+                Console.WriteLine("fileNameText found!");
+                fileNameText.Visibility = Visibility.Hidden;
             }
         }
 
@@ -415,7 +427,7 @@ namespace AurieInstaller.ViewModels.Pages
 
                             using (HttpClient client = new())
                             {
-                                progressBar.Visibility = Visibility.Visible;
+                                fileNameText.Text = "";
                                 int totalFiles = localFilePaths.Count;
                                 int downloadedFiles = 0;
 
@@ -447,6 +459,9 @@ namespace AurieInstaller.ViewModels.Pages
                                                         long bytesDownloaded = 0;
                                                         byte[] buffer = new byte[4096];
                                                         Console.WriteLine($"Writing to '{localFilePaths[fileName]}'...");
+                                                        fileNameText.Text = $"Downloading {fileName}...";
+                                                        progressBar.Visibility = Visibility.Visible;
+                                                        fileNameText.Visibility = Visibility.Visible;
                                                         using (Stream stream = await fileResponse.Content.ReadAsStreamAsync())
                                                         {
                                                             using (FileStream fileStream = new FileStream(localFilePaths[fileName], FileMode.Create, FileAccess.Write))
@@ -461,7 +476,6 @@ namespace AurieInstaller.ViewModels.Pages
                                                                     int fileProgress = (int)((double)bytesDownloaded / totalFileSize * 100);
                                                                     progressBar.Value = (int)(100.0 / totalFiles) * downloadedFiles + (int)((double)fileProgress / totalFiles);
                                                                     Console.WriteLine(progressBar.Value);
-                                                                    Console.WriteLine($"Progress for {fileName}: {fileProgress}%");
                                                                 }
                                                             }
                                                         }
@@ -470,12 +484,15 @@ namespace AurieInstaller.ViewModels.Pages
                                                     } else Console.WriteLine($"Failed to download file '{fileName}'. Status code: {fileResponse.StatusCode}");
                                                 } else Console.WriteLine($"Failed to get download URL for file '{fileName}'.");
                                             }
-                                            progressBar.Value = 100;
-                                            progressBar.Visibility = Visibility.Hidden;
                                         } else Console.WriteLine("No download URLs found for the specified files.");
                                     } else Console.WriteLine($"Failed to get latest release information. Status code: {response.StatusCode}");
                                 }
                             }
+
+                            progressBar.Value = 100;
+                            progressBar.Visibility = Visibility.Hidden;
+                            fileNameText.Visibility = Visibility.Hidden;
+
                             Snackbar snackbar = new(snackbarPresenter) {
                                 MinHeight = 0,
                                 Content = "Aurie Framework was installed successfully!",

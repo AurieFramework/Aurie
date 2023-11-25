@@ -40,6 +40,9 @@ namespace AurieInstaller.Views.Pages
 
             Console.WriteLine("Setting progressBar...");
             ViewModel.SetProgressBar(progressBar);
+
+            Console.WriteLine("Setting fileNameText...");
+            ViewModel.SetFileNameText(fileNameText);
         }
 
         private void runnerBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

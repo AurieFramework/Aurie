@@ -43,6 +43,7 @@
                 Grid.Column="1"
                 Grid.Row="0"
                 Content="Browse..."
+                Width="90"
                 Command="{Binding ViewModel.BrowseRunnerCommand, Mode=OneWay}"
                 Icon="Fluent24" Margin="10,0,0,0"/>
 
@@ -64,6 +65,7 @@
                 Content="Play Game"
                 Foreground="White"
                 Visibility="Hidden"
+                Width="90"
                 Command="{Binding ViewModel.PlayButtonCommand, Mode=OneWay}"
                 Icon="Fluent24"
                 Margin="10,10,0,0" VerticalAlignment="Top" Grid.Column="1" HorizontalAlignment="Center"/>
@@ -75,13 +77,35 @@
             HorizontalAlignment="Center"
             Height="Auto"
             Width="400"/>
-        <ProgressBar 
-            x:Name="progressBar"
-            DockPanel.Dock="Bottom"
-            VerticalAlignment="Bottom"
-            Foreground="#6C51A3"
-            Minimum="0"
-            Maximum="100"
-            />
+        <Grid DockPanel.Dock="Bottom">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ui:TextBlock 
+                Grid.Column="0"
+                x:Name="fileNameText"
+                Text="Downloading AurieCore.dll..."
+                TextTrimming="CharacterEllipsis"
+                VerticalAlignment="Bottom"
+                Visibility="Hidden"
+                Width="180"
+                Margin="0,0,10,10"
+                />
+            
+            <ProgressBar 
+                Grid.Column="1"
+                x:Name="progressBar"
+                DockPanel.Dock="Bottom"
+                VerticalAlignment="Bottom"
+                Visibility="Hidden"
+                Width="180"
+                Foreground="#6C51A3"
+                Minimum="0"
+                Maximum="100"
+                Margin="0,0,0,12"
+                />
+        </Grid>
+        
     </DockPanel>
 </Page>
