@@ -3,6 +3,7 @@
 // Copyright (C) Leszek Pomianowski and WPF UI Contributors.
 // All Rights Reserved.
 
+using AurieInstaller.ViewModels.Pages;
 using AurieInstaller.ViewModels.Windows;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -24,8 +25,13 @@ namespace AurieInstaller.Views.Windows
         )
         {
             Wpf.Ui.Appearance.Watcher.Watch(this);
-            
+
+            _ = new DashboardViewModel() { SnackbarService = snackbarService };
+            _ = new SettingsViewModel() { SnackbarService = snackbarService };
+
             ViewModel = viewModel;
+            ViewModel.SnackbarService = snackbarService;
+
             DataContext = this;
 
             InitializeComponent();

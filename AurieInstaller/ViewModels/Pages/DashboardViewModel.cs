@@ -19,10 +19,9 @@ using Brushes = System.Windows.Media.Brushes;
 using System.Diagnostics;
 using Wpf.Ui.Controls;
 using Button = Wpf.Ui.Controls.Button;
-using MessageBox = System.Windows.MessageBox;
-using MessageBoxButton = System.Windows.MessageBoxButton;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
+using TextBlock = Wpf.Ui.Controls.TextBlock;
 
 namespace AurieInstaller.ViewModels.Pages
 {
@@ -74,9 +73,23 @@ namespace AurieInstaller.ViewModels.Pages
         private ComboBox? runnerBox;
         private Button? installButton;
         private Button? playButton;
+        private ProgressBar? progressBar;
+        private TextBlock? fileNameText;
         private readonly SettingsManager settingsManager = new();
         private AppSettings settings = SettingsManager.LoadSettings();
         private bool canInstall = true;
+
+        private static ISnackbarService? _snackbarService;
+
+        public ISnackbarService SnackbarService
+        {
+            get => _snackbarService;
+            set
+            {
+                _snackbarService = value;
+                OnPropertyChanged(nameof(SnackbarService));
+            }
+        }
 
         public bool CanInstall {
             get { return canInstall; }
@@ -138,6 +151,16 @@ namespace AurieInstaller.ViewModels.Pages
             }
         }
 
+        public void SetProgressBar(ProgressBar progressBar)
+        {
+            this.progressBar = progressBar;
+            if (progressBar != null)
+            {
+                Console.WriteLine("progressBar found!");
+                progressBar.Visibility = Visibility.Hidden;
+            }
+        }
+
         public void SetPlayButton(Button playButton)
         {
             this.playButton = playButton;
@@ -152,14 +175,31 @@ namespace AurieInstaller.ViewModels.Pages
             }
         }
 
+        public void SetFileNameText(TextBlock fileNameText)
+        {
+            this.fileNameText = fileNameText;
+            if (fileNameText != null)
+            {
+                Console.WriteLine("fileNameText found!");
+                fileNameText.Visibility = Visibility.Hidden;
+            }
+        }
+
+        public static SnackbarPresenter GetSnackbarPresenter()
+        {
+            return _snackbarService.GetSnackbarPresenter();
+        }
+
         internal static void ThrowError(string Message)
         {
-            MessageBox.Show(
-                Message,
-                "Fatal Error",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error
-            );
+            Snackbar snackbar = new(GetSnackbarPresenter()) {
+                MinHeight = 0,
+                Content = Message,
+                Timeout = System.TimeSpan.FromSeconds(5),
+                Appearance = ControlAppearance.Danger,
+                VerticalContentAlignment = VerticalAlignment.Center
+            };
+            snackbar.Show();
         }
 
         internal static OpenFileDialog PickGame(string Title, string Filter)
@@ -388,6 +428,10 @@ namespace AurieInstaller.ViewModels.Pages
 
                             using (HttpClient client = new())
                             {
+                                fileNameText.Text = "";
+                                int totalFiles = localFilePaths.Count;
+                                int downloadedFiles = 0;
+
                                 foreach (string repo in repos)
                                 {
                                     client.DefaultRequestHeaders.UserAgent.ParseAdd("Aurie");
@@ -412,13 +456,31 @@ namespace AurieInstaller.ViewModels.Pages
 
                                                     if (fileResponse.IsSuccessStatusCode)
                                                     {
-                                                        byte[] fileBytes = await fileResponse.Content.ReadAsByteArrayAsync();
-                                                        if (localFilePaths.TryGetValue(fileName, out string localFilePath))
+                                                        long totalFileSize = fileResponse.Content.Headers.ContentLength ?? 0;
+                                                        long bytesDownloaded = 0;
+                                                        byte[] buffer = new byte[4096];
+                                                        Console.WriteLine($"Writing to '{localFilePaths[fileName]}'...");
+                                                        fileNameText.Text = $"Downloading {fileName}...";
+                                                        progressBar.Visibility = Visibility.Visible;
+                                                        fileNameText.Visibility = Visibility.Visible;
+                                                        using (Stream stream = await fileResponse.Content.ReadAsStreamAsync())
                                                         {
-                                                            Console.WriteLine($"Writing to '{localFilePath}'...");
-                                                            System.IO.File.WriteAllBytes(localFilePath, fileBytes);
-                                                            Console.WriteLine($"File '{fileName}' downloaded to '{localFilePath}' successfully.");
-                                                        } else Console.WriteLine($"Local path not specified for file '{fileName}'.");
+                                                            using (FileStream fileStream = new FileStream(localFilePaths[fileName], FileMode.Create, FileAccess.Write))
+                                                            {
+                                                                int bytesRead;
+                                                                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                                                                {
+                                                                    await fileStream.WriteAsync(buffer, 0, bytesRead);
+
+                                                                    bytesDownloaded += bytesRead;
+
+                                                                    int fileProgress = (int)((double)bytesDownloaded / totalFileSize * 100);
+                                                                    progressBar.Value = (int)(100.0 / totalFiles) * downloadedFiles + (int)((double)fileProgress / totalFiles);
+                                                                }
+                                                            }
+                                                        }
+                                                        downloadedFiles++;
+                                                        Console.WriteLine($"File '{fileName}' downloaded to '{localFilePaths[fileName]}' successfully.");
                                                     } else Console.WriteLine($"Failed to download file '{fileName}'. Status code: {fileResponse.StatusCode}");
                                                 } else Console.WriteLine($"Failed to get download URL for file '{fileName}'.");
                                             }
@@ -426,12 +488,20 @@ namespace AurieInstaller.ViewModels.Pages
                                     } else Console.WriteLine($"Failed to get latest release information. Status code: {response.StatusCode}");
                                 }
                             }
-                            MessageBox.Show(
-                                "Aurie Framework was installed successfully.",
-                                "Success!",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Information
-                            );
+
+                            progressBar.Value = 100;
+                            progressBar.Visibility = Visibility.Hidden;
+                            fileNameText.Visibility = Visibility.Hidden;
+
+                            await GetSnackbarPresenter().HideCurrent();
+                            Snackbar snackbar = new(GetSnackbarPresenter()) {
+                                MinHeight = 0,
+                                Content = "Aurie Framework was installed successfully!",
+                                Timeout = System.TimeSpan.FromSeconds(5),
+                                Appearance = ControlAppearance.Success,
+                                VerticalContentAlignment = VerticalAlignment.Center
+                            };
+                            snackbar.Show();
                             canInstall = false;
                             installButton.Content = "Uninstall Aurie";
                             installButton.Background = Brushes.DarkRed;
@@ -448,13 +518,15 @@ namespace AurieInstaller.ViewModels.Pages
                             using RegistryKey? ifeo = GetIFEOKey(true);
                             ifeo?.DeleteSubKeyTree(runner_name);
                         }
-
-                        MessageBox.Show(
-                            "Aurie Framework was uninstalled successfully.",
-                            "Success!",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information
-                        );
+                        await GetSnackbarPresenter().HideCurrent();
+                        Snackbar snackbar = new(GetSnackbarPresenter()) {
+                            MinHeight = 0,
+                            Content = "Aurie Framework was uninstalled successfully!",
+                            Timeout = System.TimeSpan.FromSeconds(5),
+                            Appearance = ControlAppearance.Caution,
+                            VerticalContentAlignment = VerticalAlignment.Center
+                        };
+                        snackbar.Show();
                         canInstall = true;
                         installButton.Content = "Install Aurie";
                         installButton.Background = Brushes.DarkGreen;

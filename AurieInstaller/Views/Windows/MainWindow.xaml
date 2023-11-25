@@ -46,7 +46,7 @@
             ShowMaximize="False"
             CloseWindowByDoubleClickOnIcon="True" Grid.ColumnSpan="3">
             <ui:TitleBar.Icon>
-                <ui:ImageIcon Source="pack://application:,,,/Assets/wpfui-icon-256.png" />
+                <ui:ImageIcon Source="pack://application:,,,/Assets/aurie-icon-256.png" />
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 
