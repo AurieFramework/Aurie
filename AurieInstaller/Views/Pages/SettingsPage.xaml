@@ -62,8 +62,7 @@
             Grid.Column="1"
             Grid.Row="0"
             Content="Delete Config"
-            Background="DarkRed"
-            MouseOverBackground="#B20000"
+            BorderBrush="Red"
             Command="{Binding ViewModel.DeleteConfigCommand, Mode=OneWay}"
             Icon="Fluent24" Margin="70,0,0,0" VerticalAlignment="Top"/>
     </Grid>

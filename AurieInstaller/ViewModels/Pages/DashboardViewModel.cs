@@ -336,8 +336,7 @@ namespace AurieInstaller.ViewModels.Pages
                     {
                         canInstall = false;
                         installButton.Content = "Uninstall Aurie";
-                        installButton.Background = Brushes.DarkRed;
-                        installButton.MouseOverBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B20000"));
+                        installButton.BorderBrush = Brushes.Red;
                         Console.WriteLine($"{selectedRunnerName} already has Aurie installed!");
                         return;
                     }
@@ -345,8 +344,7 @@ namespace AurieInstaller.ViewModels.Pages
                     {
                         canInstall = true;
                         installButton.Content = "Install Aurie";
-                        installButton.Background = Brushes.DarkGreen;
-                        installButton.MouseOverBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007800"));
+                        installButton.BorderBrush = Brushes.Green;
                         Console.WriteLine($"{selectedRunnerName} doesn't have Aurie installed yet!");
                         return;
                     }
@@ -504,8 +502,7 @@ namespace AurieInstaller.ViewModels.Pages
                             snackbar.Show();
                             canInstall = false;
                             installButton.Content = "Uninstall Aurie";
-                            installButton.Background = Brushes.DarkRed;
-                            installButton.MouseOverBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B20000"));
+                            installButton.BorderBrush = Brushes.Red;
                         }
                     }
                     else if (canInstall == false)
@@ -529,8 +526,7 @@ namespace AurieInstaller.ViewModels.Pages
                         snackbar.Show();
                         canInstall = true;
                         installButton.Content = "Install Aurie";
-                        installButton.Background = Brushes.DarkGreen;
-                        installButton.MouseOverBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007800"));
+                        installButton.BorderBrush = Brushes.Green;
                     }
                 }
             }
