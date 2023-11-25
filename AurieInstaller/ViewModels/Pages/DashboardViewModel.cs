@@ -8,6 +8,7 @@ using Microsoft.Win32;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -292,10 +293,9 @@ namespace AurieInstaller.ViewModels.Pages
                     string runner_path = GetRunnerPathFromName(selectedRunnerName);
                     string runner_directory = Path.GetDirectoryName(runner_path);
                     string registry_runner_path = runner_path.Replace('\\', '_');
-                    string winePrefix = Environment.GetEnvironmentVariable("WINEPREFIX");
                     // Check if the framework is already initialized
                     // Registry check is optional when running Wine
-                    if ((runner_key.GetSubKeyNames().Contains(registry_runner_path) || winePrefix != null) &&
+                    if ((runner_key.GetSubKeyNames().Contains(registry_runner_path) || IsRunningOnWine()) &&
                         CheckDirectoryStructure(runner_directory))
                     {
                         canInstall = false;
@@ -490,6 +490,21 @@ namespace AurieInstaller.ViewModels.Pages
             }
         }
 
+        [DllImport("ntdll.dll", SetLastError = true)]
+        private static extern IntPtr wine_get_version();
+
+        internal static bool IsRunningOnWine()
+        {
+            try
+            {
+                return wine_get_version() != IntPtr.Zero;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         internal static bool CheckDirectoryStructure(string rootPath)
         {
             string modsPath = Path.Combine(rootPath, "mods");
@@ -527,8 +542,6 @@ namespace AurieInstaller.ViewModels.Pages
             string loader = $"mods\\AurieLoader.exe";
             string arguments = $"{Path.GetFileName(runnerPath)}";
 
-            string winePrefix = Environment.GetEnvironmentVariable("WINEPREFIX");
-
             try
             {
                 using (RegistryKey? runner_key = GetRunnerKey(Path.GetFileName(runnerPath), true))
@@ -542,11 +555,11 @@ namespace AurieInstaller.ViewModels.Pages
                     Console.WriteLine($"Starting {settings.CurrentSelectedRunner}...");
 
                     string registry_runner_path = runnerPath.Replace('\\', '_');
-                    if ((runner_key.GetSubKeyNames().Contains(registry_runner_path) || winePrefix != null) &&
+                    if ((runner_key.GetSubKeyNames().Contains(registry_runner_path) || IsRunningOnWine()) &&
                         CheckDirectoryStructure(directory))
                     {
                         Console.WriteLine("Running AurieLoader...");
-                        if (winePrefix != null)
+                        if (IsRunningOnWine())
                         {
                             Console.WriteLine("Running on Wine...");
                             arguments += " --debug";
@@ -566,7 +579,7 @@ namespace AurieInstaller.ViewModels.Pages
             }
             catch (Exception ex)
             {
-                ThrowError("Failed to access the required registry keys!\n" + ex.Message);
+                ThrowError("Failed to launch the game!\n" + ex.Message);
             }
         }
     }
