@@ -1,6 +1,12 @@
 # Aurie Framework
-A work-in-progress framework for my new projects. Supports Windows 7 => Windows 11.
+Native x64 modding framework supporting Windows 8.1 => Windows 11.
+
+Aurie Framework allows the following:
+- Runtime module loading / unloading
+- Module interoperability through interfaces
+- Hooks using SafetyHook
+- Leak-prone memory management
+- Code execution before the executable's entrypoint is ran
 
 ## Getting help
-- For help regarding the framework - [Arch Wizards Server](https://discord.gg/vbT8Ed4cpq)
-- For general game modding questions - [Underminers Server](https://discord.gg/3ESNF4QPrh)
+- [Arch Wizards Server](https://discord.gg/vbT8Ed4cpq)
