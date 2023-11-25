@@ -11,8 +11,20 @@ namespace AurieInstaller.ViewModels.Windows
 {
     public partial class MainWindowViewModel : ObservableObject
     {
+        private ISnackbarService _snackbarService;
+
+        public ISnackbarService SnackbarService
+        {
+            get => _snackbarService;
+            set
+            {
+                _snackbarService = value;
+                OnPropertyChanged(nameof(SnackbarService));
+            }
+        }
+
         [ObservableProperty]
-        private string _applicationTitle = "Aurie Framework Installer";
+        private string _applicationTitle = "Aurie Manager";
 
         [ObservableProperty]
         private ObservableCollection<object> _menuItems = new()

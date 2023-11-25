@@ -73,13 +73,23 @@ namespace AurieInstaller.ViewModels.Pages
         private ComboBox? runnerBox;
         private Button? installButton;
         private Button? playButton;
-        private static SnackbarPresenter? snackbarPresenter;
-        private SnackbarService snackbarService = new();
         private ProgressBar? progressBar;
         private TextBlock? fileNameText;
         private readonly SettingsManager settingsManager = new();
         private AppSettings settings = SettingsManager.LoadSettings();
         private bool canInstall = true;
+
+        private static ISnackbarService? _snackbarService;
+
+        public ISnackbarService SnackbarService
+        {
+            get => _snackbarService;
+            set
+            {
+                _snackbarService = value;
+                OnPropertyChanged(nameof(SnackbarService));
+            }
+        }
 
         public bool CanInstall {
             get { return canInstall; }
@@ -141,20 +151,6 @@ namespace AurieInstaller.ViewModels.Pages
             }
         }
 
-        public void SetSnackbarPresenter(SnackbarPresenter snackbarPresenter)
-        {
-            DashboardViewModel.snackbarPresenter = snackbarPresenter;
-            if (snackbarPresenter != null)
-            {
-                Console.WriteLine("snackbarPresenter found!");
-            }
-        }
-
-        public static SnackbarPresenter GetSnackbarPresenter()
-        {
-            return snackbarPresenter;
-        }
-
         public void SetProgressBar(ProgressBar progressBar)
         {
             this.progressBar = progressBar;
@@ -187,6 +183,11 @@ namespace AurieInstaller.ViewModels.Pages
                 Console.WriteLine("fileNameText found!");
                 fileNameText.Visibility = Visibility.Hidden;
             }
+        }
+
+        public static SnackbarPresenter GetSnackbarPresenter()
+        {
+            return _snackbarService.GetSnackbarPresenter();
         }
 
         internal static void ThrowError(string Message)
@@ -475,7 +476,6 @@ namespace AurieInstaller.ViewModels.Pages
 
                                                                     int fileProgress = (int)((double)bytesDownloaded / totalFileSize * 100);
                                                                     progressBar.Value = (int)(100.0 / totalFiles) * downloadedFiles + (int)((double)fileProgress / totalFiles);
-                                                                    Console.WriteLine(progressBar.Value);
                                                                 }
                                                             }
                                                         }
@@ -493,7 +493,8 @@ namespace AurieInstaller.ViewModels.Pages
                             progressBar.Visibility = Visibility.Hidden;
                             fileNameText.Visibility = Visibility.Hidden;
 
-                            Snackbar snackbar = new(snackbarPresenter) {
+                            await GetSnackbarPresenter().HideCurrent();
+                            Snackbar snackbar = new(GetSnackbarPresenter()) {
                                 MinHeight = 0,
                                 Content = "Aurie Framework was installed successfully!",
                                 Timeout = System.TimeSpan.FromSeconds(5),
@@ -517,7 +518,8 @@ namespace AurieInstaller.ViewModels.Pages
                             using RegistryKey? ifeo = GetIFEOKey(true);
                             ifeo?.DeleteSubKeyTree(runner_name);
                         }
-                        Snackbar snackbar = new(snackbarPresenter) {
+                        await GetSnackbarPresenter().HideCurrent();
+                        Snackbar snackbar = new(GetSnackbarPresenter()) {
                             MinHeight = 0,
                             Content = "Aurie Framework was uninstalled successfully!",
                             Timeout = System.TimeSpan.FromSeconds(5),
