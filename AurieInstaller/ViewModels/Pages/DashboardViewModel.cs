@@ -542,7 +542,7 @@ namespace AurieInstaller.ViewModels.Pages
 
         internal static void RunCommand(string directory, string command, string arguments)
         {
-            ProcessStartInfo processStartInfo = new ProcessStartInfo
+            ProcessStartInfo process_start_info = new ProcessStartInfo
             {
                 FileName = command.ToString(),
                 Arguments = arguments.ToString(),
@@ -553,7 +553,7 @@ namespace AurieInstaller.ViewModels.Pages
 
             using (Process process = new Process())
             {
-                process.StartInfo = processStartInfo;
+                process.StartInfo = process_start_info;
                 process.Start();
             }
         }
@@ -573,26 +573,26 @@ namespace AurieInstaller.ViewModels.Pages
             }
         }
 
-        internal static bool CheckDirectoryStructure(string rootPath)
+        internal static bool CheckDirectoryStructure(string root_path)
         {
-            string modsPath = Path.Combine(rootPath, "mods");
-            if (!Directory.Exists(modsPath))
+            string mods_path = Path.Combine(root_path, "mods");
+            if (!Directory.Exists(mods_path))
                 return false;
 
-            string auriePath = Path.Combine(modsPath, "Aurie");
-            if (!Directory.Exists(auriePath))
+            string aurie_path = Path.Combine(mods_path, "Aurie");
+            if (!Directory.Exists(aurie_path))
                 return false;
 
-            string nativePath = Path.Combine(modsPath, "Native");
-            if (!Directory.Exists(nativePath))
+            string native_path = Path.Combine(mods_path, "Native");
+            if (!Directory.Exists(native_path))
                 return false;
 
-            string aurieCorePath = Path.Combine(nativePath, "AurieCore.dll");
-            if (!File.Exists(aurieCorePath))
+            string aurie_core_path = Path.Combine(native_path, "AurieCore.dll");
+            if (!File.Exists(aurie_core_path))
                 return false;
 
-            string aurieLoaderPath = Path.Combine(modsPath, "AurieLoader.exe");
-            if (!File.Exists(aurieLoaderPath))
+            string aurie_loader_path = Path.Combine(mods_path, "AurieLoader.exe");
+            if (!File.Exists(aurie_loader_path))
                 return false;
 
             return true;
@@ -627,17 +627,11 @@ namespace AurieInstaller.ViewModels.Pages
                         CheckDirectoryStructure(directory))
                     {
                         Console.WriteLine("Running AurieLoader...");
+                        
                         if (IsRunningOnWine())
-                        {
-                            Console.WriteLine("Running on Wine...");
                             arguments += " --debug";
-                            RunCommand(directory, loader, arguments);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Not running on Wine...");
-                            RunCommand(directory, loader, arguments);
-                        }
+
+                        RunCommand(directory, loader, arguments);
                     }
                     else
                     {
