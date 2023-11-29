@@ -22,6 +22,14 @@ using Button = Wpf.Ui.Controls.Button;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
 using TextBlock = Wpf.Ui.Controls.TextBlock;
+using Wpf.Ui.Appearance;
+using System.Threading;
+using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
+using static AurieInstaller.ViewModels.Pages.DashboardViewModel;
+using System.Windows.Shapes;
+using Path = System.IO.Path;
+using System.ComponentModel;
 
 namespace AurieInstaller.ViewModels.Pages
 {
@@ -73,11 +81,43 @@ namespace AurieInstaller.ViewModels.Pages
         private ComboBox? runnerBox;
         private Button? installButton;
         private Button? playButton;
-        private ProgressBar? progressBar;
+        private ProgressBar? downloadProgressBar;
         private TextBlock? fileNameText;
+        private Canvas? modListCanvas;
+        private Border? modListMask;
+        private ListView? modListView;
+        private Button? addModsButton;
+        private Button? removeModsButton;
         private readonly SettingsManager settingsManager = new();
         private AppSettings settings = SettingsManager.LoadSettings();
         private bool canInstall = true;
+
+        /*public const uint DONT_RESOLVE_DLL_REFERENCES = 0x00000001;
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr LoadLibraryEx(string lpFileName, IntPtr hFile, uint dwFlags);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool FreeLibrary(IntPtr hModule);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        public struct ModInfo
+        {
+            [MarshalAs(UnmanagedType.LPStr)]
+            public string mod_name;
+            public int version_major;
+            public int version_minor;
+            public int version_patch;
+            public string mod_repo;
+            public string mod_icon;
+        }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void AurieGetModInfoDelegate(ref ModInfo info);*/
 
         private static ISnackbarService? _snackbarService;
 
@@ -89,6 +129,56 @@ namespace AurieInstaller.ViewModels.Pages
                 _snackbarService = value;
                 OnPropertyChanged(nameof(SnackbarService));
             }
+        }
+
+        private static IContentDialogService? _contentDialogService;
+
+        public IContentDialogService ContentDialogService
+        {
+            get => _contentDialogService;
+            set
+            {
+                _contentDialogService = value;
+                OnPropertyChanged(nameof(ContentDialogService));
+            }
+        }
+
+        private ObservableCollection<ModItem> mods;
+
+        public ObservableCollection<ModItem> Mods
+        {
+            get { return mods; }
+            set
+            {
+                if (mods != value)
+                {
+                    mods = value;
+                    OnPropertyChanged(nameof(Mods));
+                }
+            }
+        }
+
+        public class ModItem : ObservableObject
+        {
+            private string? mod_name;
+            public string? ModPath { get; set; }
+            public string? ModName
+            {
+                get { return mod_name; }
+                set
+                {
+                    if (mod_name != value)
+                    {
+                        mod_name = value;
+                        OnPropertyChanged(nameof(ModName));
+                    }
+                }
+            }
+            public string? ModIcon { get; set; }
+            public string? ModRepo { get; set; }
+            public bool IsEnabled { get; set; }
+            public bool HasUpdate { get; set; }
+            public bool IsNative { get; set; }
         }
 
         public bool CanInstall {
@@ -112,24 +202,57 @@ namespace AurieInstaller.ViewModels.Pages
             return null;
         }
 
-        public void SetInstallButton(Button installButton)
+        public class UIElements
         {
-            this.installButton = installButton;
+            public Button? InstallButton { get; set; }
+            public ComboBox? RunnerBox { get; set; }
+            public ProgressBar? DownloadProgressBar { get; set; }
+            public Button? PlayButton { get; set; }
+            public TextBlock? FileNameText { get; set; }
+            public Canvas? ModListCanvas { get; set; }
+            public Border? ModListMask { get; set; }
+            public ListView? ModListView { get; set; }
+            public Button? AddModsButton { get; set; }
+            public Button? RemoveModsButton {  get; set; }
+        }
+
+        public void SetUIElements(UIElements uIElements)
+        {
+            installButton = uIElements.InstallButton;
+            runnerBox = uIElements.RunnerBox;
+            downloadProgressBar = uIElements.DownloadProgressBar;
+            playButton = uIElements.PlayButton;
+            fileNameText = uIElements.FileNameText;
+            modListCanvas = uIElements.ModListCanvas;
+            modListMask = uIElements.ModListMask;
+            modListView = uIElements.ModListView;
+            addModsButton = uIElements.AddModsButton;
+            removeModsButton = uIElements.RemoveModsButton;
+
             if (installButton != null)
             {
                 Console.WriteLine("installButton found!");
             }
-        }
-        public void SetRunnerBox(ComboBox runnerBox)
-        {
-            this.runnerBox = runnerBox;
+
+            if (addModsButton != null)
+            {
+                Console.WriteLine("addModsButton found!");
+                addModsButton.Visibility = Visibility.Hidden;
+            }
+
+            if (removeModsButton != null)
+            {
+                Console.WriteLine("removeModsButton found!");
+                removeModsButton.Visibility = Visibility.Hidden;
+            }
+
             if (runnerBox != null)
             {
                 Console.WriteLine("runnerBox found!");
                 settings = SettingsManager.LoadSettings();
                 runnerBox.Items.Clear();
                 runnerBox.SelectedItem = null;
-                runnerBox.Text = "Select a runner...";
+                runnerBox.Text = "Select a game...";
                 runnerBox.IsEnabled = false;
                 installButton.Visibility = Visibility.Hidden;
 
@@ -149,21 +272,13 @@ namespace AurieInstaller.ViewModels.Pages
                     runnerBox.SelectedItem = settings.CurrentSelectedRunner;
                 }
             }
-        }
 
-        public void SetProgressBar(ProgressBar progressBar)
-        {
-            this.progressBar = progressBar;
-            if (progressBar != null)
+            if (downloadProgressBar != null)
             {
                 Console.WriteLine("progressBar found!");
-                progressBar.Visibility = Visibility.Hidden;
+                downloadProgressBar.Visibility = Visibility.Hidden;
             }
-        }
 
-        public void SetPlayButton(Button playButton)
-        {
-            this.playButton = playButton;
             if (playButton != null)
             {
                 Console.WriteLine("playButton found!");
@@ -173,15 +288,33 @@ namespace AurieInstaller.ViewModels.Pages
                     playButton.Visibility = Visibility.Visible;
                 }
             }
-        }
 
-        public void SetFileNameText(TextBlock fileNameText)
-        {
-            this.fileNameText = fileNameText;
             if (fileNameText != null)
             {
                 Console.WriteLine("fileNameText found!");
                 fileNameText.Visibility = Visibility.Hidden;
+            }
+
+            if (modListMask != null)
+            {
+                Console.WriteLine("modListMask found!");
+                modListMask.Visibility = Visibility.Hidden;
+                ThemeType theme = Theme.GetAppTheme();
+                if (theme == ThemeType.Dark)
+                {
+                    modListMask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#202020");
+                }
+                else if (theme == ThemeType.Light)
+                {
+                    modListMask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#fafafa");
+                }
+            }
+
+            if (modListView != null)
+            {
+                Console.WriteLine("modListView found!");
+                modListView.Visibility = Visibility.Hidden;
+                SetModList();
             }
         }
 
@@ -190,16 +323,149 @@ namespace AurieInstaller.ViewModels.Pages
             return _snackbarService.GetSnackbarPresenter();
         }
 
+        public ContentPresenter GetContentPresenter()
+        {
+            return _contentDialogService.GetContentPresenter();
+        }
+
+        private void SetModList()
+        {
+            Mods ??= new ObservableCollection<ModItem>();
+            Mods.Clear();
+            List<ModItem> tempMods = new();
+            tempMods.Clear();
+            if (runnerBox != null && runnerBox.SelectedItem != null)
+            {
+                try
+                {
+                    string runner_path = GetRunnerPathFromName(runnerBox.SelectedItem.ToString());
+                    string runner_directory = Directory.GetParent(runner_path)?.FullName ?? "";
+                    string[] aurieFiles = Directory.GetFiles(Path.Combine(runner_directory, "mods", "Aurie"), "*.dll")
+                        .Union(Directory.GetFiles(Path.Combine(runner_directory, "mods", "Aurie"), "*.dll.disabled"))
+                        .ToArray();
+                    string[] nativeFiles = Directory.GetFiles(Path.Combine(runner_directory, "mods", "Native"), "*.dll")
+                        .Union(Directory.GetFiles(Path.Combine(runner_directory, "mods", "Native"), "*.dll.disabled"))
+                        .ToArray();
+
+                    foreach (string file in aurieFiles)
+                    {
+                        string mod_name = Path.GetFileName(file);
+                        /*if (mod_name == "discord-rpc.dll")
+                        {
+                            Console.WriteLine($"'{file}'");
+                            IntPtr module_handle = LoadLibraryEx(file, IntPtr.Zero, DONT_RESOLVE_DLL_REFERENCES);
+                            if (module_handle != IntPtr.Zero)
+                            {
+                                IntPtr function_pointer = GetProcAddress(module_handle, "aurie_get_mod_info");
+                                if (function_pointer != IntPtr.Zero)
+                                {
+                                    AurieGetModInfoDelegate aurie_get_mod_info = Marshal.GetDelegateForFunctionPointer<AurieGetModInfoDelegate>(function_pointer);
+
+                                    ModInfo mod_info = new();
+                                    aurie_get_mod_info(ref mod_info);
+
+                                    Console.WriteLine($"Mod Name: {mod_info.mod_name}");
+                                    Console.WriteLine($"Version: {mod_info.version_major}.{mod_info.version_minor}.{mod_info.version_patch}");
+                                    Console.WriteLine($"Mod Repo: {mod_info.mod_repo}");
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"'aurie_get_mod_info' not found for {mod_name}!");
+                                }
+                                FreeLibrary(module_handle);
+                            }
+                            else
+                            {
+                                int errorCode = Marshal.GetLastWin32Error();
+                                Console.WriteLine($"Cannot load library for {mod_name}! Error code: {errorCode}");
+                            }
+                        }*/
+                        bool mod_enabled = !mod_name.Contains(".dll.disabled");
+                        ModItem mod = new() {
+                            ModPath = file,
+                            ModName = mod_name,
+                            IsEnabled = mod_enabled,
+                            HasUpdate = false,
+                            IsNative = false
+                        };
+                        tempMods.Add(mod);
+                    }
+
+                    foreach (string file in nativeFiles)
+                    {
+                        string mod_name = Path.GetFileName(file);
+                        bool mod_enabled = !mod_name.Contains(".dll.disabled");
+                        ModItem mod = new() {
+                            ModPath = file,
+                            ModName = mod_name,
+                            IsEnabled = mod_enabled,
+                            HasUpdate = false,
+                            IsNative = true
+                        };
+                        tempMods.Add(mod);
+                    }
+
+                    int yytkIndex = tempMods.FindIndex(mod => mod.ModName == "YYToolkit.dll");
+                    ModItem yytkMod = tempMods[yytkIndex];
+                    tempMods.RemoveAt(yytkIndex);
+                    tempMods.Insert(0, yytkMod);
+
+                    int aurieIndex = tempMods.FindIndex(mod => mod.ModName == "AurieCore.dll");
+                    ModItem aurieMod = tempMods[aurieIndex];
+                    tempMods.RemoveAt(aurieIndex);
+                    tempMods.Insert(0, aurieMod);
+
+                    foreach (ModItem mod in tempMods)
+                    {
+                        Mods.Add(mod);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+            }
+
+            addModsButton.Visibility = Visibility.Visible;
+            removeModsButton.Visibility = Visibility.Visible;
+            modListView.ItemsSource = Mods;
+            if (Mods.Count > 0)
+            {
+                modListCanvas.Visibility = Visibility.Visible;
+                modListView.Visibility = Visibility.Visible;
+                modListMask.Visibility = Visibility.Visible;
+                removeModsButton.IsEnabled = true;
+
+                if (Mods.Count > 6)
+                {
+                    modListCanvas.Width = 300;
+                    modListView.Width = 300;
+                }
+                else
+                {
+                    modListCanvas.Width = 286;
+                    modListView.Width = 286;
+                }
+            }
+            else
+            {
+                modListCanvas.Width = 286;
+                modListView.Width = 286;
+                removeModsButton.IsEnabled = false;
+            }
+        }
+
         internal static void ThrowError(string Message)
         {
             Snackbar snackbar = new(GetSnackbarPresenter()) {
                 MinHeight = 0,
                 Content = Message,
-                Timeout = System.TimeSpan.FromSeconds(5),
+                Timeout = System.TimeSpan.FromSeconds(4),
                 Appearance = ControlAppearance.Danger,
                 VerticalContentAlignment = VerticalAlignment.Center
             };
             snackbar.Show();
+            System.Media.SystemSounds.Exclamation.Play();
         }
 
         internal static OpenFileDialog PickGame(string Title, string Filter)
@@ -306,9 +572,10 @@ namespace AurieInstaller.ViewModels.Pages
             settings.CurrentSelectedRunner = runner_name;
 
             settingsManager.SaveSettings(settings);
+            SetModList();
         }
 
-        public void OnRunnerChange(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        public void OnRunnerChange(object sender, SelectionChangedEventArgs e)
         {
             if (runnerBox != null && runnerBox.SelectedItem != null)
             {
@@ -338,7 +605,6 @@ namespace AurieInstaller.ViewModels.Pages
                         installButton.Content = "Uninstall Aurie";
                         installButton.BorderBrush = Brushes.Red;
                         Console.WriteLine($"{selectedRunnerName} already has Aurie installed!");
-                        return;
                     }
                     else
                     {
@@ -346,8 +612,8 @@ namespace AurieInstaller.ViewModels.Pages
                         installButton.Content = "Install Aurie";
                         installButton.BorderBrush = Brushes.Green;
                         Console.WriteLine($"{selectedRunnerName} doesn't have Aurie installed yet!");
-                        return;
                     }
+                    SetModList();
                 }
             }
         }
@@ -459,7 +725,7 @@ namespace AurieInstaller.ViewModels.Pages
                                                         byte[] buffer = new byte[4096];
                                                         Console.WriteLine($"Writing to '{localFilePaths[fileName]}'...");
                                                         fileNameText.Text = $"Downloading {fileName}...";
-                                                        progressBar.Visibility = Visibility.Visible;
+                                                        downloadProgressBar.Visibility = Visibility.Visible;
                                                         fileNameText.Visibility = Visibility.Visible;
                                                         using (Stream stream = await fileResponse.Content.ReadAsStreamAsync())
                                                         {
@@ -473,7 +739,7 @@ namespace AurieInstaller.ViewModels.Pages
                                                                     bytesDownloaded += bytesRead;
 
                                                                     int fileProgress = (int)((double)bytesDownloaded / totalFileSize * 100);
-                                                                    progressBar.Value = (int)(100.0 / totalFiles) * downloadedFiles + (int)((double)fileProgress / totalFiles);
+                                                                    downloadProgressBar.Value = (int)(100.0 / totalFiles) * downloadedFiles + (int)((double)fileProgress / totalFiles);
                                                                 }
                                                             }
                                                         }
@@ -487,22 +753,24 @@ namespace AurieInstaller.ViewModels.Pages
                                 }
                             }
 
-                            progressBar.Value = 100;
-                            progressBar.Visibility = Visibility.Hidden;
+                            downloadProgressBar.Value = 100;
+                            downloadProgressBar.Visibility = Visibility.Hidden;
                             fileNameText.Visibility = Visibility.Hidden;
 
                             await GetSnackbarPresenter().HideCurrent();
                             Snackbar snackbar = new(GetSnackbarPresenter()) {
                                 MinHeight = 0,
                                 Content = "Aurie Framework was installed successfully!",
-                                Timeout = System.TimeSpan.FromSeconds(5),
+                                Timeout = System.TimeSpan.FromSeconds(4),
                                 Appearance = ControlAppearance.Success,
                                 VerticalContentAlignment = VerticalAlignment.Center
                             };
                             snackbar.Show();
+                            System.Media.SystemSounds.Hand.Play();
                             canInstall = false;
                             installButton.Content = "Uninstall Aurie";
                             installButton.BorderBrush = Brushes.Red;
+                            SetModList();
                         }
                     }
                     else if (canInstall == false)
@@ -519,14 +787,16 @@ namespace AurieInstaller.ViewModels.Pages
                         Snackbar snackbar = new(GetSnackbarPresenter()) {
                             MinHeight = 0,
                             Content = "Aurie Framework was uninstalled successfully!",
-                            Timeout = System.TimeSpan.FromSeconds(5),
+                            Timeout = TimeSpan.FromSeconds(4),
                             Appearance = ControlAppearance.Caution,
                             VerticalContentAlignment = VerticalAlignment.Center
                         };
+                        System.Media.SystemSounds.Exclamation.Play();
                         snackbar.Show();
                         canInstall = true;
                         installButton.Content = "Install Aurie";
                         installButton.BorderBrush = Brushes.Green;
+                        SetModList();
                     }
                 }
             }
@@ -544,6 +814,105 @@ namespace AurieInstaller.ViewModels.Pages
             {
                 Console.WriteLine($"Starting {settings.CurrentSelectedRunner}...");
                 Process.Start(runnerPath);
+            }
+        }
+
+        [RelayCommand]
+        private void OnAddModsButton()
+        {
+            string modName = runnerBox.SelectedItem.ToString();
+
+            OpenFileDialog openFileDialog = new OpenFileDialog {
+                Multiselect = true,
+                Filter = "Mod files (*.dll)|*.dll",
+                Title = $"Select mods to add to {modName}"
+            };
+
+            bool? result = openFileDialog.ShowDialog();
+
+            if (result == true)
+            {
+                string[] selectedFiles = openFileDialog.FileNames;
+
+                string runner_path = GetRunnerPathFromName(modName);
+                string runner_directory = Directory.GetParent(runner_path)?.FullName ?? "";
+                string destinationDirectory = Path.Combine(runner_directory, "mods", "Aurie");
+
+                foreach (string file in selectedFiles)
+                {
+                    string fileName = Path.GetFileName(file);
+                    string destinationPath = Path.Combine(destinationDirectory, fileName);
+
+                    try
+                    {
+                        File.Copy(file, destinationPath, true);
+                        Console.WriteLine($"File '{fileName}' copied to '{destinationPath}' successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error copying file '{fileName}': {ex.Message}");
+                    }
+                }
+                SetModList();
+            }
+        }
+
+        [RelayCommand]
+        private async void OnRemoveModsButton()
+        {
+            if (modListView.SelectedItems.Count == 0)
+            {
+                await GetSnackbarPresenter().HideCurrent();
+                Snackbar snackbar = new(GetSnackbarPresenter()) {
+                    MinHeight = 0,
+                    Content = "No mods are selected!",
+                    Timeout = System.TimeSpan.FromSeconds(4),
+                    Appearance = ControlAppearance.Danger,
+                    VerticalContentAlignment = VerticalAlignment.Center
+                };
+                snackbar.Show();
+                System.Media.SystemSounds.Exclamation.Play();
+                return;
+            }
+
+            var contentDialog = new ContentDialog(GetContentPresenter());
+
+            contentDialog.Title = "Delete Mods";
+            contentDialog.Content = "Would you like to delete all of the selected mods?";
+            contentDialog.PrimaryButtonText = "Delete";
+            contentDialog.CloseButtonText = "Cancel";
+            contentDialog.DialogHeight = 270;
+            contentDialog.DialogWidth = 340;
+
+            ContentDialogResult result = await contentDialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                bool modsDeleted = false;
+                Console.WriteLine("Deleting all selected mods...");
+                foreach (Object selectedItem in modListView.SelectedItems)
+                {
+                    if (selectedItem is ModItem modItem)
+                    {
+                        if (modItem.ModName == "AurieCore.dll" || modItem.ModName == "YYToolkit.dll") continue;
+                        string modPath = modItem.ModPath;
+
+                        try
+                        {
+                            File.Delete(modPath);
+                            modsDeleted = true;
+                            Console.WriteLine($"Deleted {modPath}!");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error deleting file {modPath}: {ex.Message}");
+                        }
+                    }
+                }
+                if (modsDeleted)
+                {
+                    Console.WriteLine("Settings mods!");
+                    SetModList();
+                }
             }
         }
     }

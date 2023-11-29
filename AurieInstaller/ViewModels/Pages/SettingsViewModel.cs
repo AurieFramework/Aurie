@@ -105,6 +105,7 @@ namespace AurieInstaller.ViewModels.Pages
                 Appearance = ControlAppearance.Success,
                 VerticalContentAlignment = VerticalAlignment.Center
             };
+            System.Media.SystemSounds.Hand.Play();
             snackbar.Show();
         }
     }

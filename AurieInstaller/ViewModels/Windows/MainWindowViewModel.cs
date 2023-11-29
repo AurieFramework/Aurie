@@ -31,7 +31,7 @@ namespace AurieInstaller.ViewModels.Windows
         {
             new NavigationViewItem()
             {
-                Content = "Main",
+                Content = "Install Manager",
                 Icon = new SymbolIcon { Symbol = SymbolRegular.Home24 },
                 TargetPageType = typeof(Views.Pages.DashboardPage)
             }

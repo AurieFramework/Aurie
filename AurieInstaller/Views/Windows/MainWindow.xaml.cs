@@ -28,6 +28,7 @@ namespace AurieInstaller.Views.Windows
 
             _ = new DashboardViewModel() { SnackbarService = snackbarService };
             _ = new SettingsViewModel() { SnackbarService = snackbarService };
+            _ = new DashboardViewModel() { ContentDialogService = contentDialogService };
 
             ViewModel = viewModel;
             ViewModel.SnackbarService = snackbarService;
