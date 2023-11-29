@@ -91,6 +91,7 @@ namespace AurieInstaller.ViewModels.Pages
         private readonly SettingsManager settingsManager = new();
         private AppSettings settings = SettingsManager.LoadSettings();
         private bool canInstall = true;
+        private bool mod_list_view_initialized = false;
 
         /*public const uint DONT_RESOLVE_DLL_REFERENCES = 0x00000001;
 
@@ -310,9 +311,10 @@ namespace AurieInstaller.ViewModels.Pages
                 }
             }
 
-            if (modListView != null)
+            if (modListView != null && mod_list_view_initialized == false)
             {
                 Console.WriteLine("modListView found!");
+                mod_list_view_initialized = true;
                 modListView.Visibility = Visibility.Hidden;
                 SetModList();
             }
@@ -334,96 +336,95 @@ namespace AurieInstaller.ViewModels.Pages
             Mods.Clear();
             List<ModItem> tempMods = new();
             tempMods.Clear();
-            if (runnerBox != null && runnerBox.SelectedItem != null)
+            if (runnerBox == null || runnerBox.SelectedItem == null) return;
+            
+            try
             {
-                try
+                string runner_path = GetRunnerPathFromName(runnerBox.SelectedItem.ToString());
+                string runner_directory = Directory.GetParent(runner_path)?.FullName ?? "";
+                string[] aurieFiles = Directory.GetFiles(Path.Combine(runner_directory, "mods", "Aurie"), "*.dll")
+                    .Union(Directory.GetFiles(Path.Combine(runner_directory, "mods", "Aurie"), "*.dll.disabled"))
+                    .ToArray();
+                string[] nativeFiles = Directory.GetFiles(Path.Combine(runner_directory, "mods", "Native"), "*.dll")
+                    .Union(Directory.GetFiles(Path.Combine(runner_directory, "mods", "Native"), "*.dll.disabled"))
+                    .ToArray();
+
+                foreach (string file in aurieFiles)
                 {
-                    string runner_path = GetRunnerPathFromName(runnerBox.SelectedItem.ToString());
-                    string runner_directory = Directory.GetParent(runner_path)?.FullName ?? "";
-                    string[] aurieFiles = Directory.GetFiles(Path.Combine(runner_directory, "mods", "Aurie"), "*.dll")
-                        .Union(Directory.GetFiles(Path.Combine(runner_directory, "mods", "Aurie"), "*.dll.disabled"))
-                        .ToArray();
-                    string[] nativeFiles = Directory.GetFiles(Path.Combine(runner_directory, "mods", "Native"), "*.dll")
-                        .Union(Directory.GetFiles(Path.Combine(runner_directory, "mods", "Native"), "*.dll.disabled"))
-                        .ToArray();
-
-                    foreach (string file in aurieFiles)
+                    string mod_name = Path.GetFileName(file);
+                    /*if (mod_name == "discord-rpc.dll")
                     {
-                        string mod_name = Path.GetFileName(file);
-                        /*if (mod_name == "discord-rpc.dll")
+                        Console.WriteLine($"'{file}'");
+                        IntPtr module_handle = LoadLibraryEx(file, IntPtr.Zero, DONT_RESOLVE_DLL_REFERENCES);
+                        if (module_handle != IntPtr.Zero)
                         {
-                            Console.WriteLine($"'{file}'");
-                            IntPtr module_handle = LoadLibraryEx(file, IntPtr.Zero, DONT_RESOLVE_DLL_REFERENCES);
-                            if (module_handle != IntPtr.Zero)
+                            IntPtr function_pointer = GetProcAddress(module_handle, "aurie_get_mod_info");
+                            if (function_pointer != IntPtr.Zero)
                             {
-                                IntPtr function_pointer = GetProcAddress(module_handle, "aurie_get_mod_info");
-                                if (function_pointer != IntPtr.Zero)
-                                {
-                                    AurieGetModInfoDelegate aurie_get_mod_info = Marshal.GetDelegateForFunctionPointer<AurieGetModInfoDelegate>(function_pointer);
+                                AurieGetModInfoDelegate aurie_get_mod_info = Marshal.GetDelegateForFunctionPointer<AurieGetModInfoDelegate>(function_pointer);
 
-                                    ModInfo mod_info = new();
-                                    aurie_get_mod_info(ref mod_info);
+                                ModInfo mod_info = new();
+                                aurie_get_mod_info(ref mod_info);
 
-                                    Console.WriteLine($"Mod Name: {mod_info.mod_name}");
-                                    Console.WriteLine($"Version: {mod_info.version_major}.{mod_info.version_minor}.{mod_info.version_patch}");
-                                    Console.WriteLine($"Mod Repo: {mod_info.mod_repo}");
-                                }
-                                else
-                                {
-                                    Console.WriteLine($"'aurie_get_mod_info' not found for {mod_name}!");
-                                }
-                                FreeLibrary(module_handle);
+                                Console.WriteLine($"Mod Name: {mod_info.mod_name}");
+                                Console.WriteLine($"Version: {mod_info.version_major}.{mod_info.version_minor}.{mod_info.version_patch}");
+                                Console.WriteLine($"Mod Repo: {mod_info.mod_repo}");
                             }
                             else
                             {
-                                int errorCode = Marshal.GetLastWin32Error();
-                                Console.WriteLine($"Cannot load library for {mod_name}! Error code: {errorCode}");
+                                Console.WriteLine($"'aurie_get_mod_info' not found for {mod_name}!");
                             }
-                        }*/
-                        bool mod_enabled = !mod_name.Contains(".dll.disabled");
-                        ModItem mod = new() {
-                            ModPath = file,
-                            ModName = mod_name,
-                            IsEnabled = mod_enabled,
-                            HasUpdate = false,
-                            IsNative = false
-                        };
-                        tempMods.Add(mod);
-                    }
-
-                    foreach (string file in nativeFiles)
-                    {
-                        string mod_name = Path.GetFileName(file);
-                        bool mod_enabled = !mod_name.Contains(".dll.disabled");
-                        ModItem mod = new() {
-                            ModPath = file,
-                            ModName = mod_name,
-                            IsEnabled = mod_enabled,
-                            HasUpdate = false,
-                            IsNative = true
-                        };
-                        tempMods.Add(mod);
-                    }
-
-                    int yytkIndex = tempMods.FindIndex(mod => mod.ModName == "YYToolkit.dll");
-                    ModItem yytkMod = tempMods[yytkIndex];
-                    tempMods.RemoveAt(yytkIndex);
-                    tempMods.Insert(0, yytkMod);
-
-                    int aurieIndex = tempMods.FindIndex(mod => mod.ModName == "AurieCore.dll");
-                    ModItem aurieMod = tempMods[aurieIndex];
-                    tempMods.RemoveAt(aurieIndex);
-                    tempMods.Insert(0, aurieMod);
-
-                    foreach (ModItem mod in tempMods)
-                    {
-                        Mods.Add(mod);
-                    }
+                            FreeLibrary(module_handle);
+                        }
+                        else
+                        {
+                            int errorCode = Marshal.GetLastWin32Error();
+                            Console.WriteLine($"Cannot load library for {mod_name}! Error code: {errorCode}");
+                        }
+                    }*/
+                    bool mod_enabled = !mod_name.Contains(".dll.disabled");
+                    ModItem mod = new() {
+                        ModPath = file,
+                        ModName = mod_name,
+                        IsEnabled = mod_enabled,
+                        HasUpdate = false,
+                        IsNative = false
+                    };
+                    tempMods.Add(mod);
                 }
-                catch (Exception ex)
+
+                foreach (string file in nativeFiles)
                 {
-                    Console.WriteLine(ex.ToString());
+                    string mod_name = Path.GetFileName(file);
+                    bool mod_enabled = !mod_name.Contains(".dll.disabled");
+                    ModItem mod = new() {
+                        ModPath = file,
+                        ModName = mod_name,
+                        IsEnabled = mod_enabled,
+                        HasUpdate = false,
+                        IsNative = true
+                    };
+                    tempMods.Add(mod);
                 }
+
+                int yytkIndex = tempMods.FindIndex(mod => mod.ModName == "YYToolkit.dll");
+                ModItem yytkMod = tempMods[yytkIndex];
+                tempMods.RemoveAt(yytkIndex);
+                tempMods.Insert(0, yytkMod);
+
+                int aurieIndex = tempMods.FindIndex(mod => mod.ModName == "AurieCore.dll");
+                ModItem aurieMod = tempMods[aurieIndex];
+                tempMods.RemoveAt(aurieIndex);
+                tempMods.Insert(0, aurieMod);
+
+                foreach (ModItem mod in tempMods)
+                {
+                    Mods.Add(mod);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
             }
 
             addModsButton.Visibility = Visibility.Visible;

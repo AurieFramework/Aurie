@@ -33,11 +33,8 @@ namespace AurieInstaller.Views.Pages
             Loaded += DashboardPage_Loaded;
         }
 
-        private bool is_initialized = false;
-
         private void DashboardPage_Loaded(object sender, RoutedEventArgs e)
         {
-            if (is_initialized == true) return;
             var uiElements = new UIElements
             {
                 InstallButton = installButton,
@@ -52,7 +49,6 @@ namespace AurieInstaller.Views.Pages
                 RemoveModsButton = removeModsButton
             };
             ViewModel.SetUIElements(uiElements);
-            is_initialized = true;
         }
 
         private void ToggleButton_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
