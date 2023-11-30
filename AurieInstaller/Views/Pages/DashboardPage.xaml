@@ -92,7 +92,7 @@
                     </Canvas.OpacityMask>
                     <ListView 
                         x:Name="mod_list_view"
-                        ItemsSource="{Binding m_Mods}"
+                        ItemsSource="{Binding ViewModel.m_Mods}"
                         Grid.Column="0"
                         Width="286"
                         Height="222"

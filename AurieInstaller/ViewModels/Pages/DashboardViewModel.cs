@@ -18,6 +18,7 @@ using TextBlock = Wpf.Ui.Controls.TextBlock;
 using Wpf.Ui.Appearance;
 using System.Collections.ObjectModel;
 using Path = System.IO.Path;
+using Wpf.Ui;
 
 namespace AurieInstaller.ViewModels.Pages
 {
@@ -106,7 +107,6 @@ namespace AurieInstaller.ViewModels.Pages
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void AurieGetModInfoDelegate(ref ModInfo info);*/
-
         private static ISnackbarService? snackbar_service;
 
         public ISnackbarService m_SnackbarService
@@ -206,7 +206,7 @@ namespace AurieInstaller.ViewModels.Pages
 
         public void SetUIElements(UIElements UIElements, bool IsInitialized)
         {
-            if (!IsInitialized)
+            if (IsInitialized == false)
             {
                 install_button = UIElements.m_InstallButton;
                 runner_box = UIElements.m_RunnerBox;
@@ -290,12 +290,12 @@ namespace AurieInstaller.ViewModels.Pages
             {
                 Console.WriteLine("mod_list_mask found!");
                 mod_list_mask.Visibility = Visibility.Hidden;
-                ThemeType theme = Theme.GetAppTheme();
-                if (theme == ThemeType.Dark)
+                ApplicationTheme theme = ApplicationThemeManager.GetAppTheme();
+                if (theme == ApplicationTheme.Dark)
                 {
                     mod_list_mask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#202020");
                 }
-                else if (theme == ThemeType.Light)
+                else if (theme == ApplicationTheme.Light)
                 {
                     mod_list_mask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#fafafa");
                 }
@@ -305,7 +305,7 @@ namespace AurieInstaller.ViewModels.Pages
             {
                 Console.WriteLine("mod_list_view found!");
                 mod_list_view.Visibility = Visibility.Hidden;
-                SetModList();
+                if (IsInitialized == false) SetModList();
             }
         }
 
@@ -418,7 +418,6 @@ namespace AurieInstaller.ViewModels.Pages
 
             add_mods_button.Visibility = Visibility.Visible;
             remove_mods_button.Visibility = Visibility.Visible;
-            mod_list_view.ItemsSource = m_Mods;
             if (m_Mods.Count > 0)
             {
                 mod_list_canvas.Visibility = Visibility.Visible;
