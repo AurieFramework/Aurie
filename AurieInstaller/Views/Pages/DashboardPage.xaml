@@ -30,7 +30,7 @@
             <ComboBox
                 Grid.Column="0"
                 Grid.Row="0"
-                x:Name="runnerBox"
+                x:Name="runner_box"
                 IsEnabled="False"
                 IsEditable="True"
                 IsReadOnly="True"
@@ -77,22 +77,22 @@
             </Grid.ColumnDefinitions>
             <Grid HorizontalAlignment="Left">
                 <Border 
-                    Name="modListMask"
+                    Name="mod_list_mask"
                     Background="#202020"
                     CornerRadius="4"
                     Width="286"
                     Loaded="ModListMask_Loaded"/>
                 <Canvas
-                    x:Name="modListCanvas"
+                    x:Name="mod_list_canvas"
                     Grid.Column="0"
                     Width="286"
                     Height="220">
                     <Canvas.OpacityMask>
-                        <VisualBrush Visual="{Binding ElementName=modListMask}" />
+                        <VisualBrush Visual="{Binding ElementName=mod_list_mask}" />
                     </Canvas.OpacityMask>
                     <ListView 
-                        x:Name="modListView"
-                        ItemsSource="{Binding Mods}"
+                        x:Name="mod_list_view"
+                        ItemsSource="{Binding m_Mods}"
                         Grid.Column="0"
                         Width="286"
                         Height="222"
@@ -106,10 +106,10 @@
                                         <ColumnDefinition Width="35" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock 
-                                        x:Name="modName"
+                                        x:Name="mod_name"
                                         Grid.Column="0" 
                                         Padding="10,2,0,2"
-                                        Text="{Binding ModName}" />
+                                        Text="{Binding m_ModName}" />
                                     <!--<ui:Button 
                                         Grid.Column="1"
                                         Width="25"
@@ -152,9 +152,8 @@
                                         Checked="ModToggle_Checked"
                                         Unchecked="ModToggle_Unchecked"
                                         Loaded="ModToggle_Loaded"
-                                        DataContextChanged="ToggleButton_DataContextChanged"
-                                        IsChecked="{Binding IsEnabled}">
-                                        <ui:SymbolIcon x:Name="modToggleSymbol" Symbol="Dismiss20" RenderTransformOrigin="0.5,0.5" >
+                                        IsChecked="{Binding m_IsEnabled}">
+                                        <ui:SymbolIcon x:Name="mod_toggle_symbol" Symbol="Dismiss20" RenderTransformOrigin="0.5,0.5" >
                                             <ui:SymbolIcon.RenderTransform>
                                                 <TransformGroup>
                                                     <ScaleTransform ScaleX="1.2" ScaleY="1.2"/>
@@ -168,10 +167,10 @@
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem" BasedOn="{StaticResource {x:Type ListViewItem}}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ModName}" Value="AurieCore.dll">
+                                    <DataTrigger Binding="{Binding m_ModName}" Value="AurieCore.dll">
                                         <Setter Property="Focusable" Value="False" />
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding ModName}" Value="YYToolkit.dll">
+                                    <DataTrigger Binding="{Binding m_ModName}" Value="YYToolkit.dll">
                                         <Setter Property="Focusable" Value="False" />
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -194,7 +193,7 @@
                     <ui:Button
                         Grid.Row="0"
                         Grid.Column="0"
-                        x:Name="addModsButton"
+                        x:Name="add_mods_button"
                         Width="125"
                         Height="30"
                         Padding="0,0,0,0"
@@ -227,7 +226,7 @@
                     <ui:Button
                         Grid.Row="1"
                         Grid.Column="0"
-                        x:Name="removeModsButton"
+                        x:Name="remove_mods_button"
                         Width="125"
                         Height="30"
                         Padding="0,0,0,0"
@@ -300,7 +299,7 @@
                     </Grid.RowDefinitions>
                     <ui:Button
                         Grid.Row="0"
-                        x:Name="installButton"
+                        x:Name="install_button"
                         Content="Install Aurie"
                         Width="125"
                         BorderBrush="Green"
@@ -312,7 +311,7 @@
 
                     <ui:Button
                         Grid.Row="1"
-                        x:Name="playButton"
+                        x:Name="play_button"
                         Content="Play Game"
                         Width="125"
                         Command="{Binding ViewModel.PlayButtonCommand, Mode=OneWay}"
@@ -330,7 +329,7 @@
             </Grid.ColumnDefinitions>
             <ui:TextBlock 
                 Grid.Column="0"
-                x:Name="fileNameText"
+                x:Name="file_name_text"
                 Text="Downloading AurieCore.dll..."
                 TextTrimming="CharacterEllipsis"
                 VerticalAlignment="Bottom"
@@ -341,7 +340,7 @@
 
             <ProgressBar 
                 Grid.Column="1"
-                x:Name="progressBar"
+                x:Name="progress_bar"
                 DockPanel.Dock="Bottom"
                 VerticalAlignment="Bottom"
                 Width="180"

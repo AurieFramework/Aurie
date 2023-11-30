@@ -3,60 +3,47 @@
 // Copyright (C) Leszek Pomianowski and WPF UI Contributors.
 // All Rights Reserved.
 
-using Microsoft.Extensions.Options;
 using Microsoft.Win32;
-using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
 using System.Runtime.InteropServices;
-using System.Windows.Input;
 using System.Net.Http;
-using System.Threading.Tasks;
 using System.Text.Json;
 using System.Windows.Controls;
-using System.Drawing;
 using System.Windows.Media;
 using Brushes = System.Windows.Media.Brushes;
 using System.Diagnostics;
 using Wpf.Ui.Controls;
 using Button = Wpf.Ui.Controls.Button;
-using Color = System.Windows.Media.Color;
-using ColorConverter = System.Windows.Media.ColorConverter;
 using TextBlock = Wpf.Ui.Controls.TextBlock;
 using Wpf.Ui.Appearance;
-using System.Threading;
 using System.Collections.ObjectModel;
-using System.Runtime.InteropServices;
-using static AurieInstaller.ViewModels.Pages.DashboardViewModel;
-using System.Windows.Shapes;
 using Path = System.IO.Path;
-using System.ComponentModel;
 
 namespace AurieInstaller.ViewModels.Pages
 {
     public class RunnerData
     {
-        public required string Name { get; set; }
-        public required string Path { get; set; }
+        public required string m_Name { get; set; }
+        public required string m_Path { get; set; }
     }
 
     public class AppSettings
     {
-        public List<RunnerData> AddedRunners { get; set; } = new List<RunnerData>();
-        public string? CurrentSelectedRunner { get; set; }
+        public List<RunnerData> m_AddedRunners { get; set; } = new List<RunnerData>();
+        public string? m_CurrentSelectedRunner { get; set; }
     }
 
     public class SettingsManager
     {
-        private const string SettingsFileName = "aurie-config.json";
-        private static readonly string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Aurie");
-        private static readonly string SettingsFilePath = Path.Combine(AppDataPath, SettingsFileName);
+        private const string settings_file_name = "aurie-config.json";
+        private static readonly string app_data_path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Aurie");
+        private static readonly string settings_file_path = Path.Combine(app_data_path, settings_file_name);
 
         public static AppSettings LoadSettings()
         {
-            if (File.Exists(SettingsFilePath))
+            if (File.Exists(settings_file_path))
             {
-                string json = File.ReadAllText(SettingsFilePath);
+                string json = File.ReadAllText(settings_file_path);
                 return JsonSerializer.Deserialize<AppSettings>(json);
             }
             else
@@ -71,28 +58,27 @@ namespace AurieInstaller.ViewModels.Pages
             {
                 WriteIndented = true
             });
-            Directory.CreateDirectory(AppDataPath);
-            File.WriteAllText(SettingsFilePath, json);
+            Directory.CreateDirectory(app_data_path);
+            File.WriteAllText(settings_file_path, json);
         }
     }
 
     public partial class DashboardViewModel : ObservableObject
     {
         private static readonly string m_IFEOPath = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options";
-        private ComboBox? runnerBox;
-        private Button? installButton;
-        private Button? playButton;
-        private ProgressBar? downloadProgressBar;
-        private TextBlock? fileNameText;
-        private Canvas? modListCanvas;
-        private Border? modListMask;
-        private ListView? modListView;
-        private Button? addModsButton;
-        private Button? removeModsButton;
-        private readonly SettingsManager settingsManager = new();
+        private ComboBox? runner_box;
+        private Button? install_button;
+        private Button? play_button;
+        private ProgressBar? download_progress_bar;
+        private TextBlock? file_name_text;
+        private Canvas? mod_list_canvas;
+        private Border? mod_list_mask;
+        private ListView? mod_list_view;
+        private Button? add_mods_button;
+        private Button? remove_mods_button;
+        private readonly SettingsManager settings_manager = new();
         private AppSettings settings = SettingsManager.LoadSettings();
-        private bool canInstall = true;
-        private bool mod_list_view_initialized = false;
+        private bool can_install = true;
 
         /*public const uint DONT_RESOLVE_DLL_REFERENCES = 0x00000001;
 
@@ -121,33 +107,33 @@ namespace AurieInstaller.ViewModels.Pages
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void AurieGetModInfoDelegate(ref ModInfo info);*/
 
-        private static ISnackbarService? _snackbarService;
+        private static ISnackbarService? snackbar_service;
 
-        public ISnackbarService SnackbarService
+        public ISnackbarService m_SnackbarService
         {
-            get => _snackbarService;
+            get => snackbar_service;
             set
             {
-                _snackbarService = value;
-                OnPropertyChanged(nameof(SnackbarService));
+                snackbar_service = value;
+                OnPropertyChanged(nameof(m_SnackbarService));
             }
         }
 
-        private static IContentDialogService? _contentDialogService;
+        private static IContentDialogService? content_dialog_service;
 
-        public IContentDialogService ContentDialogService
+        public IContentDialogService m_ContentDialogService
         {
-            get => _contentDialogService;
+            get => content_dialog_service;
             set
             {
-                _contentDialogService = value;
-                OnPropertyChanged(nameof(ContentDialogService));
+                content_dialog_service = value;
+                OnPropertyChanged(nameof(m_ContentDialogService));
             }
         }
 
         private ObservableCollection<ModItem> mods;
 
-        public ObservableCollection<ModItem> Mods
+        public ObservableCollection<ModItem> m_Mods
         {
             get { return mods; }
             set
@@ -155,7 +141,7 @@ namespace AurieInstaller.ViewModels.Pages
                 if (mods != value)
                 {
                     mods = value;
-                    OnPropertyChanged(nameof(Mods));
+                    OnPropertyChanged(nameof(m_Mods));
                 }
             }
         }
@@ -163,8 +149,8 @@ namespace AurieInstaller.ViewModels.Pages
         public class ModItem : ObservableObject
         {
             private string? mod_name;
-            public string? ModPath { get; set; }
-            public string? ModName
+            public string? m_ModPath { get; set; }
+            public string? m_ModName
             {
                 get { return mod_name; }
                 set
@@ -172,185 +158,187 @@ namespace AurieInstaller.ViewModels.Pages
                     if (mod_name != value)
                     {
                         mod_name = value;
-                        OnPropertyChanged(nameof(ModName));
+                        OnPropertyChanged(nameof(m_ModName));
                     }
                 }
             }
-            public string? ModIcon { get; set; }
-            public string? ModRepo { get; set; }
-            public bool IsEnabled { get; set; }
-            public bool HasUpdate { get; set; }
-            public bool IsNative { get; set; }
+            public string? m_ModIcon { get; set; }
+            public string? m_ModRepo { get; set; }
+            public bool m_IsEnabled { get; set; }
+            public bool m_HasUpdate { get; set; }
+            public bool m_IsNative { get; set; }
         }
 
-        public bool CanInstall {
-            get { return canInstall; }
+        public bool m_CanInstall {
+            get { return can_install; }
             set
             {
-                if (canInstall != value)
+                if (can_install != value)
                 {
-                    canInstall = value;
-                    OnPropertyChanged(nameof(CanInstall));
+                    can_install = value;
+                    OnPropertyChanged(nameof(m_CanInstall));
                 }
             }
         }
 
         public string? GetRunnerPathFromName(string name)
         {
-            foreach (RunnerData runner in settings.AddedRunners)
+            foreach (RunnerData runner in settings.m_AddedRunners)
             {
-                if (runner.Name == name) return runner.Path;
+                if (runner.m_Name == name) return runner.m_Path;
             }
             return null;
         }
 
         public class UIElements
         {
-            public Button? InstallButton { get; set; }
-            public ComboBox? RunnerBox { get; set; }
-            public ProgressBar? DownloadProgressBar { get; set; }
-            public Button? PlayButton { get; set; }
-            public TextBlock? FileNameText { get; set; }
-            public Canvas? ModListCanvas { get; set; }
-            public Border? ModListMask { get; set; }
-            public ListView? ModListView { get; set; }
-            public Button? AddModsButton { get; set; }
-            public Button? RemoveModsButton {  get; set; }
+            public Button? m_InstallButton { get; set; }
+            public ComboBox? m_RunnerBox { get; set; }
+            public ProgressBar? m_DownloadProgressBar { get; set; }
+            public Button? m_PlayButton { get; set; }
+            public TextBlock? m_FileNameText { get; set; }
+            public Canvas? m_ModListCanvas { get; set; }
+            public Border? m_ModListMask { get; set; }
+            public ListView? m_ModListView { get; set; }
+            public Button? m_AddModsButton { get; set; }
+            public Button? m_RemoveModsButton {  get; set; }
         }
 
-        public void SetUIElements(UIElements uIElements)
+        public void SetUIElements(UIElements UIElements, bool IsInitialized)
         {
-            installButton = uIElements.InstallButton;
-            runnerBox = uIElements.RunnerBox;
-            downloadProgressBar = uIElements.DownloadProgressBar;
-            playButton = uIElements.PlayButton;
-            fileNameText = uIElements.FileNameText;
-            modListCanvas = uIElements.ModListCanvas;
-            modListMask = uIElements.ModListMask;
-            modListView = uIElements.ModListView;
-            addModsButton = uIElements.AddModsButton;
-            removeModsButton = uIElements.RemoveModsButton;
-
-            if (installButton != null)
+            if (!IsInitialized)
             {
-                Console.WriteLine("installButton found!");
+                install_button = UIElements.m_InstallButton;
+                runner_box = UIElements.m_RunnerBox;
+                download_progress_bar = UIElements.m_DownloadProgressBar;
+                play_button = UIElements.m_PlayButton;
+                file_name_text = UIElements.m_FileNameText;
+                mod_list_canvas = UIElements.m_ModListCanvas;
+                mod_list_mask = UIElements.m_ModListMask;
+                mod_list_view = UIElements.m_ModListView;
+                add_mods_button = UIElements.m_AddModsButton;
+                remove_mods_button = UIElements.m_RemoveModsButton;
             }
 
-            if (addModsButton != null)
+            if (install_button != null)
             {
-                Console.WriteLine("addModsButton found!");
-                addModsButton.Visibility = Visibility.Hidden;
+                Console.WriteLine("install_button found!");
             }
 
-            if (removeModsButton != null)
+            if (add_mods_button != null)
             {
-                Console.WriteLine("removeModsButton found!");
-                removeModsButton.Visibility = Visibility.Hidden;
+                Console.WriteLine("add_mods_button found!");
+                add_mods_button.Visibility = Visibility.Hidden;
             }
 
-            if (runnerBox != null)
+            if (remove_mods_button != null)
             {
-                Console.WriteLine("runnerBox found!");
+                Console.WriteLine("remove_mods_button found!");
+                remove_mods_button.Visibility = Visibility.Hidden;
+            }
+
+            if (runner_box != null)
+            {
+                Console.WriteLine("runner_box found!");
                 settings = SettingsManager.LoadSettings();
-                runnerBox.Items.Clear();
-                runnerBox.SelectedItem = null;
-                runnerBox.Text = "Select a game...";
-                runnerBox.IsEnabled = false;
-                installButton.Visibility = Visibility.Hidden;
+                runner_box.Items.Clear();
+                runner_box.SelectedItem = null;
+                runner_box.Text = "Select a game...";
+                runner_box.IsEnabled = false;
+                install_button.Visibility = Visibility.Hidden;
 
-                foreach (RunnerData runner in settings.AddedRunners)
+                foreach (RunnerData runner in settings.m_AddedRunners)
                 {
-                    runnerBox.Items.Add(runner.Name);
+                    runner_box.Items.Add(runner.m_Name);
                 }
 
-                if (runnerBox.Items.Count > 0)
+                if (runner_box.Items.Count > 0)
                 {
-                    runnerBox.IsEnabled = true;
-                    installButton.Visibility = Visibility.Visible;
+                    runner_box.IsEnabled = true;
+                    install_button.Visibility = Visibility.Visible;
                 }
 
-                if (settings.CurrentSelectedRunner != null)
+                if (settings.m_CurrentSelectedRunner != null)
                 {
-                    runnerBox.SelectedItem = settings.CurrentSelectedRunner;
-                }
-            }
-
-            if (downloadProgressBar != null)
-            {
-                Console.WriteLine("progressBar found!");
-                downloadProgressBar.Visibility = Visibility.Hidden;
-            }
-
-            if (playButton != null)
-            {
-                Console.WriteLine("playButton found!");
-                playButton.Visibility = Visibility.Hidden;
-                if (runnerBox.Items.Count > 0)
-                {
-                    playButton.Visibility = Visibility.Visible;
+                    runner_box.SelectedItem = settings.m_CurrentSelectedRunner;
                 }
             }
 
-            if (fileNameText != null)
+            if (download_progress_bar != null)
             {
-                Console.WriteLine("fileNameText found!");
-                fileNameText.Visibility = Visibility.Hidden;
+                Console.WriteLine("progress_bar found!");
+                download_progress_bar.Visibility = Visibility.Hidden;
             }
 
-            if (modListMask != null)
+            if (play_button != null)
             {
-                Console.WriteLine("modListMask found!");
-                modListMask.Visibility = Visibility.Hidden;
+                Console.WriteLine("play_button found!");
+                play_button.Visibility = Visibility.Hidden;
+                if (runner_box.Items.Count > 0)
+                {
+                    play_button.Visibility = Visibility.Visible;
+                }
+            }
+
+            if (file_name_text != null)
+            {
+                Console.WriteLine("file_name_text found!");
+                file_name_text.Visibility = Visibility.Hidden;
+            }
+
+            if (mod_list_mask != null)
+            {
+                Console.WriteLine("mod_list_mask found!");
+                mod_list_mask.Visibility = Visibility.Hidden;
                 ThemeType theme = Theme.GetAppTheme();
                 if (theme == ThemeType.Dark)
                 {
-                    modListMask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#202020");
+                    mod_list_mask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#202020");
                 }
                 else if (theme == ThemeType.Light)
                 {
-                    modListMask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#fafafa");
+                    mod_list_mask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#fafafa");
                 }
             }
 
-            if (modListView != null && mod_list_view_initialized == false)
+            if (mod_list_view != null)
             {
-                Console.WriteLine("modListView found!");
-                mod_list_view_initialized = true;
-                modListView.Visibility = Visibility.Hidden;
+                Console.WriteLine("mod_list_view found!");
+                mod_list_view.Visibility = Visibility.Hidden;
                 SetModList();
             }
         }
 
         public static SnackbarPresenter GetSnackbarPresenter()
         {
-            return _snackbarService.GetSnackbarPresenter();
+            return snackbar_service.GetSnackbarPresenter();
         }
 
         public ContentPresenter GetContentPresenter()
         {
-            return _contentDialogService.GetContentPresenter();
+            return content_dialog_service.GetContentPresenter();
         }
 
         private void SetModList()
         {
-            Mods ??= new ObservableCollection<ModItem>();
-            Mods.Clear();
-            List<ModItem> tempMods = new();
-            tempMods.Clear();
-            if (runnerBox == null || runnerBox.SelectedItem == null) return;
+            m_Mods ??= new ObservableCollection<ModItem>();
+            m_Mods.Clear();
+            List<ModItem> temp_mods = new();
+            temp_mods.Clear();
+            if (runner_box == null || runner_box.SelectedItem == null) return;
             
             try
             {
-                string runner_path = GetRunnerPathFromName(runnerBox.SelectedItem.ToString());
+                string runner_path = GetRunnerPathFromName(runner_box.SelectedItem.ToString());
                 string runner_directory = Directory.GetParent(runner_path)?.FullName ?? "";
-                string[] aurieFiles = Directory.GetFiles(Path.Combine(runner_directory, "mods", "Aurie"), "*.dll")
+                string[] aurie_files = Directory.GetFiles(Path.Combine(runner_directory, "mods", "Aurie"), "*.dll")
                     .Union(Directory.GetFiles(Path.Combine(runner_directory, "mods", "Aurie"), "*.dll.disabled"))
                     .ToArray();
-                string[] nativeFiles = Directory.GetFiles(Path.Combine(runner_directory, "mods", "Native"), "*.dll")
+                string[] native_files = Directory.GetFiles(Path.Combine(runner_directory, "mods", "Native"), "*.dll")
                     .Union(Directory.GetFiles(Path.Combine(runner_directory, "mods", "Native"), "*.dll.disabled"))
                     .ToArray();
 
-                foreach (string file in aurieFiles)
+                foreach (string file in aurie_files)
                 {
                     string mod_name = Path.GetFileName(file);
                     /*if (mod_name == "discord-rpc.dll")
@@ -385,42 +373,42 @@ namespace AurieInstaller.ViewModels.Pages
                     }*/
                     bool mod_enabled = !mod_name.Contains(".dll.disabled");
                     ModItem mod = new() {
-                        ModPath = file,
-                        ModName = mod_name,
-                        IsEnabled = mod_enabled,
-                        HasUpdate = false,
-                        IsNative = false
+                        m_ModPath = file,
+                        m_ModName = mod_name,
+                        m_IsEnabled = mod_enabled,
+                        m_HasUpdate = false,
+                        m_IsNative = false
                     };
-                    tempMods.Add(mod);
+                    temp_mods.Add(mod);
                 }
 
-                foreach (string file in nativeFiles)
+                foreach (string file in native_files)
                 {
                     string mod_name = Path.GetFileName(file);
                     bool mod_enabled = !mod_name.Contains(".dll.disabled");
                     ModItem mod = new() {
-                        ModPath = file,
-                        ModName = mod_name,
-                        IsEnabled = mod_enabled,
-                        HasUpdate = false,
-                        IsNative = true
+                        m_ModPath = file,
+                        m_ModName = mod_name,
+                        m_IsEnabled = mod_enabled,
+                        m_HasUpdate = false,
+                        m_IsNative = true
                     };
-                    tempMods.Add(mod);
+                    temp_mods.Add(mod);
                 }
 
-                int yytkIndex = tempMods.FindIndex(mod => mod.ModName == "YYToolkit.dll");
-                ModItem yytkMod = tempMods[yytkIndex];
-                tempMods.RemoveAt(yytkIndex);
-                tempMods.Insert(0, yytkMod);
+                int yytk_index = temp_mods.FindIndex(mod => mod.m_ModName == "YYToolkit.dll");
+                ModItem yytk_mod = temp_mods[yytk_index];
+                temp_mods.RemoveAt(yytk_index);
+                temp_mods.Insert(0, yytk_mod);
 
-                int aurieIndex = tempMods.FindIndex(mod => mod.ModName == "AurieCore.dll");
-                ModItem aurieMod = tempMods[aurieIndex];
-                tempMods.RemoveAt(aurieIndex);
-                tempMods.Insert(0, aurieMod);
+                int aurie_index = temp_mods.FindIndex(mod => mod.m_ModName == "AurieCore.dll");
+                ModItem aurie_mod = temp_mods[aurie_index];
+                temp_mods.RemoveAt(aurie_index);
+                temp_mods.Insert(0, aurie_mod);
 
-                foreach (ModItem mod in tempMods)
+                foreach (ModItem mod in temp_mods)
                 {
-                    Mods.Add(mod);
+                    m_Mods.Add(mod);
                 }
             }
             catch (Exception ex)
@@ -428,32 +416,32 @@ namespace AurieInstaller.ViewModels.Pages
                 Console.WriteLine(ex.ToString());
             }
 
-            addModsButton.Visibility = Visibility.Visible;
-            removeModsButton.Visibility = Visibility.Visible;
-            modListView.ItemsSource = Mods;
-            if (Mods.Count > 0)
+            add_mods_button.Visibility = Visibility.Visible;
+            remove_mods_button.Visibility = Visibility.Visible;
+            mod_list_view.ItemsSource = m_Mods;
+            if (m_Mods.Count > 0)
             {
-                modListCanvas.Visibility = Visibility.Visible;
-                modListView.Visibility = Visibility.Visible;
-                modListMask.Visibility = Visibility.Visible;
-                removeModsButton.IsEnabled = true;
+                mod_list_canvas.Visibility = Visibility.Visible;
+                mod_list_view.Visibility = Visibility.Visible;
+                mod_list_mask.Visibility = Visibility.Visible;
+                remove_mods_button.IsEnabled = true;
 
-                if (Mods.Count > 6)
+                if (m_Mods.Count > 6)
                 {
-                    modListCanvas.Width = 300;
-                    modListView.Width = 300;
+                    mod_list_canvas.Width = 300;
+                    mod_list_view.Width = 300;
                 }
                 else
                 {
-                    modListCanvas.Width = 286;
-                    modListView.Width = 286;
+                    mod_list_canvas.Width = 286;
+                    mod_list_view.Width = 286;
                 }
             }
             else
             {
-                modListCanvas.Width = 286;
-                modListView.Width = 286;
-                removeModsButton.IsEnabled = false;
+                mod_list_canvas.Width = 286;
+                mod_list_view.Width = 286;
+                remove_mods_button.IsEnabled = false;
             }
         }
 
@@ -462,7 +450,7 @@ namespace AurieInstaller.ViewModels.Pages
             Snackbar snackbar = new(GetSnackbarPresenter()) {
                 MinHeight = 0,
                 Content = Message,
-                Timeout = System.TimeSpan.FromSeconds(4),
+                Timeout = TimeSpan.FromSeconds(4),
                 Appearance = ControlAppearance.Danger,
                 VerticalContentAlignment = VerticalAlignment.Center
             };
@@ -519,36 +507,36 @@ namespace AurieInstaller.ViewModels.Pages
             return keys;
         }
 
-        internal static Dictionary<string, string> GetDownloadUrls(string json, string[] fileNames)
+        internal static Dictionary<string, string> GetDownloadUrls(string Json, string[] FileNames)
         {
-            Dictionary<string, string> downloadUrls = new();
+            Dictionary<string, string> download_urls = new();
 
-            using (JsonDocument doc = JsonDocument.Parse(json))
+            using (JsonDocument doc = JsonDocument.Parse(Json))
             {
                 JsonElement root = doc.RootElement;
 
-                if (root.TryGetProperty("assets", out JsonElement assetsArray) && assetsArray.ValueKind == JsonValueKind.Array)
+                if (root.TryGetProperty("assets", out JsonElement assets_array) && assets_array.ValueKind == JsonValueKind.Array)
                 {
-                    foreach (JsonElement asset in assetsArray.EnumerateArray())
+                    foreach (JsonElement asset in assets_array.EnumerateArray())
                     {
-                        string assetName = asset.GetProperty("name").GetString();
-                        string downloadUrl = asset.GetProperty("browser_download_url").GetString();
+                        string asset_name = asset.GetProperty("name").GetString();
+                        string download_url = asset.GetProperty("browser_download_url").GetString();
 
-                        if (fileNames.Contains(assetName))
+                        if (FileNames.Contains(asset_name))
                         {
-                            downloadUrls[assetName] = downloadUrl;
+                            download_urls[asset_name] = download_url;
                         }
                     }
                 }
             }
 
-            return downloadUrls;
+            return download_urls;
         }
 
         [RelayCommand]
         private void OnBrowseRunner()
         {
-            OpenFileDialog runner_selection_dialog = PickGame("Select the game executable...", "PE Files|*.exe|All Files|*.*");
+            OpenFileDialog runner_selection_dialog = PickGame("Select the game executable...", "Game Executables|*.exe");
             // Make it not a nullable (thank you Issue!)
             bool filename_selected = runner_selection_dialog.ShowDialog() ?? false;
             if (!filename_selected)
@@ -558,35 +546,35 @@ namespace AurieInstaller.ViewModels.Pages
             string runner_path = runner_selection_dialog.FileName;
             string runner_name = runner_selection_dialog.SafeFileName;
 
-            if (!runnerBox.Items.Contains(runner_name))
+            if (!runner_box.Items.Contains(runner_name))
             {
-                runnerBox.Items.Add(runner_name);
-                RunnerData newRunner = new() {
-                    Name = runner_name,
-                    Path = runner_path
+                runner_box.Items.Add(runner_name);
+                RunnerData new_runner = new() {
+                    m_Name = runner_name,
+                    m_Path = runner_path
                 };
-                settings.AddedRunners.Add(newRunner);
+                settings.m_AddedRunners.Add(new_runner);
             }
-            runnerBox.IsEnabled = true;
-            installButton.Visibility = Visibility.Visible;
-            playButton.Visibility = Visibility.Visible;
-            runnerBox.SelectedItem = runner_name;
-            settings.CurrentSelectedRunner = runner_name;
+            runner_box.IsEnabled = true;
+            install_button.Visibility = Visibility.Visible;
+            play_button.Visibility = Visibility.Visible;
+            runner_box.SelectedItem = runner_name;
+            settings.m_CurrentSelectedRunner = runner_name;
 
-            settingsManager.SaveSettings(settings);
+            settings_manager.SaveSettings(settings);
             SetModList();
         }
 
         public void OnRunnerChange(object sender, SelectionChangedEventArgs e)
         {
-            if (runnerBox != null && runnerBox.SelectedItem != null)
+            if (runner_box != null && runner_box.SelectedItem != null)
             {
-                string selectedRunnerName = (string)runnerBox.SelectedItem;
-                settings.CurrentSelectedRunner = selectedRunnerName;
-                settingsManager.SaveSettings(settings);
-                Console.WriteLine(selectedRunnerName);
+                string selected_runner_name = (string)runner_box.SelectedItem;
+                settings.m_CurrentSelectedRunner = selected_runner_name;
+                settings_manager.SaveSettings(settings);
+                Console.WriteLine(selected_runner_name);
 
-                using (RegistryKey? runner_key = GetRunnerKey(selectedRunnerName, true))
+                using (RegistryKey? runner_key = GetRunnerKey(selected_runner_name, true))
                 {
                     if (runner_key is null)
                     {
@@ -598,7 +586,7 @@ namespace AurieInstaller.ViewModels.Pages
                     runner_key.SetValue("IsAurieInstallerKey", 1, RegistryValueKind.DWord);
                     runner_key.SetValue("UseFilter", 1, RegistryValueKind.DWord);
 
-                    string runner_path = GetRunnerPathFromName(selectedRunnerName);
+                    string runner_path = GetRunnerPathFromName(selected_runner_name);
                     string runner_directory = Path.GetDirectoryName(runner_path);
                     string registry_runner_path = runner_path.Replace('\\', '_');
                     // Check if the framework is already initialized
@@ -606,17 +594,17 @@ namespace AurieInstaller.ViewModels.Pages
                     if ((runner_key.GetSubKeyNames().Contains(registry_runner_path) || IsRunningOnWine()) &&
                         CheckDirectoryStructure(runner_directory))
                     {
-                        canInstall = false;
-                        installButton.Content = "Uninstall Aurie";
-                        installButton.BorderBrush = Brushes.Red;
-                        Console.WriteLine($"{selectedRunnerName} already has Aurie installed!");
+                        can_install = false;
+                        install_button.Content = "Uninstall Aurie";
+                        install_button.BorderBrush = Brushes.Red;
+                        Console.WriteLine($"{selected_runner_name} already has Aurie installed!");
                     }
                     else
                     {
-                        canInstall = true;
-                        installButton.Content = "Install Aurie";
-                        installButton.BorderBrush = Brushes.Green;
-                        Console.WriteLine($"{selectedRunnerName} doesn't have Aurie installed yet!");
+                        can_install = true;
+                        install_button.Content = "Install Aurie";
+                        install_button.BorderBrush = Brushes.Green;
+                        Console.WriteLine($"{selected_runner_name} doesn't have Aurie installed yet!");
                     }
                     SetModList();
                 }
@@ -626,12 +614,12 @@ namespace AurieInstaller.ViewModels.Pages
         [RelayCommand]
         private async void OnInstallButton()
         {
-            if (runnerBox.SelectedItem == null)
+            if (runner_box.SelectedItem == null)
             {
                 Console.WriteLine("No runner currently selected!");
                 return;
             }
-            string runner_name = (string)runnerBox.SelectedItem;
+            string runner_name = (string)runner_box.SelectedItem;
             string runner_path = GetRunnerPathFromName(runner_name);
             try
             {
@@ -648,7 +636,7 @@ namespace AurieInstaller.ViewModels.Pages
                     runner_key.SetValue("UseFilter", 1, RegistryValueKind.DWord);
 
                     string registry_runner_path = runner_path.Replace('\\', '_');
-                    if (canInstall == true)
+                    if (can_install == true)
                     {
                         // Create the filter subkey with our name
                         using (RegistryKey? filter_subkey = runner_key.CreateSubKey(registry_runner_path, true))
@@ -682,13 +670,13 @@ namespace AurieInstaller.ViewModels.Pages
                             string owner = "AurieFramework";
                             string[] repos = { "Aurie", "YYToolkit" };
 
-                            Dictionary<string, string[]> fileNames = new()
+                            Dictionary<string, string[]> file_names = new()
                             {
                                 { "Aurie", new string[] { "AurieLoader.exe", "AurieCore.dll" } },
                                 { "YYToolkit", new string[] { "YYToolkit.dll" } }
                             };
 
-                            Dictionary<string, string> localFilePaths = new()
+                            Dictionary<string, string> local_file_paths = new()
                             {
                                 { "AurieLoader.exe", Path.Combine(runner_directory, "mods", "AurieLoader.exe") },
                                 { "AurieCore.dll", Path.Combine(runner_directory, "mods", "Native", "AurieCore.dll") },
@@ -697,70 +685,70 @@ namespace AurieInstaller.ViewModels.Pages
 
                             using (HttpClient client = new())
                             {
-                                fileNameText.Text = "";
-                                int totalFiles = localFilePaths.Count;
-                                int downloadedFiles = 0;
+                                file_name_text.Text = "";
+                                int total_files = local_file_paths.Count;
+                                int downloaded_files = 0;
 
                                 foreach (string repo in repos)
                                 {
                                     client.DefaultRequestHeaders.UserAgent.ParseAdd("Aurie");
                                     client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github.v3+json");
 
-                                    string apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases/latest";
-                                    HttpResponseMessage response = await client.GetAsync(apiUrl);
+                                    string api_url = $"https://api.github.com/repos/{owner}/{repo}/releases/latest";
+                                    HttpResponseMessage response = await client.GetAsync(api_url);
 
                                     if (response.IsSuccessStatusCode)
                                     {
-                                        string responseContent = await response.Content.ReadAsStringAsync();
-                                        fileNames.TryGetValue(repo, out string[] fileNamesArray);
-                                        Dictionary<string, string> downloadUrls = GetDownloadUrls(responseContent, fileNamesArray);
+                                        string response_content = await response.Content.ReadAsStringAsync();
+                                        file_names.TryGetValue(repo, out string[] file_names_array);
+                                        Dictionary<string, string> download_urls = GetDownloadUrls(response_content, file_names_array);
 
-                                        if (downloadUrls.Count > 0)
+                                        if (download_urls.Count > 0)
                                         {
-                                            foreach (string fileName in fileNamesArray)
+                                            foreach (string file_name in file_names_array)
                                             {
-                                                if (downloadUrls.TryGetValue(fileName, out string downloadUrl))
+                                                if (download_urls.TryGetValue(file_name, out string download_url))
                                                 {
-                                                    HttpResponseMessage fileResponse = await client.GetAsync(downloadUrl);
+                                                    HttpResponseMessage file_response = await client.GetAsync(download_url);
 
-                                                    if (fileResponse.IsSuccessStatusCode)
+                                                    if (file_response.IsSuccessStatusCode)
                                                     {
-                                                        long totalFileSize = fileResponse.Content.Headers.ContentLength ?? 0;
-                                                        long bytesDownloaded = 0;
+                                                        long total_file_size = file_response.Content.Headers.ContentLength ?? 0;
+                                                        long bytes_downloaded = 0;
                                                         byte[] buffer = new byte[4096];
-                                                        Console.WriteLine($"Writing to '{localFilePaths[fileName]}'...");
-                                                        fileNameText.Text = $"Downloading {fileName}...";
-                                                        downloadProgressBar.Visibility = Visibility.Visible;
-                                                        fileNameText.Visibility = Visibility.Visible;
-                                                        using (Stream stream = await fileResponse.Content.ReadAsStreamAsync())
+                                                        Console.WriteLine($"Writing to '{local_file_paths[file_name]}'...");
+                                                        file_name_text.Text = $"Downloading {file_name}...";
+                                                        download_progress_bar.Visibility = Visibility.Visible;
+                                                        file_name_text.Visibility = Visibility.Visible;
+                                                        using (Stream stream = await file_response.Content.ReadAsStreamAsync())
                                                         {
-                                                            using (FileStream fileStream = new FileStream(localFilePaths[fileName], FileMode.Create, FileAccess.Write))
+                                                            using (FileStream file_stream = new FileStream(local_file_paths[file_name], FileMode.Create, FileAccess.Write))
                                                             {
                                                                 int bytesRead;
                                                                 while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                                                                 {
-                                                                    await fileStream.WriteAsync(buffer, 0, bytesRead);
+                                                                    await file_stream.WriteAsync(buffer, 0, bytesRead);
 
-                                                                    bytesDownloaded += bytesRead;
+                                                                    bytes_downloaded += bytesRead;
 
-                                                                    int fileProgress = (int)((double)bytesDownloaded / totalFileSize * 100);
-                                                                    downloadProgressBar.Value = (int)(100.0 / totalFiles) * downloadedFiles + (int)((double)fileProgress / totalFiles);
+                                                                    int file_progress = (int)((double)bytes_downloaded / total_file_size * 100);
+                                                                    download_progress_bar.Value = (int)(100.0 / total_files) * downloaded_files + (int)((double)file_progress / total_files);
                                                                 }
                                                             }
                                                         }
-                                                        downloadedFiles++;
-                                                        Console.WriteLine($"File '{fileName}' downloaded to '{localFilePaths[fileName]}' successfully.");
-                                                    } else Console.WriteLine($"Failed to download file '{fileName}'. Status code: {fileResponse.StatusCode}");
-                                                } else Console.WriteLine($"Failed to get download URL for file '{fileName}'.");
+                                                        downloaded_files++;
+                                                        Console.WriteLine($"File '{file_name}' downloaded to '{local_file_paths[file_name]}' successfully.");
+                                                    } else Console.WriteLine($"Failed to download file '{file_name}'. Status code: {file_response.StatusCode}");
+                                                } else Console.WriteLine($"Failed to get download URL for file '{file_name}'.");
                                             }
                                         } else Console.WriteLine("No download URLs found for the specified files.");
                                     } else Console.WriteLine($"Failed to get latest release information. Status code: {response.StatusCode}");
                                 }
                             }
 
-                            downloadProgressBar.Value = 100;
-                            downloadProgressBar.Visibility = Visibility.Hidden;
-                            fileNameText.Visibility = Visibility.Hidden;
+                            download_progress_bar.Value = 100;
+                            download_progress_bar.Visibility = Visibility.Hidden;
+                            file_name_text.Visibility = Visibility.Hidden;
 
                             await GetSnackbarPresenter().HideCurrent();
                             Snackbar snackbar = new(GetSnackbarPresenter()) {
@@ -772,13 +760,13 @@ namespace AurieInstaller.ViewModels.Pages
                             };
                             snackbar.Show();
                             System.Media.SystemSounds.Hand.Play();
-                            canInstall = false;
-                            installButton.Content = "Uninstall Aurie";
-                            installButton.BorderBrush = Brushes.Red;
+                            can_install = false;
+                            install_button.Content = "Uninstall Aurie";
+                            install_button.BorderBrush = Brushes.Red;
                             SetModList();
                         }
                     }
-                    else if (canInstall == false)
+                    else if (can_install == false)
                     {
                         runner_key.DeleteSubKeyTree(registry_runner_path);
 
@@ -798,9 +786,9 @@ namespace AurieInstaller.ViewModels.Pages
                         };
                         System.Media.SystemSounds.Exclamation.Play();
                         snackbar.Show();
-                        canInstall = true;
-                        installButton.Content = "Install Aurie";
-                        installButton.BorderBrush = Brushes.Green;
+                        can_install = true;
+                        install_button.Content = "Install Aurie";
+                        install_button.BorderBrush = Brushes.Green;
                         SetModList();
                     }
                 }
@@ -872,18 +860,18 @@ namespace AurieInstaller.ViewModels.Pages
         [RelayCommand]
         private void OnPlayButton()
         {
-            string runnerPath = GetRunnerPathFromName(settings.CurrentSelectedRunner);
+            string runner_path = GetRunnerPathFromName(settings.m_CurrentSelectedRunner);
 
-            if (runnerPath == null)
+            if (runner_path == null)
                 return;
 
-            string directory = Path.GetDirectoryName(runnerPath);
+            string directory = Path.GetDirectoryName(runner_path);
             string loader = $"mods\\AurieLoader.exe";
-            string arguments = $"{Path.GetFileName(runnerPath)}";
+            string arguments = $"{Path.GetFileName(runner_path)}";
 
             try
             {
-                using (RegistryKey? runner_key = GetRunnerKey(Path.GetFileName(runnerPath), true))
+                using (RegistryKey? runner_key = GetRunnerKey(Path.GetFileName(runner_path), true))
                 {
                     if (runner_key is null)
                     {
@@ -891,9 +879,9 @@ namespace AurieInstaller.ViewModels.Pages
                         return;
                     }
 
-                    Console.WriteLine($"Starting {settings.CurrentSelectedRunner}...");
+                    Console.WriteLine($"Starting {settings.m_CurrentSelectedRunner}...");
 
-                    string registry_runner_path = runnerPath.Replace('\\', '_');
+                    string registry_runner_path = runner_path.Replace('\\', '_');
                     if ((runner_key.GetSubKeyNames().Contains(registry_runner_path) || IsRunningOnWine()) &&
                         CheckDirectoryStructure(directory))
                     {
@@ -906,7 +894,7 @@ namespace AurieInstaller.ViewModels.Pages
                     }
                     else
                     {
-                        Process.Start(runnerPath);
+                        Process.Start(runner_path);
                     }
                 }
             }
@@ -919,37 +907,37 @@ namespace AurieInstaller.ViewModels.Pages
         [RelayCommand]
         private void OnAddModsButton()
         {
-            string modName = runnerBox.SelectedItem.ToString();
+            string mod_name = runner_box.SelectedItem.ToString();
 
-            OpenFileDialog openFileDialog = new OpenFileDialog {
+            OpenFileDialog open_file_dialog = new OpenFileDialog {
                 Multiselect = true,
                 Filter = "Mod files (*.dll)|*.dll",
-                Title = $"Select mods to add to {modName}"
+                Title = $"Select mods to add to {mod_name}"
             };
 
-            bool? result = openFileDialog.ShowDialog();
+            bool? result = open_file_dialog.ShowDialog();
 
             if (result == true)
             {
-                string[] selectedFiles = openFileDialog.FileNames;
+                string[] selected_files = open_file_dialog.FileNames;
 
-                string runner_path = GetRunnerPathFromName(modName);
+                string runner_path = GetRunnerPathFromName(mod_name);
                 string runner_directory = Directory.GetParent(runner_path)?.FullName ?? "";
-                string destinationDirectory = Path.Combine(runner_directory, "mods", "Aurie");
+                string destination_directory = Path.Combine(runner_directory, "mods", "Aurie");
 
-                foreach (string file in selectedFiles)
+                foreach (string file in selected_files)
                 {
-                    string fileName = Path.GetFileName(file);
-                    string destinationPath = Path.Combine(destinationDirectory, fileName);
+                    string file_name = Path.GetFileName(file);
+                    string destination_path = Path.Combine(destination_directory, file_name);
 
                     try
                     {
-                        File.Copy(file, destinationPath, true);
-                        Console.WriteLine($"File '{fileName}' copied to '{destinationPath}' successfully.");
+                        File.Copy(file, destination_path, true);
+                        Console.WriteLine($"File '{file_name}' copied to '{destination_path}' successfully.");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error copying file '{fileName}': {ex.Message}");
+                        Console.WriteLine($"Error copying file '{file_name}': {ex.Message}");
                     }
                 }
                 SetModList();
@@ -959,13 +947,13 @@ namespace AurieInstaller.ViewModels.Pages
         [RelayCommand]
         private async void OnRemoveModsButton()
         {
-            if (modListView.SelectedItems.Count == 0)
+            if (mod_list_view.SelectedItems.Count == 0)
             {
                 await GetSnackbarPresenter().HideCurrent();
                 Snackbar snackbar = new(GetSnackbarPresenter()) {
                     MinHeight = 0,
                     Content = "No mods are selected!",
-                    Timeout = System.TimeSpan.FromSeconds(4),
+                    Timeout = TimeSpan.FromSeconds(4),
                     Appearance = ControlAppearance.Danger,
                     VerticalContentAlignment = VerticalAlignment.Center
                 };
@@ -974,40 +962,40 @@ namespace AurieInstaller.ViewModels.Pages
                 return;
             }
 
-            var contentDialog = new ContentDialog(GetContentPresenter());
+            var content_dialog = new ContentDialog(GetContentPresenter()) {
+                Title = "Delete Mods",
+                Content = "Would you like to delete all of the selected mods?",
+                PrimaryButtonText = "Delete",
+                CloseButtonText = "Cancel",
+                DialogHeight = 270,
+                DialogWidth = 340
+            };
 
-            contentDialog.Title = "Delete Mods";
-            contentDialog.Content = "Would you like to delete all of the selected mods?";
-            contentDialog.PrimaryButtonText = "Delete";
-            contentDialog.CloseButtonText = "Cancel";
-            contentDialog.DialogHeight = 270;
-            contentDialog.DialogWidth = 340;
-
-            ContentDialogResult result = await contentDialog.ShowAsync();
+            ContentDialogResult result = await content_dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-                bool modsDeleted = false;
+                bool mods_deleted = false;
                 Console.WriteLine("Deleting all selected mods...");
-                foreach (Object selectedItem in modListView.SelectedItems)
+                foreach (object selected_item in mod_list_view.SelectedItems)
                 {
-                    if (selectedItem is ModItem modItem)
+                    if (selected_item is ModItem mod_item)
                     {
-                        if (modItem.ModName == "AurieCore.dll" || modItem.ModName == "YYToolkit.dll") continue;
-                        string modPath = modItem.ModPath;
+                        if (mod_item.m_ModName == "AurieCore.dll" || mod_item.m_ModName == "YYToolkit.dll") continue;
+                        string mod_path = mod_item.m_ModPath;
 
                         try
                         {
-                            File.Delete(modPath);
-                            modsDeleted = true;
-                            Console.WriteLine($"Deleted {modPath}!");
+                            File.Delete(mod_path);
+                            mods_deleted = true;
+                            Console.WriteLine($"Deleted {mod_path}!");
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Error deleting file {modPath}: {ex.Message}");
+                            Console.WriteLine($"Error deleting file {mod_path}: {ex.Message}");
                         }
                     }
                 }
-                if (modsDeleted)
+                if (mods_deleted)
                 {
                     Console.WriteLine("Settings mods!");
                     SetModList();

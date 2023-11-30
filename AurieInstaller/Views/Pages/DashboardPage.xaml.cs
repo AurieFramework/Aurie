@@ -16,6 +16,7 @@ using Wpf.Ui.Appearance;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Data;
+using System.Runtime.CompilerServices;
 
 namespace AurieInstaller.Views.Pages
 {
@@ -33,27 +34,25 @@ namespace AurieInstaller.Views.Pages
             Loaded += DashboardPage_Loaded;
         }
 
+        private bool is_initialized = false;
+
         private void DashboardPage_Loaded(object sender, RoutedEventArgs e)
         {
-            var uiElements = new UIElements
+            var ui_elements = new UIElements
             {
-                InstallButton = installButton,
-                RunnerBox = runnerBox,
-                DownloadProgressBar = progressBar,
-                PlayButton = playButton,
-                FileNameText = fileNameText,
-                ModListCanvas = modListCanvas,
-                ModListMask = modListMask,
-                ModListView = modListView,
-                AddModsButton = addModsButton,
-                RemoveModsButton = removeModsButton
+                m_InstallButton = install_button,
+                m_RunnerBox = runner_box,
+                m_DownloadProgressBar = progress_bar,
+                m_PlayButton = play_button,
+                m_FileNameText = file_name_text,
+                m_ModListCanvas = mod_list_canvas,
+                m_ModListMask = mod_list_mask,
+                m_ModListView = mod_list_view,
+                m_AddModsButton = add_mods_button,
+                m_RemoveModsButton = remove_mods_button
             };
-            ViewModel.SetUIElements(uiElements);
-        }
-
-        private void ToggleButton_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            Console.WriteLine($"DataContext changed. New type: {e.NewValue?.GetType().FullName}");
+            ViewModel.SetUIElements(ui_elements, is_initialized);
+            is_initialized = true;
         }
 
         private void RunnerBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -67,10 +66,10 @@ namespace AurieInstaller.Views.Pages
             Grid grid = FindParent<Grid>(toggle_button);
             ListViewItem list_view_item = FindParent<ListViewItem>(grid);
             ModItem mod_item = (ModItem)list_view_item.DataContext;
-            TextBlock text_block = (TextBlock)FindParent<Grid>(toggle_button)?.FindName("modName");
-            SymbolIcon symbol_icon = (SymbolIcon)toggle_button.FindName("modToggleSymbol");
+            TextBlock text_block = (TextBlock)FindParent<Grid>(toggle_button)?.FindName("mod_name");
+            SymbolIcon symbol_icon = (SymbolIcon)toggle_button.FindName("mod_toggle_symbol");
 
-            mod_item.IsEnabled = true;
+            mod_item.m_IsEnabled = true;
             toggle_button.ToolTip = "Disable Mod";
             ThemeType theme = Theme.GetAppTheme();
             if (theme == ThemeType.Dark)
@@ -82,8 +81,8 @@ namespace AurieInstaller.Views.Pages
                 text_block.Foreground = Brushes.Black;
             }
             symbol_icon.Symbol = Wpf.Ui.Common.SymbolRegular.Checkmark20;
-            mod_item.ModPath = ChangeFileExtension(mod_item.ModPath);
-            mod_item.ModName = Path.GetFileName(mod_item.ModPath);
+            mod_item.m_ModPath = ChangeFileExtension(mod_item.m_ModPath);
+            mod_item.m_ModName = Path.GetFileName(mod_item.m_ModPath);
         }
 
         private void ModToggle_Unchecked(object sender, RoutedEventArgs e)
@@ -92,40 +91,40 @@ namespace AurieInstaller.Views.Pages
             Grid grid = FindParent<Grid>(toggle_button);
             ListViewItem list_view_item = FindParent<ListViewItem>(grid);
             ModItem mod_item = (ModItem)list_view_item.DataContext;
-            TextBlock text_block = (TextBlock)FindParent<Grid>(toggle_button)?.FindName("modName");
-            SymbolIcon symbol_icon = (SymbolIcon)toggle_button.FindName("modToggleSymbol");
+            TextBlock text_block = (TextBlock)FindParent<Grid>(toggle_button)?.FindName("mod_name");
+            SymbolIcon symbol_icon = (SymbolIcon)toggle_button.FindName("mod_toggle_symbol");
 
-            mod_item.IsEnabled = false;
+            mod_item.m_IsEnabled = false;
             toggle_button.ToolTip = "Enable Mod";
             text_block.Foreground = Brushes.Gray;
             symbol_icon.Symbol = Wpf.Ui.Common.SymbolRegular.Dismiss20;
-            mod_item.ModPath = ChangeFileExtension(mod_item.ModPath);
-            mod_item.ModName = Path.GetFileName(mod_item.ModPath);
+            mod_item.m_ModPath = ChangeFileExtension(mod_item.m_ModPath);
+            mod_item.m_ModName = Path.GetFileName(mod_item.m_ModPath);
         }
 
         private void ModToggle_Loaded(object sender, RoutedEventArgs e)
         {
             ToggleButton toggle_button = (ToggleButton)sender;
             ModItem mod_item = (ModItem)toggle_button.DataContext;
-            TextBlock text_block = (TextBlock)FindParent<Grid>(toggle_button)?.FindName("modName");
-            SymbolIcon symbol_icon = (SymbolIcon)toggle_button.FindName("modToggleSymbol");
+            TextBlock text_block = (TextBlock)FindParent<Grid>(toggle_button)?.FindName("mod_name");
+            SymbolIcon symbol_icon = (SymbolIcon)toggle_button.FindName("mod_toggle_symbol");
 
-            if (mod_item.ModName == "AurieCore.dll" || mod_item.ModName == "YYToolkit.dll")
+            if (mod_item.m_ModName == "AurieCore.dll" || mod_item.m_ModName == "YYToolkit.dll")
             {
-                toggle_button.ToolTip = $"{mod_item.ModName} can't be disabled!";
+                toggle_button.ToolTip = $"{mod_item.m_ModName} can't be disabled!";
                 toggle_button.IsEnabled = false;
-                text_block.FontStyle = mod_item.IsNative ? FontStyles.Italic : FontStyles.Normal;
+                text_block.FontStyle = mod_item.m_IsNative ? FontStyles.Italic : FontStyles.Normal;
                 text_block.FontWeight = FontWeights.Bold;
                 symbol_icon.Symbol = (Wpf.Ui.Common.SymbolRegular)Wpf.Ui.Common.SymbolFilled.Checkmark20;
                 return;
             }
 
-            toggle_button.ToolTip = mod_item.IsEnabled ? "Disable Mod" : "Enable Mod";
-            symbol_icon.Symbol = mod_item.IsEnabled ? Wpf.Ui.Common.SymbolRegular.Checkmark20 : Wpf.Ui.Common.SymbolRegular.Dismiss20;
+            toggle_button.ToolTip = mod_item.m_IsEnabled ? "Disable Mod" : "Enable Mod";
+            symbol_icon.Symbol = mod_item.m_IsEnabled ? Wpf.Ui.Common.SymbolRegular.Checkmark20 : Wpf.Ui.Common.SymbolRegular.Dismiss20;
 
             SolidColorBrush enabled_brush = Theme.GetAppTheme() == ThemeType.Dark ? Brushes.White : Brushes.Black;
-            text_block.Foreground = mod_item.IsEnabled ? enabled_brush : Brushes.Gray;
-            text_block.FontStyle = mod_item.IsNative ? FontStyles.Italic : FontStyles.Normal;
+            text_block.Foreground = mod_item.m_IsEnabled ? enabled_brush : Brushes.Gray;
+            text_block.FontStyle = mod_item.m_IsNative ? FontStyles.Italic : FontStyles.Normal;
         }
 
         static string? ChangeFileExtension(string current_file_path)
@@ -156,16 +155,16 @@ namespace AurieInstaller.Views.Pages
         public static T? FindParent<T>(DependencyObject child) where T : DependencyObject
         {
             //get parent item
-            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+            DependencyObject parent_object = VisualTreeHelper.GetParent(child);
 
             //we've reached the end of the tree
-            if (parentObject == null) return null;
+            if (parent_object == null) return null;
 
             //check if the parent matches the type we're looking for
-            if (parentObject is T parent)
+            if (parent_object is T parent)
                 return parent;
             else
-                return FindParent<T>(parentObject);
+                return FindParent<T>(parent_object);
         }
 
         private void ModListMask_Loaded(object sender, RoutedEventArgs e)
@@ -173,11 +172,11 @@ namespace AurieInstaller.Views.Pages
             ThemeType theme = Theme.GetAppTheme();
             if (theme == ThemeType.Dark)
             {
-                modListMask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#202020");
+                mod_list_mask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#202020");
             }
             else if (theme == ThemeType.Light)
             {
-                modListMask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#fafafa");
+                mod_list_mask.Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#fafafa");
             }
         }
     }

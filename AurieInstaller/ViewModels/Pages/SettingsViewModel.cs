@@ -84,13 +84,13 @@ namespace AurieInstaller.ViewModels.Pages
         [RelayCommand]
         private async void OnDeleteConfig()
         {
-            const string SettingsFileName = "aurie-config.json";
-            string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Aurie");
-            string SettingsFilePath = Path.Combine(AppDataPath, SettingsFileName);
+            const string settings_file_name = "aurie-config.json";
+            string app_data_path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Aurie");
+            string settings_file_path = Path.Combine(app_data_path, settings_file_name);
 
-            if (File.Exists(SettingsFilePath))
+            if (File.Exists(settings_file_path))
             {
-                File.Delete(SettingsFilePath);
+                File.Delete(settings_file_path);
                 Console.WriteLine("Config file deleted!");
             }
             else

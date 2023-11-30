@@ -26,9 +26,9 @@ namespace AurieInstaller.Views.Windows
         {
             Wpf.Ui.Appearance.Watcher.Watch(this);
 
-            _ = new DashboardViewModel() { SnackbarService = snackbarService };
+            _ = new DashboardViewModel() { m_SnackbarService = snackbarService };
             _ = new SettingsViewModel() { SnackbarService = snackbarService };
-            _ = new DashboardViewModel() { ContentDialogService = contentDialogService };
+            _ = new DashboardViewModel() { m_ContentDialogService = contentDialogService };
 
             ViewModel = viewModel;
             ViewModel.SnackbarService = snackbarService;
