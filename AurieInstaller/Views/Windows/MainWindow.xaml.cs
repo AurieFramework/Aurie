@@ -5,10 +5,8 @@
 
 using AurieInstaller.ViewModels.Pages;
 using AurieInstaller.ViewModels.Windows;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Windows.Interop;
 using Wpf.Ui;
+using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
 namespace AurieInstaller.Views.Windows
@@ -25,7 +23,14 @@ namespace AurieInstaller.Views.Windows
             IContentDialogService contentDialogService
         )
         {
-            Wpf.Ui.Appearance.SystemThemeWatcher.Watch(this);
+            if (SettingsManager.LoadSettings().m_CurrentSelectedTheme is ApplicationTheme app_theme)
+            {
+                ApplicationThemeManager.Apply(app_theme);
+            }
+            else
+            {
+                SystemThemeWatcher.Watch(this);
+            }
 
             _ = new DashboardViewModel() { m_SnackbarService = snackbarService };
             _ = new SettingsViewModel() { SnackbarService = snackbarService };

@@ -32,6 +32,7 @@ namespace AurieInstaller.ViewModels.Pages
     {
         public List<RunnerData> m_AddedRunners { get; set; } = new List<RunnerData>();
         public string? m_CurrentSelectedRunner { get; set; }
+        public ApplicationTheme m_CurrentSelectedTheme { get; set; } = ApplicationTheme.Dark;
     }
 
     public class SettingsManager
@@ -204,21 +205,18 @@ namespace AurieInstaller.ViewModels.Pages
             public Button? m_RemoveModsButton {  get; set; }
         }
 
-        public void SetUIElements(UIElements UIElements, bool IsInitialized)
+        public void SetUIElements(UIElements UIElements)
         {
-            if (IsInitialized == false)
-            {
-                install_button = UIElements.m_InstallButton;
-                runner_box = UIElements.m_RunnerBox;
-                download_progress_bar = UIElements.m_DownloadProgressBar;
-                play_button = UIElements.m_PlayButton;
-                file_name_text = UIElements.m_FileNameText;
-                mod_list_canvas = UIElements.m_ModListCanvas;
-                mod_list_mask = UIElements.m_ModListMask;
-                mod_list_view = UIElements.m_ModListView;
-                add_mods_button = UIElements.m_AddModsButton;
-                remove_mods_button = UIElements.m_RemoveModsButton;
-            }
+            install_button = UIElements.m_InstallButton;
+            runner_box = UIElements.m_RunnerBox;
+            download_progress_bar = UIElements.m_DownloadProgressBar;
+            play_button = UIElements.m_PlayButton;
+            file_name_text = UIElements.m_FileNameText;
+            mod_list_canvas = UIElements.m_ModListCanvas;
+            mod_list_mask = UIElements.m_ModListMask;
+            mod_list_view = UIElements.m_ModListView;
+            add_mods_button = UIElements.m_AddModsButton;
+            remove_mods_button = UIElements.m_RemoveModsButton;
 
             if (install_button != null)
             {
@@ -305,7 +303,7 @@ namespace AurieInstaller.ViewModels.Pages
             {
                 Console.WriteLine("mod_list_view found!");
                 mod_list_view.Visibility = Visibility.Hidden;
-                if (IsInitialized == false) SetModList();
+                SetModList("SetUIElements");
             }
         }
 
@@ -319,8 +317,9 @@ namespace AurieInstaller.ViewModels.Pages
             return content_dialog_service.GetContentPresenter();
         }
 
-        private void SetModList()
+        private void SetModList(string Source)
         {
+            Console.WriteLine($"CALLING SETMODLIST! SOURCE: {Source}");
             m_Mods ??= new ObservableCollection<ModItem>();
             m_Mods.Clear();
             List<ModItem> temp_mods = new();
@@ -561,7 +560,7 @@ namespace AurieInstaller.ViewModels.Pages
             settings.m_CurrentSelectedRunner = runner_name;
 
             settings_manager.SaveSettings(settings);
-            SetModList();
+            SetModList("OnBrowseRunner");
         }
 
         public void OnRunnerChange(object sender, SelectionChangedEventArgs e)
@@ -605,7 +604,7 @@ namespace AurieInstaller.ViewModels.Pages
                         install_button.BorderBrush = Brushes.Green;
                         Console.WriteLine($"{selected_runner_name} doesn't have Aurie installed yet!");
                     }
-                    SetModList();
+                    SetModList("OnRunnerChange");
                 }
             }
         }
@@ -762,7 +761,7 @@ namespace AurieInstaller.ViewModels.Pages
                             can_install = false;
                             install_button.Content = "Uninstall Aurie";
                             install_button.BorderBrush = Brushes.Red;
-                            SetModList();
+                            SetModList("OnInstallButton");
                         }
                     }
                     else if (can_install == false)
@@ -788,7 +787,7 @@ namespace AurieInstaller.ViewModels.Pages
                         can_install = true;
                         install_button.Content = "Install Aurie";
                         install_button.BorderBrush = Brushes.Green;
-                        SetModList();
+                        SetModList("OnInstallButton");
                     }
                 }
             }
@@ -939,7 +938,7 @@ namespace AurieInstaller.ViewModels.Pages
                         Console.WriteLine($"Error copying file '{file_name}': {ex.Message}");
                     }
                 }
-                SetModList();
+                SetModList("OnAddModsButton");
             }
         }
 
@@ -997,7 +996,7 @@ namespace AurieInstaller.ViewModels.Pages
                 if (mods_deleted)
                 {
                     Console.WriteLine("Settings mods!");
-                    SetModList();
+                    SetModList("OnRemoveModsButton");
                 }
             }
         }

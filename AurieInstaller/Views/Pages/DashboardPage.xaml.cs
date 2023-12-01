@@ -34,8 +34,6 @@ namespace AurieInstaller.Views.Pages
             Loaded += DashboardPage_Loaded;
         }
 
-        private bool is_initialized = false;
-
         private void DashboardPage_Loaded(object sender, RoutedEventArgs e)
         {
             var ui_elements = new UIElements
@@ -51,8 +49,7 @@ namespace AurieInstaller.Views.Pages
                 m_AddModsButton = add_mods_button,
                 m_RemoveModsButton = remove_mods_button
             };
-            ViewModel.SetUIElements(ui_elements, is_initialized);
-            is_initialized = true;
+            ViewModel.SetUIElements(ui_elements);
         }
 
         private void RunnerBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -105,27 +102,34 @@ namespace AurieInstaller.Views.Pages
         private void ModToggle_Loaded(object sender, RoutedEventArgs e)
         {
             ToggleButton toggle_button = (ToggleButton)sender;
-            Console.WriteLine(toggle_button.DataContext.ToString());
-            ModItem mod_item = (ModItem)toggle_button.DataContext;
-            TextBlock text_block = (TextBlock)FindParent<Grid>(toggle_button)?.FindName("mod_name");
-            SymbolIcon symbol_icon = (SymbolIcon)toggle_button.FindName("mod_toggle_symbol");
-
-            if (mod_item.m_ModName == "AurieCore.dll" || mod_item.m_ModName == "YYToolkit.dll")
+            Grid grid = FindParent<Grid>(toggle_button);
+            ListViewItem list_view_item = FindParent<ListViewItem>(grid);
+            if (list_view_item.DataContext is ModItem mod_item)
             {
-                toggle_button.ToolTip = $"{mod_item.m_ModName} can't be disabled!";
-                toggle_button.IsEnabled = false;
+                TextBlock text_block = (TextBlock)FindParent<Grid>(toggle_button)?.FindName("mod_name");
+                SymbolIcon symbol_icon = (SymbolIcon)toggle_button.FindName("mod_toggle_symbol");
+
+                if (mod_item.m_ModName == "AurieCore.dll" || mod_item.m_ModName == "YYToolkit.dll")
+                {
+                    toggle_button.ToolTip = $"{mod_item.m_ModName} can't be disabled!";
+                    toggle_button.IsEnabled = false;
+                    text_block.FontStyle = mod_item.m_IsNative ? FontStyles.Italic : FontStyles.Normal;
+                    text_block.FontWeight = FontWeights.Bold;
+                    symbol_icon.Symbol = (SymbolRegular)SymbolFilled.Checkmark20;
+                    return;
+                }
+
+                toggle_button.ToolTip = mod_item.m_IsEnabled ? "Disable Mod" : "Enable Mod";
+                symbol_icon.Symbol = mod_item.m_IsEnabled ? SymbolRegular.Checkmark20 : SymbolRegular.Dismiss20;
+
+                SolidColorBrush enabled_brush = ApplicationThemeManager.GetAppTheme() == ApplicationTheme.Dark ? Brushes.White : Brushes.Black;
+                text_block.Foreground = mod_item.m_IsEnabled ? enabled_brush : Brushes.Gray;
                 text_block.FontStyle = mod_item.m_IsNative ? FontStyles.Italic : FontStyles.Normal;
-                text_block.FontWeight = FontWeights.Bold;
-                symbol_icon.Symbol = (SymbolRegular)SymbolFilled.Checkmark20;
-                return;
             }
-
-            toggle_button.ToolTip = mod_item.m_IsEnabled ? "Disable Mod" : "Enable Mod";
-            symbol_icon.Symbol = mod_item.m_IsEnabled ? SymbolRegular.Checkmark20 : SymbolRegular.Dismiss20;
-
-            SolidColorBrush enabled_brush = ApplicationThemeManager.GetAppTheme() == ApplicationTheme.Dark ? Brushes.White : Brushes.Black;
-            text_block.Foreground = mod_item.m_IsEnabled ? enabled_brush : Brushes.Gray;
-            text_block.FontStyle = mod_item.m_IsNative ? FontStyles.Italic : FontStyles.Normal;
+            else
+            {
+                Console.WriteLine("ListViewItem.DataContext is not of type ModItem!");
+            }
         }
 
         static string? ChangeFileExtension(string current_file_path)

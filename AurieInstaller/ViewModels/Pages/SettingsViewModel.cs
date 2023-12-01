@@ -14,6 +14,9 @@ namespace AurieInstaller.ViewModels.Pages
     {
         private bool _isInitialized = false;
 
+        private AppSettings settings = new();
+        private SettingsManager settings_manager = new();
+
         private static ISnackbarService? _snackbarService;
 
         public ISnackbarService SnackbarService {
@@ -38,6 +41,7 @@ namespace AurieInstaller.ViewModels.Pages
 
         public void OnNavigatedTo()
         {
+            settings = SettingsManager.LoadSettings();
             if (!_isInitialized)
                 InitializeViewModel();
         }
@@ -46,7 +50,7 @@ namespace AurieInstaller.ViewModels.Pages
 
         private void InitializeViewModel()
         {
-            CurrentTheme = ApplicationThemeManager.GetAppTheme();
+            CurrentTheme = settings.m_CurrentSelectedTheme;
             AppVersion = $"AurieManager - {GetAssemblyVersion()}";
 
             _isInitialized = true;
@@ -69,6 +73,8 @@ namespace AurieInstaller.ViewModels.Pages
 
                     ApplicationThemeManager.Apply(ApplicationTheme.Light);
                     CurrentTheme = ApplicationTheme.Light;
+                    settings.m_CurrentSelectedTheme = ApplicationTheme.Light;
+                    settings_manager.SaveSettings(settings);
 
                     break;
 
@@ -78,6 +84,8 @@ namespace AurieInstaller.ViewModels.Pages
 
                     ApplicationThemeManager.Apply(ApplicationTheme.Dark);
                     CurrentTheme = ApplicationTheme.Dark;
+                    settings.m_CurrentSelectedTheme = ApplicationTheme.Dark;
+                    settings_manager.SaveSettings(settings);
 
                     break;
             }
