@@ -10,13 +10,14 @@
     d:DataContext="{d:DesignInstance local:DashboardPage,
                                      IsDesignTimeCreatable=False}"
     d:DesignHeight="300"
-    d:DesignWidth="400"
+    d:DesignWidth="440"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
     ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
     mc:Ignorable="d">
     <DockPanel>
         <Grid DockPanel.Dock="Top">
+            
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -24,48 +25,302 @@
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="50" />
-                <RowDefinition Height="50" />
             </Grid.RowDefinitions>
 
             <ComboBox
                 Grid.Column="0"
                 Grid.Row="0"
-                x:Name="runnerBox"
+                x:Name="runner_box"
                 IsEnabled="False"
                 IsEditable="True"
                 IsReadOnly="True"
                 Focusable="False"
-                Text="Select a runner..."
-                Width="200"
-                SelectionChanged="runnerBox_SelectionChanged" />
+                Text="Select a game..."
+                Width="286"
+                SelectionChanged="RunnerBox_SelectionChanged" />
 
             <ui:Button
                 Grid.Column="1"
                 Grid.Row="0"
-                Content="Browse..."
-                Width="90"
+                Width="125"
                 Command="{Binding ViewModel.BrowseRunnerCommand, Mode=OneWay}"
-                Icon="Fluent24" Margin="10,0,0,0"/>
+                ToolTip="Add a New Game"
+                HorizontalContentAlignment="Left"
+                Margin="24,0,0,0">
+                <StackPanel Orientation="Horizontal" Margin="-2,0,0,0">
+                    <ui:SymbolIcon Symbol="Joystick20"
+                                   Filled="True"
+                   RenderTransformOrigin="0.5,0.5">
+                        <ui:SymbolIcon.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleX="1.5" ScaleY="1.5"/>
+                                <SkewTransform/>
+                                <RotateTransform/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </ui:SymbolIcon.RenderTransform>
+                    </ui:SymbolIcon>
 
-            <ui:Button
-                Grid.Column="0"
-                Grid.Row="1"
-                x:Name="installButton"
-                Content="Install Aurie"
-                BorderBrush="Green"
-                Command="{Binding ViewModel.InstallButtonCommand, Mode=OneWay}"
-                HorizontalAlignment="Center"
-                Icon="Fluent24"
-                Margin="0,0,0,0"/>
+                    <ui:TextBlock
+                        VerticalAlignment="Center"
+                        Margin="10,0,0,0"
+                        Text="Add Game">
+                    </ui:TextBlock>
+                </StackPanel>
+            </ui:Button>
 
-            <ui:Button
-                Grid.Row="1"
-                x:Name="playButton"
-                Content="Play Game"
-                Width="90"
-                Command="{Binding ViewModel.PlayButtonCommand, Mode=OneWay}"
-                Icon="Fluent24"
-                Margin="10,10,0,0" VerticalAlignment="Top" Grid.Column="1" HorizontalAlignment="Center"/>
+        </Grid>
+        <Grid DockPanel.Dock="Top" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="286" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid HorizontalAlignment="Left">
+                <Border 
+                    Name="mod_list_mask"
+                    Background="#202020"
+                    CornerRadius="4"
+                    Width="286"
+                    Loaded="ModListMask_Loaded"/>
+                <Canvas
+                    x:Name="mod_list_canvas"
+                    Grid.Column="0"
+                    Width="286"
+                    Height="220">
+                    <Canvas.OpacityMask>
+                        <VisualBrush Visual="{Binding ElementName=mod_list_mask}" />
+                    </Canvas.OpacityMask>
+                    <ListView 
+                        x:Name="mod_list_view"
+                        ItemsSource="{Binding ViewModel.m_Mods}"
+                        Grid.Column="0"
+                        Width="286"
+                        Height="222"
+                        ScrollViewer.CanContentScroll="False">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="201" />
+                                        <ColumnDefinition Width="40" />
+                                        <ColumnDefinition Width="35" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock 
+                                        x:Name="mod_name"
+                                        Grid.Column="0" 
+                                        Padding="10,2,0,2"
+                                        Text="{Binding m_ModName}" />
+                                    <!--<ui:Button 
+                                        Grid.Column="1"
+                                        Width="25"
+                                        Foreground="Transparent"
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        Height="25"
+                                        Padding="0,0,0,0"
+                                        Margin="15,0,0,0">
+                                        <ui:SymbolIcon Filled="True" Foreground="Orange" Symbol="ArrowCircleDown20" RenderTransformOrigin="0.5,0.5" >
+                                            <ui:SymbolIcon.RenderTransform>
+                                                <TransformGroup>
+                                                    <ScaleTransform ScaleX="1.5" ScaleY="1.5"/>
+                                                    <SkewTransform/>
+                                                    <RotateTransform/>
+                                                    <TranslateTransform/>
+                                                </TransformGroup>
+                                            </ui:SymbolIcon.RenderTransform>
+                                        </ui:SymbolIcon>
+                                        <ui:Button.Style>
+                                            <Style TargetType="ui:Button">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasUpdate}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding HasUpdate}" Value="False">
+                                                        <Setter Property="Visibility" Value="Hidden" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ui:Button.Style>
+                                    </ui:Button>-->
+                                    <ToggleButton 
+                                        Grid.Column="2"
+                                        Width="25"
+                                        Height="25"
+                                        Padding="0,0,0,0"
+                                        Margin="10,0,0,0"
+                                        ToolTip="Enable Mod"
+                                        Checked="ModToggle_Checked"
+                                        Unchecked="ModToggle_Unchecked"
+                                        Loaded="ModToggle_Loaded"
+                                        IsChecked="{Binding m_IsEnabled}">
+                                        <ui:SymbolIcon x:Name="mod_toggle_symbol" Symbol="Dismiss20" RenderTransformOrigin="0.5,0.5" >
+                                            <ui:SymbolIcon.RenderTransform>
+                                                <TransformGroup>
+                                                    <ScaleTransform ScaleX="1.2" ScaleY="1.2"/>
+                                                </TransformGroup>
+                                            </ui:SymbolIcon.RenderTransform>
+                                        </ui:SymbolIcon>
+                                    </ToggleButton>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem" BasedOn="{StaticResource {x:Type ListViewItem}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding m_ModName}" Value="AurieCore.dll">
+                                        <Setter Property="Focusable" Value="False" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding m_ModName}" Value="YYToolkit.dll">
+                                        <Setter Property="Focusable" Value="False" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                    </ListView>
+                </Canvas>
+            </Grid>
+            <Grid Grid.Column="1" Width="149">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="120" />
+                    <RowDefinition Height="100" />
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" HorizontalAlignment="Right">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="38" />
+                        <RowDefinition Height="38" />
+                        <RowDefinition Height="38" />
+                    </Grid.RowDefinitions>
+                    <ui:Button
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        x:Name="add_mods_button"
+                        Width="125"
+                        Height="30"
+                        Padding="0,0,0,0"
+                        Command="{Binding ViewModel.AddModsButtonCommand, Mode=OneWay}"
+                        ToolTip="Add New Mods"
+                        Margin="14,2,0,0"
+                        VerticalAlignment="Top"
+                        HorizontalContentAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Margin="8,0,0,0">
+                            <ui:SymbolIcon Symbol="AddSquareMultiple20"
+                                           RenderTransformOrigin="0.5,0.5">
+                                <ui:SymbolIcon.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleX="1.5" ScaleY="1.5"/>
+                                        <SkewTransform/>
+                                        <RotateTransform/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </ui:SymbolIcon.RenderTransform>
+                            </ui:SymbolIcon>
+
+                            <ui:TextBlock
+                                VerticalAlignment="Center"
+                                Margin="10,0,0,0"
+                                Text="Add Mods">
+                            </ui:TextBlock>
+                        </StackPanel>
+                    </ui:Button>
+
+                    <ui:Button
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        x:Name="remove_mods_button"
+                        Width="125"
+                        Height="30"
+                        Padding="0,0,0,0"
+                        Command="{Binding ViewModel.RemoveModsButtonCommand, Mode=OneWay}"
+                        ToolTip="Delete Selected Mods"
+                        Margin="14,1,0,0"
+                        VerticalAlignment="Top"
+                        HorizontalContentAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Margin="8,0,0,0">
+                            <ui:SymbolIcon Symbol="SubtractSquareMultiple20"
+                                            RenderTransformOrigin="0.5,0.5">
+                                <ui:SymbolIcon.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleX="1.5" ScaleY="1.5"/>
+                                        <SkewTransform/>
+                                        <RotateTransform/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </ui:SymbolIcon.RenderTransform>
+                            </ui:SymbolIcon>
+
+                            <ui:TextBlock
+                                VerticalAlignment="Center"
+                                Margin="10,0,0,2"
+                                Text="Delete Mods">
+                            </ui:TextBlock>
+                        </StackPanel>
+                    </ui:Button>
+
+                    <!--<ui:Button
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        x:Name="updateModsButton"
+                        Width="125"
+                        Height="30"
+                        Padding="0,0,0,0"
+                        Command="{Binding ViewModel.RemoveModsButtonCommand, Mode=OneWay}"
+                        Icon="Fluent24"
+                        ToolTip="Update All Mods"
+                        Margin="14,0,0,0"
+                        VerticalAlignment="Top"
+                        HorizontalContentAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Margin="8,0,0,0">
+                            <ui:SymbolIcon Symbol="ArrowCircleDownDouble20"
+                                           Filled="True"
+                                           Foreground="Orange"
+                                            RenderTransformOrigin="0.5,0.5">
+                                <ui:SymbolIcon.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleX="1.5" ScaleY="1.5"/>
+                                        <SkewTransform/>
+                                        <RotateTransform/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </ui:SymbolIcon.RenderTransform>
+                            </ui:SymbolIcon>
+
+                            <ui:TextBlock
+                                VerticalAlignment="Center"
+                                Margin="10,0,0,3"
+                                Text="Update All">
+                            </ui:TextBlock>
+                        </StackPanel>
+                    </ui:Button>-->
+                </Grid>
+                <Grid Grid.Row="1" VerticalAlignment="Bottom">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="40" />
+                    </Grid.RowDefinitions>
+                    <ui:Button
+                        Grid.Row="0"
+                        x:Name="install_button"
+                        Content="Install Aurie"
+                        Width="125"
+                        BorderBrush="Green"
+                        Command="{Binding ViewModel.InstallButtonCommand, Mode=OneWay}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Icon="Fluent24"
+                        Margin="0,0,0,-1"/>
+
+                    <ui:Button
+                        Grid.Row="1"
+                        x:Name="play_button"
+                        Content="Play Game"
+                        Width="125"
+                        Command="{Binding ViewModel.PlayButtonCommand, Mode=OneWay}"
+                        Icon="Fluent24"
+                        Margin="0,0,0,2"
+                        VerticalAlignment="Bottom"
+                        HorizontalAlignment="Right"/>
+                </Grid>
+            </Grid>
         </Grid>
         <Grid DockPanel.Dock="Bottom">
             <Grid.ColumnDefinitions>
@@ -74,7 +329,7 @@
             </Grid.ColumnDefinitions>
             <ui:TextBlock 
                 Grid.Column="0"
-                x:Name="fileNameText"
+                x:Name="file_name_text"
                 Text="Downloading AurieCore.dll..."
                 TextTrimming="CharacterEllipsis"
                 VerticalAlignment="Bottom"
@@ -85,7 +340,7 @@
 
             <ProgressBar 
                 Grid.Column="1"
-                x:Name="progressBar"
+                x:Name="progress_bar"
                 DockPanel.Dock="Bottom"
                 VerticalAlignment="Bottom"
                 Width="180"

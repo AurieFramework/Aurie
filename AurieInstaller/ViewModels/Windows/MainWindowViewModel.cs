@@ -4,7 +4,7 @@
 // All Rights Reserved.
 
 using System.Collections.ObjectModel;
-using Wpf.Ui.Common;
+using Wpf.Ui;
 using Wpf.Ui.Controls;
 
 namespace AurieInstaller.ViewModels.Windows
@@ -31,7 +31,7 @@ namespace AurieInstaller.ViewModels.Windows
         {
             new NavigationViewItem()
             {
-                Content = "Main",
+                Content = "Install Manager",
                 Icon = new SymbolIcon { Symbol = SymbolRegular.Home24 },
                 TargetPageType = typeof(Views.Pages.DashboardPage)
             }

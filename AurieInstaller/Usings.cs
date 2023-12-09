@@ -2,5 +2,3 @@
 global using CommunityToolkit.Mvvm.Input;
 global using System;
 global using System.Windows;
-global using Wpf.Ui.Contracts;
-global using Wpf.Ui.Services;

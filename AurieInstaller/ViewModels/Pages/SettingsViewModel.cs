@@ -4,6 +4,8 @@
 // All Rights Reserved.
 
 using System.IO;
+using Wpf.Ui;
+using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
 namespace AurieInstaller.ViewModels.Pages
@@ -11,6 +13,9 @@ namespace AurieInstaller.ViewModels.Pages
     public partial class SettingsViewModel : ObservableObject, INavigationAware
     {
         private bool _isInitialized = false;
+
+        private AppSettings settings = new();
+        private SettingsManager settings_manager = new();
 
         private static ISnackbarService? _snackbarService;
 
@@ -32,10 +37,11 @@ namespace AurieInstaller.ViewModels.Pages
         private string _appVersion = String.Empty;
 
         [ObservableProperty]
-        private Wpf.Ui.Appearance.ThemeType _currentTheme = Wpf.Ui.Appearance.ThemeType.Unknown;
+        private ApplicationTheme _currentTheme = ApplicationTheme.Unknown;
 
         public void OnNavigatedTo()
         {
+            settings = SettingsManager.LoadSettings();
             if (!_isInitialized)
                 InitializeViewModel();
         }
@@ -44,7 +50,7 @@ namespace AurieInstaller.ViewModels.Pages
 
         private void InitializeViewModel()
         {
-            CurrentTheme = Wpf.Ui.Appearance.Theme.GetAppTheme();
+            CurrentTheme = settings.m_CurrentSelectedTheme;
             AppVersion = $"AurieManager - {GetAssemblyVersion()}";
 
             _isInitialized = true;
@@ -62,20 +68,24 @@ namespace AurieInstaller.ViewModels.Pages
             switch (parameter)
             {
                 case "theme_light":
-                    if (CurrentTheme == Wpf.Ui.Appearance.ThemeType.Light)
+                    if (CurrentTheme == ApplicationTheme.Light)
                         break;
 
-                    Wpf.Ui.Appearance.Theme.Apply(Wpf.Ui.Appearance.ThemeType.Light);
-                    CurrentTheme = Wpf.Ui.Appearance.ThemeType.Light;
+                    ApplicationThemeManager.Apply(ApplicationTheme.Light);
+                    CurrentTheme = ApplicationTheme.Light;
+                    settings.m_CurrentSelectedTheme = ApplicationTheme.Light;
+                    settings_manager.SaveSettings(settings);
 
                     break;
 
                 default:
-                    if (CurrentTheme == Wpf.Ui.Appearance.ThemeType.Dark)
+                    if (CurrentTheme == ApplicationTheme.Dark)
                         break;
 
-                    Wpf.Ui.Appearance.Theme.Apply(Wpf.Ui.Appearance.ThemeType.Dark);
-                    CurrentTheme = Wpf.Ui.Appearance.ThemeType.Dark;
+                    ApplicationThemeManager.Apply(ApplicationTheme.Dark);
+                    CurrentTheme = ApplicationTheme.Dark;
+                    settings.m_CurrentSelectedTheme = ApplicationTheme.Dark;
+                    settings_manager.SaveSettings(settings);
 
                     break;
             }
@@ -84,13 +94,13 @@ namespace AurieInstaller.ViewModels.Pages
         [RelayCommand]
         private async void OnDeleteConfig()
         {
-            const string SettingsFileName = "aurie-config.json";
-            string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Aurie");
-            string SettingsFilePath = Path.Combine(AppDataPath, SettingsFileName);
+            const string settings_file_name = "aurie-config.json";
+            string app_data_path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Aurie");
+            string settings_file_path = Path.Combine(app_data_path, settings_file_name);
 
-            if (File.Exists(SettingsFilePath))
+            if (File.Exists(settings_file_path))
             {
-                File.Delete(SettingsFilePath);
+                File.Delete(settings_file_path);
                 Console.WriteLine("Config file deleted!");
             }
             else
@@ -105,6 +115,7 @@ namespace AurieInstaller.ViewModels.Pages
                 Appearance = ControlAppearance.Success,
                 VerticalContentAlignment = VerticalAlignment.Center
             };
+            System.Media.SystemSounds.Hand.Play();
             snackbar.Show();
         }
     }

@@ -14,6 +14,7 @@ using Microsoft.Extensions.Hosting;
 using System.IO;
 using System.Reflection;
 using System.Windows.Threading;
+using Wpf.Ui;
 
 namespace AurieInstaller
 {
