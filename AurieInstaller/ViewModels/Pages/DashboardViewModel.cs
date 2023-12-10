@@ -453,7 +453,6 @@ namespace AurieInstaller.ViewModels.Pages
                 VerticalContentAlignment = VerticalAlignment.Center
             };
             snackbar.Show();
-            System.Media.SystemSounds.Exclamation.Play();
         }
 
         internal static OpenFileDialog PickGame(string Title, string Filter)
@@ -757,7 +756,6 @@ namespace AurieInstaller.ViewModels.Pages
                                 VerticalContentAlignment = VerticalAlignment.Center
                             };
                             snackbar.Show();
-                            System.Media.SystemSounds.Hand.Play();
                             can_install = false;
                             install_button.Content = "Uninstall Aurie";
                             install_button.BorderBrush = Brushes.Red;
@@ -779,10 +777,9 @@ namespace AurieInstaller.ViewModels.Pages
                             MinHeight = 0,
                             Content = "Aurie Framework was uninstalled successfully!",
                             Timeout = TimeSpan.FromSeconds(4),
-                            Appearance = ControlAppearance.Caution,
+                            Appearance = ControlAppearance.Success,
                             VerticalContentAlignment = VerticalAlignment.Center
                         };
-                        System.Media.SystemSounds.Exclamation.Play();
                         snackbar.Show();
                         can_install = true;
                         install_button.Content = "Install Aurie";
@@ -956,7 +953,6 @@ namespace AurieInstaller.ViewModels.Pages
                     VerticalContentAlignment = VerticalAlignment.Center
                 };
                 snackbar.Show();
-                System.Media.SystemSounds.Exclamation.Play();
                 return;
             }
 
