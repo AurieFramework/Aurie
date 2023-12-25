@@ -798,11 +798,10 @@ namespace AurieInstaller.ViewModels.Pages
         {
             ProcessStartInfo process_start_info = new ProcessStartInfo
             {
-                FileName = command.ToString(),
+                FileName = Path.Combine(directory, command),
                 Arguments = arguments.ToString(),
                 WorkingDirectory = directory.ToString(),
-                UseShellExecute = true,
-                CreateNoWindow = true
+                UseShellExecute = false,
             };
 
             using (Process process = new Process())
@@ -862,7 +861,7 @@ namespace AurieInstaller.ViewModels.Pages
 
             string directory = Path.GetDirectoryName(runner_path);
             string loader = $"mods\\AurieLoader.exe";
-            string arguments = $"{Path.GetFileName(runner_path)}";
+            string arguments = $"\"{Path.GetFileName(runner_path)}\"";
 
             try
             {
