@@ -61,7 +61,7 @@ namespace Aurie
 	{
 		union
 		{
-			uint8_t Bitfield = 0;
+			uint8_t Bitfield;
 			struct
 			{
 				// If this bit is set, the module's Initialize function has been called.
@@ -70,15 +70,19 @@ namespace Aurie
 				// If this bit is set, the module's Preload function has been called.
 				// This call to Preload happens before the call to Initialize.
 				// 
-				// If the Aurie Framework is injected into a running process, this function still runs first,
-				// although it obviously runs after the process entrypoint already ran.
+				// If the Aurie Framework is injected into a running process, this function does not run.
+				// Otherwise, this function is guaranteed to run before the main process's entrypoint.
 				bool IsPreloaded : 1;
 
 				// If this bit is set, the module is marked for deletion and will be unloaded by the next
 				// call to Aurie::Internal::MdpPurgeMarkedModules
 				bool MarkedForPurge : 1;
+
+				// If this bit is set, the module was loaded by a MdMapImage call from another module.
+				// This makes it such that its ModulePreload function never gets called.
+				bool IsRuntimeLoaded : 1;
 			};
-		} Flags = {};
+		} Flags;
 
 		// Describes the image base (and by extent the module).
 		union
@@ -86,10 +90,10 @@ namespace Aurie
 			HMODULE Module;
 			PVOID Pointer;
 			uintptr_t Address;
-		} ImageBase = {};
+		} ImageBase;
 
 		// Specifies the image size in memory.
-		uint32_t ImageSize = 0;
+		uint32_t ImageSize;
 
 		// The path of the loaded image.
 		fs::path ImagePath;
@@ -99,19 +103,19 @@ namespace Aurie
 		{
 			PVOID Pointer;
 			uintptr_t Address;
-		} ImageEntrypoint = {};
+		} ImageEntrypoint;
 
 		// The initialize routine for the module
-		AurieEntry ModuleInitialize = nullptr;
+		AurieEntry ModuleInitialize;
 
 		// The optional preinitialize routine for the module
-		AurieEntry ModulePreinitialize = nullptr;
+		AurieEntry ModulePreinitialize;
 
 		// An unload routine for the module
-		AurieEntry ModuleUnload = nullptr;
+		AurieEntry ModuleUnload;
 
 		// The __AurieFrameworkInit function
-		AurieLoaderEntry FrameworkInitialize = nullptr;
+		AurieLoaderEntry FrameworkInitialize;
 
 		// Interfaces exposed by the module
 		std::list<AurieInterfaceTableEntry> InterfaceTable;
@@ -126,7 +130,7 @@ namespace Aurie
 		std::list<AurieHook> Hooks;
 
 		// If set, notifies the plugin of any module actions
-		AurieModuleCallback ModuleOperationCallback = nullptr;
+		AurieModuleCallback ModuleOperationCallback;
 
 		virtual AurieObjectType GetObjectType() override
 		{
@@ -138,6 +142,20 @@ namespace Aurie
 			return (this->ImageBase.Address == Other.ImageBase.Address) &&
 				(this->ImageSize == Other.ImageSize) &&
 				(this->ImagePath == Other.ImagePath);
+		}
+		
+		AurieModule()
+		{
+			this->Flags = {};
+			this->ImageBase = {};
+			this->ImageSize = 0;
+			this->ImageEntrypoint = {};
+
+			this->ModuleInitialize = nullptr;
+			this->ModulePreinitialize = nullptr;
+			this->ModuleUnload = nullptr;
+			this->FrameworkInitialize = nullptr;
+			this->ModuleOperationCallback = nullptr;
 		}
 	};
 
