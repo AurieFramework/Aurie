@@ -6,11 +6,7 @@ namespace Aurie
 	AurieStatus Internal::MdpCreateModule(
 		IN const fs::path& ImagePath, 
 		IN HMODULE ImageModule,
-		IN AurieEntry ModuleInitialize, 
-		IN AurieEntry ModulePreinitialize,
-		IN AurieEntry ModuleUnload,
-		IN AurieLoaderEntry FrameworkInitialize,
-		IN AurieModuleCallback ModuleOperationCallback,
+		IN bool ProcessExports,
 		IN uint8_t BitFlags,
 		OUT AurieModule& Module
 	)
@@ -21,11 +17,20 @@ namespace Aurie
 		// Populate known fields first
 		temp_module.Flags.Bitfield = BitFlags;
 		temp_module.ImagePath = ImagePath;
-		temp_module.ModuleInitialize = ModuleInitialize;
-		temp_module.ModulePreinitialize = ModulePreinitialize;
-		temp_module.FrameworkInitialize = FrameworkInitialize;
-		temp_module.ModuleOperationCallback = ModuleOperationCallback;
-		temp_module.ModuleUnload = ModuleUnload;
+
+		if (ProcessExports)
+		{
+			last_status = MdpProcessImageExports(
+				ImagePath,
+				ImageModule,
+				&temp_module
+			);
+
+			if (!AurieSuccess(last_status))
+			{
+				return last_status;
+			}
+		}
 
 		last_status = MdpQueryModuleInformation(
 			ImageModule,
@@ -116,8 +121,15 @@ namespace Aurie
 		// Make sure the image has the required exports
 		bool has_framework_init = PpFindFileExportByName(ImagePath, "__AurieFrameworkInit") != 0;
 		bool has_module_entry = PpFindFileExportByName(ImagePath, "ModuleInitialize") != 0;
+		bool has_module_preinit = PpFindFileExportByName(ImagePath, "ModulePreinitialize") != 0;
 
-		if (!has_framework_init || !has_module_entry)
+		// If the image doesn't have a framework init function, we can't load it.
+		if (!has_framework_init)
+			return AURIE_INVALID_SIGNATURE;
+
+		// If we don't have a module entry OR a module preinitialize function, we can't load.
+		bool has_either_entry = has_module_entry || has_module_preinit;
+		if (!has_either_entry)
 			return AURIE_INVALID_SIGNATURE;
 
 		AurieModule* potential_loaded_copy = nullptr;
@@ -281,6 +293,50 @@ namespace Aurie
 		return AURIE_SUCCESS;
 	}
 
+	AurieStatus Internal::MdpProcessImageExports(
+		IN const fs::path& ImagePath, 
+		IN HMODULE ImageBaseAddress, 
+		IN OUT AurieModule* ModuleImage
+	)
+	{
+		// Find all the required functions
+		uintptr_t framework_init_offset = PpFindFileExportByName(ImagePath, "__AurieFrameworkInit");
+		uintptr_t module_init_offset = PpFindFileExportByName(ImagePath, "ModuleInitialize");
+
+		uintptr_t module_callback_offset = PpFindFileExportByName(ImagePath, "ModuleOperationCallback");
+		uintptr_t module_preload_offset = PpFindFileExportByName(ImagePath, "ModulePreinitialize");
+		uintptr_t module_unload_offset = PpFindFileExportByName(ImagePath, "ModuleUnload");
+
+		// Cast the problems away
+		char* image_base = reinterpret_cast<char*>(ImageBaseAddress);
+
+		AurieEntry module_init = reinterpret_cast<AurieEntry>(image_base + module_init_offset);
+		AurieEntry module_preload = reinterpret_cast<AurieEntry>(image_base + module_preload_offset);
+		AurieEntry module_unload = reinterpret_cast<AurieEntry>(image_base + module_unload_offset);
+		AurieLoaderEntry framework_init = reinterpret_cast<AurieLoaderEntry>(image_base + framework_init_offset);
+		AurieModuleCallback module_callback = reinterpret_cast<AurieModuleCallback>(image_base + module_callback_offset);
+
+		// If the offsets are zero, the function wasn't found, which means we shouldn't populate the field.
+		if (module_init_offset)
+			ModuleImage->ModuleInitialize = module_init;
+
+		if (module_preload_offset)
+			ModuleImage->ModulePreinitialize = module_preload;
+
+		if (framework_init_offset)
+			ModuleImage->FrameworkInitialize = framework_init;
+
+		if (module_callback_offset)
+			ModuleImage->ModuleOperationCallback = module_callback;
+
+		if (module_unload_offset)
+			ModuleImage->ModuleUnload = module_unload;
+
+		// We always need __AurieFrameworkInit to exist.
+		// We also need either a ModuleInitialize or a ModulePreinitialize function.
+		return ((module_init_offset || module_preload_offset) && framework_init_offset) ? AURIE_SUCCESS : AURIE_FILE_PART_NOT_FOUND;
+	}
+
 	// The ignoring of return values here is on purpose, we just have to power through
 	// and unload / free what we can.
 	AurieStatus Internal::MdpUnmapImage(
@@ -376,6 +432,7 @@ namespace Aurie
 	void Internal::MdpMapFolder(
 		IN const fs::path& Folder, 
 		IN bool Recursive,
+		IN bool IsRuntimeLoad,
 		OPTIONAL OUT size_t* NumberOfMappedModules
 	)
 	{
@@ -413,7 +470,7 @@ namespace Aurie
 		{
 			AurieModule* loaded_module = nullptr;
 
-			if (AurieSuccess(MdMapImage(module, loaded_module)))
+			if (AurieSuccess(MdMapImageEx(module, IsRuntimeLoad, loaded_module)))
 				loaded_count++;
 		}
 
@@ -426,6 +483,19 @@ namespace Aurie
 		OUT AurieModule*& Module
 	)
 	{
+		return MdMapImageEx(
+			ImagePath,
+			true,
+			Module
+		);
+	}
+
+	AurieStatus MdMapImageEx(
+		IN const fs::path& ImagePath,
+		IN bool IsRuntimeLoad,
+		OUT AurieModule*& Module
+	)
+	{
 		AurieStatus last_status = AURIE_SUCCESS;
 		HMODULE image_base = nullptr;
 
@@ -435,62 +505,76 @@ namespace Aurie
 		if (!AurieSuccess(last_status))
 			return last_status;
 
-		// Find all the required functions
-		uintptr_t framework_init_offset = PpFindFileExportByName(ImagePath, "__AurieFrameworkInit");
-		uintptr_t module_init_offset = PpFindFileExportByName(ImagePath, "ModuleInitialize");
-
-		uintptr_t module_callback_offset = PpFindFileExportByName(ImagePath, "ModuleOperationCallback");
-		uintptr_t module_preload_offset = PpFindFileExportByName(ImagePath, "ModulePreinitialize");
-		uintptr_t module_unload_offset = PpFindFileExportByName(ImagePath, "ModuleUnload");
-
-		AurieEntry module_init = reinterpret_cast<AurieEntry>((char*)image_base + module_init_offset);
-		AurieEntry module_preload = reinterpret_cast<AurieEntry>((char*)image_base + module_preload_offset);
-		AurieEntry module_unload = reinterpret_cast<AurieEntry>((char*)image_base + module_unload_offset);
-		AurieLoaderEntry fwk_init = reinterpret_cast<AurieLoaderEntry>((char*)image_base + framework_init_offset);
-		AurieModuleCallback module_callback = reinterpret_cast<AurieModuleCallback>((char*)image_base + module_callback_offset);
-
-		// Verify image integrity
-		last_status = Internal::MmpVerifyCallback(image_base, module_init);
-		if (!AurieSuccess(last_status))
-			return last_status;
-
-		last_status = Internal::MmpVerifyCallback(image_base, fwk_init);
-		if (!AurieSuccess(last_status))
-			return last_status;
-
-		// MdiMapImage checks for __aurie_fwk_init and ModuleInitialize, but doesn't check ModulePreinitialize since it's optional
-		// If the offsets are null, the thing wasn't found, and we shouldn't try to call it
-		if (!module_preload_offset)
-			module_preload = nullptr;
-
-		if (!module_unload_offset)
-			module_unload = nullptr;
-
-		if (!module_callback_offset)
-			module_callback = nullptr;
-
 		// Create the module object
 		AurieModule module_object = {};
 		last_status = Internal::MdpCreateModule(
 			ImagePath,
 			image_base,
-			module_init,
-			module_preload,
-			module_unload,
-			fwk_init,
-			module_callback,
+			true,
 			0,
 			module_object
 		);
 
-		// TODO: Invoke module load callbacks
-
+		// Verify image integrity
+		last_status = Internal::MmpVerifyCallback(module_object.ImageBase.Module, module_object.FrameworkInitialize);
 		if (!AurieSuccess(last_status))
 			return last_status;
 
-		// Add it to our list of modules
+		module_object.Flags.IsRuntimeLoaded = IsRuntimeLoad;
+
+		// Add the module to the module list before running module code
+		// No longer safe to access module_object
 		Module = Internal::MdpAddModuleToList(std::move(module_object));
+
+		if (IsRuntimeLoad)
+		{
+			// Dispatch Module Preinitialize to not break modules that depend on it (eg. YYTK)
+			last_status = Internal::MdpDispatchEntry(
+				Module,
+				Module->ModulePreinitialize
+			);
+
+			// Remove module if Preinitialize failed
+			if (!AurieSuccess(last_status))
+			{
+				Internal::MdpMarkModuleForPurge(Module); 
+				Internal::MdpPurgeMarkedModules();
+
+				return last_status;
+			}
+
+			Module->Flags.IsPreloaded = true;
+
+			// Dispatch Module Initialize
+			last_status = Internal::MdpDispatchEntry(
+				Module,
+				Module->ModuleInitialize
+			);
+
+			// Remove module if Initialize failed
+			if (!AurieSuccess(last_status))
+			{
+				Internal::MdpMarkModuleForPurge(Module);
+				Internal::MdpPurgeMarkedModules();
+
+				return last_status;
+			}
+
+			Internal::MdpPurgeMarkedModules();
+
+			Module->Flags.IsInitialized = true;
+
+			// Module is now fully initialized
+		}
+		
 		return AURIE_SUCCESS;
+	}
+
+	bool MdIsImageRuntimeLoaded(
+		IN AurieModule* Module
+	)
+	{
+		return Module->Flags.IsRuntimeLoaded;
 	}
 
 	bool MdIsImageInitialized(
@@ -511,6 +595,7 @@ namespace Aurie
 		Internal::MdpMapFolder(
 			FolderPath,
 			Recursive,
+			true,
 			nullptr
 		);
 

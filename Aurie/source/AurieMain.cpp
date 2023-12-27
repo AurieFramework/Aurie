@@ -78,11 +78,7 @@ void ArProcessAttach(HINSTANCE Instance)
 		Internal::MdpCreateModule(
 			process_name,
 			Instance,
-			nullptr,
-			nullptr,
-			nullptr,
-			nullptr,
-			nullptr,
+			false,
 			0,
 			initial_module
 		)
@@ -124,6 +120,7 @@ void ArProcessAttach(HINSTANCE Instance)
 	Internal::MdpMapFolder(
 		folder_path,
 		true,
+		false,
 		nullptr
 	);
 
@@ -167,7 +164,7 @@ void ArProcessAttach(HINSTANCE Instance)
 		ElWaitForCurrentProcessWindow();
 
 	WaitForInputIdle(GetCurrentProcess(), INFINITE);
-		
+
 	// Call ModuleEntry on all loaded plugins
 	for (auto& entry : Internal::g_LdrModuleList)
 	{

@@ -13,12 +13,22 @@ namespace Aurie
 		OUT AurieModule*& Module
 	);
 
+	AurieStatus MdMapImageEx(
+		IN const fs::path& ImagePath,
+		IN bool IsRuntimeLoad,
+		OUT AurieModule*& Module
+	);
+
 	EXPORTED bool MdIsImagePreinitialized(
 		IN AurieModule* Module
 	);
 
 	// Checks whether an image is initialized or not
 	EXPORTED bool MdIsImageInitialized(
+		IN AurieModule* Module
+	);
+
+	EXPORTED bool MdIsImageRuntimeLoaded(
 		IN AurieModule* Module
 	);
 
@@ -44,11 +54,7 @@ namespace Aurie
 		AurieStatus MdpCreateModule(
 			IN const fs::path& ImagePath,
 			IN HMODULE ImageModule,
-			IN AurieEntry ModuleInitialize,
-			IN AurieEntry ModulePreinitialize,
-			IN AurieEntry ModuleUnload,
-			IN AurieLoaderEntry FrameworkInitialize,
-			IN AurieModuleCallback ModuleOperationCallback,
+			IN bool ProcessExports,
 			IN uint8_t BitFlags,
 			OUT AurieModule& Module
 		);
@@ -112,6 +118,12 @@ namespace Aurie
 			OUT AurieModule*& Module
 		);
 
+		AurieStatus MdpProcessImageExports(
+			IN const fs::path& ImagePath,
+			IN HMODULE ImageBaseAddress,
+			OUT AurieModule* ModuleImage
+		);
+
 		AurieStatus MdpUnmapImage(
 			IN AurieModule* Module,
 			IN bool RemoveFromList,
@@ -126,6 +138,7 @@ namespace Aurie
 		void MdpMapFolder(
 			IN const fs::path& Folder,
 			IN bool Recursive,
+			IN bool IsRuntimeLoad,
 			OPTIONAL OUT size_t* NumberOfMappedModules
 		);
 
