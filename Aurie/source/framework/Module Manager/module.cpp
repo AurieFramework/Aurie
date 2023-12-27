@@ -121,8 +121,15 @@ namespace Aurie
 		// Make sure the image has the required exports
 		bool has_framework_init = PpFindFileExportByName(ImagePath, "__AurieFrameworkInit") != 0;
 		bool has_module_entry = PpFindFileExportByName(ImagePath, "ModuleInitialize") != 0;
+		bool has_module_preinit = PpFindFileExportByName(ImagePath, "ModulePreinitialize") != 0;
 
-		if (!has_framework_init || !has_module_entry)
+		// If the image doesn't have a framework init function, we can't load it.
+		if (!has_framework_init)
+			return AURIE_INVALID_SIGNATURE;
+
+		// If we don't have a module entry OR a module preinitialize function, we can't load.
+		bool has_either_entry = has_module_entry || has_module_preinit;
+		if (!has_either_entry)
 			return AURIE_INVALID_SIGNATURE;
 
 		AurieModule* potential_loaded_copy = nullptr;
@@ -513,26 +520,53 @@ namespace Aurie
 		if (!AurieSuccess(last_status))
 			return last_status;
 
-		Module->Flags.IsRuntimeLoaded = IsRuntimeLoad;
+		module_object.Flags.IsRuntimeLoaded = IsRuntimeLoad;
+
+		// Add the module to the module list before running module code
+		// No longer safe to access module_object
+		Module = Internal::MdpAddModuleToList(std::move(module_object));
 
 		if (IsRuntimeLoad)
 		{
-			// We don't dispatch a ModulePreinitialize for runtime-loaded modules,
-			// since their ModulePreinitialize function wouldn't run before
-			// the process started executing code (defeating the purpose of ModulePreinitialize)
+			// Dispatch Module Preinitialize to not break modules that depend on it (eg. YYTK)
+			last_status = Internal::MdpDispatchEntry(
+				Module,
+				Module->ModulePreinitialize
+			);
+
+			// Remove module if Preinitialize failed
+			if (!AurieSuccess(last_status))
+			{
+				Internal::MdpMarkModuleForPurge(Module); 
+				Internal::MdpPurgeMarkedModules();
+
+				return last_status;
+			}
+
+			Module->Flags.IsPreloaded = true;
+
+			// Dispatch Module Initialize
 			last_status = Internal::MdpDispatchEntry(
 				Module,
 				Module->ModuleInitialize
 			);
 
+			// Remove module if Initialize failed
 			if (!AurieSuccess(last_status))
+			{
+				Internal::MdpMarkModuleForPurge(Module);
+				Internal::MdpPurgeMarkedModules();
+
 				return last_status;
+			}
+
+			Internal::MdpPurgeMarkedModules();
 
 			Module->Flags.IsInitialized = true;
-		}
 
-		// Add it to our list of modules
-		Module = Internal::MdpAddModuleToList(std::move(module_object));
+			// Module is now fully initialized
+		}
+		
 		return AURIE_SUCCESS;
 	}
 

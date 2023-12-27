@@ -48,7 +48,7 @@
 #endif // AURIE_FWK_MINOR
 
 #ifndef AURIE_FWK_PATCH
-#define AURIE_FWK_PATCH 2
+#define AURIE_FWK_PATCH 3
 #endif // AURIE_FWK_PATCH
 
 
@@ -424,6 +424,14 @@ namespace Aurie
 	{
 		return AURIE_API_CALL(MdIsImageInitialized, Module);
 	}
+
+	inline bool MdIsImageRuntimeLoaded(
+		IN AurieModule* Module
+	)
+	{
+		return AURIE_API_CALL(MdIsImageRuntimeLoaded, Module);
+	}
+
 
 	inline AurieStatus MdMapFolder(
 		IN const fs::path& FolderPath,

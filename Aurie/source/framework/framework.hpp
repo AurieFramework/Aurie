@@ -70,7 +70,8 @@ namespace Aurie
 				// If this bit is set, the module's Preload function has been called.
 				// This call to Preload happens before the call to Initialize.
 				// 
-				// If the Aurie Framework is injected into a running process, this function does not run.
+				// If the Aurie Framework is injected into a running process, this function is called
+				// right before the call to Initialize.
 				// Otherwise, this function is guaranteed to run before the main process's entrypoint.
 				bool IsPreloaded : 1;
 
