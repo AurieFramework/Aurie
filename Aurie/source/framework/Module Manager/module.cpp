@@ -281,7 +281,7 @@ namespace Aurie
 			g_LdrModuleList.end(),
 			[ModulePath](const AurieModule& Module) -> bool
 			{
-				return Module.ImagePath == ModulePath;
+				return fs::equivalent(ModulePath, Module.ImagePath);
 			}
 		);
 
