@@ -2,7 +2,6 @@
 #include <filesystem>
 #include "KInjector/KInjector.hpp"
 
-
 size_t MapFolder(
 	IN HANDLE ProcessHandle,
 	IN const std::filesystem::path& Folder
@@ -46,9 +45,8 @@ int wmain(int argc, wchar_t** argv)
 	// Represents if the -aurie_wait_for_input argument is present
 	bool wait_for_input = false;
 
-	// The executable we're actually going to want to launch is 
-	// always called the same as our executable, but with a .bak appended to it,
-	// i.e. "Will You Snail.exe" will turn into "Will You Snail.exe.bak"
+	// argv[1] is always the executable name (or path) if we're using IFEO, which is the only
+	// method explicitely supported by AurieLoader.
 	std::wstring process_command_line;
 	for (int i = 1; i < argc; i++)
 	{
@@ -111,14 +109,36 @@ int wmain(int argc, wchar_t** argv)
 		printf("[!] -aurie_wait_for_input flag provided, waiting for input...\n");
 		std::cin.ignore();
 	}
+	
+	// Get the image filename of the process
+	WCHAR process_path_buffer[512] = { 0 };
+	DWORD process_path_buffer_size = sizeof(process_path_buffer) / sizeof(process_path_buffer[0]);
 
-	size_t module_count = MapFolder(
-		process_info.hProcess, 
-		std::filesystem::current_path() / "mods" / "native"
-	);
+	size_t module_count = 0;
+	if (!QueryFullProcessImageNameW(
+		process_info.hProcess,
+		0, // PROCESS_NAME_WIN32
+		process_path_buffer,
+		&process_path_buffer_size
+	))
+	{
+		printf("[!] Failed to determine process image path, current directory will be used!\n");
+
+		module_count = MapFolder(
+			process_info.hProcess,
+			std::filesystem::current_path() / "mods" / "native"
+		);
+	}
+	else
+	{
+		module_count = MapFolder(
+			process_info.hProcess,
+			std::filesystem::path(process_path_buffer).parent_path() / "mods" / "native"
+		);
+	}
 
 	printf("[>] MapFolder mapped %lld modules\n", module_count);
-
+	
 	// If no modules were mapped, we can just resume the process.
 	if (module_count == 0)
 		ResumeThread(process_info.hThread);
