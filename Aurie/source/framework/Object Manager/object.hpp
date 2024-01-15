@@ -69,6 +69,12 @@ namespace Aurie
 		EXPORTED AurieObjectType ObpGetObjectType(
 			IN AurieObject* Object
 		);
+
+		EXPORTED AurieStatus ObpLookupInterfaceOwnerExport(
+			IN const char* InterfaceName,
+			IN const char* ExportName,
+			OUT PVOID& ExportAddress
+		);
 	}
 }
 

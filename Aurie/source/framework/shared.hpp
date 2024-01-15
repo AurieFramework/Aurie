@@ -48,7 +48,7 @@
 #endif // AURIE_FWK_MINOR
 
 #ifndef AURIE_FWK_PATCH
-#define AURIE_FWK_PATCH 4
+#define AURIE_FWK_PATCH 5
 #endif // AURIE_FWK_PATCH
 
 
@@ -597,6 +597,15 @@ namespace Aurie
 		)
 		{
 			return AURIE_API_CALL(ObpGetObjectType, Object);
+		}
+
+		inline AurieStatus ObpLookupInterfaceOwnerExport(
+			IN const char* InterfaceName,
+			IN const char* ExportName,
+			OUT PVOID& ExportAddress
+		)
+		{
+			return AURIE_API_CALL(ObpLookupInterfaceOwnerExport, InterfaceName, ExportName, ExportAddress);
 		}
 	}
 

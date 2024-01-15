@@ -77,6 +77,51 @@ namespace Aurie
 			);
 		}
 
+		AurieStatus ObpLookupInterfaceOwnerExport(
+			IN const char* InterfaceName, 
+			IN const char* ExportName,
+			OUT PVOID& ExportAddress
+		)
+		{
+			AurieStatus last_status = AURIE_SUCCESS;
+
+			AurieModule* interface_owner = nullptr;
+			AurieInterfaceTableEntry* table_entry = nullptr;
+
+			// First, look up the interface owner AurieModule
+			last_status = ObpLookupInterfaceOwner(
+				InterfaceName,
+				true,
+				interface_owner,
+				table_entry
+			);
+
+			if (!AurieSuccess(last_status))
+				return last_status;
+
+			// Now, get the module base address
+			PVOID module_base_address = MdpGetModuleBaseAddress(
+				interface_owner
+			);
+
+			// Module has no base address?
+			if (!module_base_address)
+				return AURIE_FILE_PART_NOT_FOUND;
+
+			// Get the thing
+			PVOID procedure_address = GetProcAddress(
+				reinterpret_cast<HMODULE>(module_base_address),
+				ExportName
+			);
+
+			// No export with that name...
+			if (!procedure_address)
+				return AURIE_OBJECT_NOT_FOUND;
+
+			ExportAddress = procedure_address;
+			return AURIE_SUCCESS;
+		}
+
 		AurieObjectType ObpGetObjectType(
 			IN AurieObject* Object
 		)
