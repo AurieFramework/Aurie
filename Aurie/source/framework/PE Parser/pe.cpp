@@ -140,7 +140,11 @@ namespace Aurie
 			return AURIE_ACCESS_DENIED;
 
 		// Query the filesize and allocate memory for it
-		size_t file_size = input_file.tellg();
+		std::streampos file_size_raw = input_file.tellg();
+		if (file_size_raw > SIZE_MAX)
+			return AURIE_INSUFFICIENT_MEMORY;
+
+		size_t file_size = static_cast<size_t>(file_size_raw);
 		char* file_in_memory = new char[file_size];
 
 		// If we fail allocating memory, then there's simply not enough memory for us to allocate.
