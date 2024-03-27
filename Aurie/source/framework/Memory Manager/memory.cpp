@@ -79,10 +79,39 @@ namespace Aurie
 			IN PVOID CallbackRoutine
 		)
 		{
-			if (CallbackRoutine && Module)
-				return AURIE_SUCCESS;
+			// TODO: Should probably validate if a module backed by AurieModule is calling.
+			// Not checking this might be opening up some detection vectors where unauthorized
+			// callers could register and potentially manipulate callbacks.
+			if (!Module || !CallbackRoutine)
+				return AURIE_INVALID_PARAMETER;
 
-			return AURIE_ACCESS_DENIED;
+			uint64_t section_offset = 0;
+			size_t section_size = 0;
+			
+			// Query the .text section of the module
+			// Unless registering a callback from dynamic code,
+			// this check should always pass.
+			AurieStatus last_status = AURIE_SUCCESS;
+			last_status = PpiGetModuleSectionBounds(
+				Module,
+				".text",
+				section_offset,
+				section_size
+			);
+
+			if (!AurieSuccess(last_status))
+				return last_status;
+
+			uint64_t module_callback = reinterpret_cast<uint64_t>(CallbackRoutine);
+			uint64_t module_text_start = reinterpret_cast<uint64_t>(Module) + section_offset;
+			uint64_t module_text_end = module_text_start + section_size;
+			
+			// Verify that the callback is coming from the module's .text section.
+			// If it's not, we may be registering a malicious callback.
+			if (module_callback < module_text_start || module_callback > module_text_end)
+				return AURIE_ACCESS_DENIED;
+
+			return AURIE_SUCCESS;
 		}
 
 		void MmpFreeMemory(

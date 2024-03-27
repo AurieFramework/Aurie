@@ -25,27 +25,67 @@ namespace Aurie
 		OUT AurieInterfaceBase*& Interface
 	);
 
+	EXPORTED AurieStatus ObCreateCallback(
+		IN AurieModule* OwnerModule,
+		IN const char* CallbackName,
+		IN AurieCallbackEntry CallbackRoutine,
+		OUT AurieCallback** CallbackObject
+	);
+
+	EXPORTED AurieStatus ObDestroyCallback(
+		IN AurieModule* OwnerModule,
+		IN AurieCallback* CallbackObject
+	);
+
+	EXPORTED AurieStatus ObRegisterCallback(
+		IN const char* CallbackName,
+		IN AurieCallbackEntry Routine
+	);
+
+	EXPORTED AurieStatus ObUnregisterCallback(
+		IN const char* CallbackName,
+		IN AurieCallbackEntry Routine
+	);
+
 	namespace Internal
 	{
-		EXPORTED void ObpSetModuleOperationCallback(
-			IN AurieModule* Module,
-			IN AurieModuleCallback CallbackRoutine
+		EXPORTED AurieStatus ObpCreateCallbackObject(
+			IN const char* CallbackName,
+			IN AurieCallbackEntry PreCallback,
+			IN AurieCallbackEntry PostCallback,
+			IN bool IsDispatchable,
+			IN bool IsPartial,
+			OUT AurieCallback** CallbackObject
 		);
 
-		void ObpDispatchModuleOperationCallbacks(
-			IN AurieModule* AffectedModule,
-			IN AurieEntry Routine,
-			IN bool IsFutureCall
+		EXPORTED AurieStatus ObpAssignCallback(
+			IN AurieCallback* CallbackObject,
+			IN uint32_t Position,
+			IN AurieCallbackEntry CallbackEntry
+		);
+
+		AurieStatus ObpSetCallbackFlags(
+			IN AurieCallback* CallbackObject,
+			IN bool AllowDispatch,
+			IN bool IsPartial
+		);
+
+		bool ObpIsCallbackDispatchable(
+			IN AurieCallback* CallbackObject
+		);
+
+		bool ObpIsCallbackPartial(
+			IN AurieCallback* CallbackObject
+		);
+
+		AurieStatus ObpLookupCallbackByName(
+			IN const char* Name,
+			OUT AurieCallback*& CallbackObject
 		);
 
 		AurieStatus ObpAddInterfaceToTable(
 			IN AurieModule* Module,
 			IN AurieInterfaceTableEntry& Entry
-		);
-
-		AurieOperationInfo ObpCreateOperationInfo(
-			IN AurieModule* Module,
-			IN bool IsFutureCall
 		);
 
 		AurieStatus ObpDestroyInterface(

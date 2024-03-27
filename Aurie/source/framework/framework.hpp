@@ -54,6 +54,19 @@ namespace Aurie
 		}
 	};
 
+	struct AurieCallback : AurieObject
+	{
+		AurieModule* OwnerModule;
+		AurieCallbackEntry PreCallback;
+		AurieCallbackEntry PostCallback;
+		std::list<AurieCallbackEntry> Callbacks;
+
+		virtual AurieObjectType GetObjectType() override
+		{
+			return AURIE_OBJECT_CALLBACK;
+		}
+	};
+
 	// A direct representation of a loaded object.
 	// Contains internal resources such as the interface table.
 	// This structure should be opaque to modules as the contents may change at any time.
