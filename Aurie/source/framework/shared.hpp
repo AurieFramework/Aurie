@@ -44,11 +44,11 @@
 #endif // AURIE_FWK_MAJOR
 
 #ifndef AURIE_FWK_MINOR
-#define AURIE_FWK_MINOR 0
+#define AURIE_FWK_MINOR 1
 #endif // AURIE_FWK_MINOR
 
 #ifndef AURIE_FWK_PATCH
-#define AURIE_FWK_PATCH 5
+#define AURIE_FWK_PATCH 0
 #endif // AURIE_FWK_PATCH
 
 
@@ -62,6 +62,7 @@ namespace Aurie
 	struct AurieObject;
 	struct AurieMemoryAllocation;
 	struct AurieHook;
+	struct AurieCallback;
 
 	// Forward declarations (not opaque)
 	struct AurieInterfaceBase;
@@ -112,7 +113,9 @@ namespace Aurie
 		// An AurieMemoryAllocation object
 		AURIE_OBJECT_ALLOCATION = 3,
 		// An AurieHook object
-		AURIE_OBJECT_HOOK = 4
+		AURIE_OBJECT_HOOK = 4,
+		// An AurieCallback object
+		AURIE_OBJECT_CALLBACK = 5,
 	};
 
 	enum AurieModuleOperationType : uint32_t
@@ -188,21 +191,6 @@ namespace Aurie
 		) = 0;
 	};
 
-	struct AurieOperationInfo
-	{
-		union
-		{
-			uint8_t Flags;
-			struct
-			{
-				bool IsFutureCall : 1;
-				bool Reserved : 7;
-			};
-		};
-
-		PVOID ModuleBaseAddress;
-	};
-
 	// Always points to the initial Aurie image
 	// Initialized in either ArProcessAttach or __aurie_fwk_init
 	inline AurieModule* g_ArInitialImage = nullptr;
@@ -220,11 +208,11 @@ namespace Aurie
 		IN OPTIONAL AurieModule* SelfModule
 		);
 
-	using AurieModuleCallback = void(*)(
-		IN AurieModule* AffectedModule,
-		IN AurieModuleOperationType OperationType,
-		OPTIONAL IN OUT AurieOperationInfo* OperationInfo
-		);
+	using AurieCallbackEntry = void(*)(
+		IN AurieObject* Object,
+		IN PVOID Argument1,
+		IN PVOID Argument2
+	);
 }
 
 #ifndef AURIE_INCLUDE_PRIVATE
@@ -584,14 +572,6 @@ namespace Aurie
 
 	namespace Internal
 	{
-		inline void ObpSetModuleOperationCallback(
-			IN AurieModule* Module,
-			IN AurieModuleCallback CallbackRoutine
-		)
-		{
-			return AURIE_API_CALL(ObpSetModuleOperationCallback, Module, CallbackRoutine);
-		}
-
 		inline AurieObjectType ObpGetObjectType(
 			IN AurieObject* Object
 		)
