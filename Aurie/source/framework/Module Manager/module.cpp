@@ -314,7 +314,6 @@ namespace Aurie
 		AurieEntry module_preload = reinterpret_cast<AurieEntry>(image_base + module_preload_offset);
 		AurieEntry module_unload = reinterpret_cast<AurieEntry>(image_base + module_unload_offset);
 		AurieLoaderEntry framework_init = reinterpret_cast<AurieLoaderEntry>(image_base + framework_init_offset);
-		AurieModuleCallback module_callback = reinterpret_cast<AurieModuleCallback>(image_base + module_callback_offset);
 
 		// If the offsets are zero, the function wasn't found, which means we shouldn't populate the field.
 		if (module_init_offset)
@@ -325,9 +324,6 @@ namespace Aurie
 
 		if (framework_init_offset)
 			ModuleImage->FrameworkInitialize = framework_init;
-
-		if (module_callback_offset)
-			ModuleImage->ModuleOperationCallback = module_callback;
 
 		if (module_unload_offset)
 			ModuleImage->ModuleUnload = module_unload;
@@ -359,10 +355,7 @@ namespace Aurie
 				Module->ModuleUnload
 			);
 		}
-
-		// Remove the module's operation callback
-		Module->ModuleOperationCallback = nullptr;
-
+		
 		// Destory all interfaces created by the module
 		for (auto& module_interface : Module->InterfaceTable)
 		{
@@ -406,11 +399,6 @@ namespace Aurie
 		if (Module == g_ArInitialImage)
 			return AURIE_SUCCESS;
 
-		ObpDispatchModuleOperationCallbacks(
-			Module, 
-			Entry, 
-			true
-		);
 
 		AurieStatus module_status = Module->FrameworkInitialize(
 			g_ArInitialImage,
@@ -418,12 +406,6 @@ namespace Aurie
 			Entry,
 			MdpGetImagePath(Module),
 			Module
-		);
-
-		ObpDispatchModuleOperationCallbacks(
-			Module, 
-			Entry, 
-			false
 		);
 
 		return module_status;

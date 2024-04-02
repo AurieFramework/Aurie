@@ -209,7 +209,13 @@ namespace Aurie
 		);
 
 	using AurieCallbackEntry = void(*)(
-		IN AurieObject* Object,
+		IN AurieObject* TargetObject,
+		IN PVOID Argument1,
+		IN PVOID Argument2
+	);
+
+	using AurieCallbackEntryEx = AurieStatus(*)(
+		IN AurieObject* TargetObject,
 		IN PVOID Argument1,
 		IN PVOID Argument2
 	);
