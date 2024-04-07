@@ -63,7 +63,7 @@ namespace Aurie
 		AurieModule* OwnerModule;
 
 		// Callback to invoke prior to looping the callbacks list
-		AurieCallbackEntry PreCallback;
+		AurieCallbackEntryEx PreCallback;
 
 		// Callback to invoke prior to calling an entry from the callback list
 		AurieCallbackEntryEx PreInvokeCallback;
@@ -87,10 +87,13 @@ namespace Aurie
 				// not yet being created.
 				bool IsPartial : 1;
 
-				// If true, any attempts to dispatch the callback will return AURIE_ACCESS_DENIED.
+				// If false, any attempts to dispatch the callback will return AURIE_ACCESS_DENIED.
 				bool Dispatchable : 1;
 
-				bool Reserved : 6;
+				// If true, the callback is awaiting deletion and will no longer be called
+				bool DeferredDeletion : 1;
+
+				bool Reserved : 5;
 			};
 		} Flags;
 

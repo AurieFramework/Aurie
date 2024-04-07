@@ -6,24 +6,29 @@
 
 namespace Aurie
 {
+	// Queries a file's image architecture
 	EXPORTED AurieStatus PpQueryImageArchitecture(
 		IN const fs::path& Path,
 		OUT unsigned short& ImageArchitecture
 	);
 
+	// Finds the file offset of an export
 	EXPORTED uintptr_t PpFindFileExportByName(
 		IN const fs::path& Path,
 		IN const char* ImageExportName
 	);
 
+	// GetProcAddress on the Aurie Framework module
 	EXPORTED void* PpGetFrameworkRoutine(
 		IN const char* ExportName
 	);
 
+	// Queries the image architecture of the running Aurie Framework module
 	EXPORTED AurieStatus PpGetCurrentArchitecture(
 		IN unsigned short& ImageArchitecture
 	);
 
+	// Queries the image subsystem of a mapped image
 	EXPORTED AurieStatus PpGetImageSubsystem(
 		IN PVOID Image,
 		OUT unsigned short& ImageSubsystem
@@ -31,7 +36,7 @@ namespace Aurie
 
 	namespace Internal
 	{
-		// Finds an export by name
+		// Finds an export of a given AurieModule by name
 		EXPORTED void* PpiFindModuleExportByName(
 			IN const AurieModule* Image,
 			IN const char* ImageExportName
@@ -56,6 +61,7 @@ namespace Aurie
 			OUT void*& NtHeader
 		);
 
+		// Gets the module section bounds of a mapped image
 		EXPORTED AurieStatus PpiGetModuleSectionBounds(
 			IN void* Image,
 			IN const char* SectionName,
@@ -63,6 +69,8 @@ namespace Aurie
 			OUT size_t& SectionSize
 		);
 
+		// Queries an export offset from the start of a file
+		// This offset stays the same when the file is mapped
 		AurieStatus PpiGetExportOffset(
 			IN void* Image,
 			IN const char* ImageExportName,

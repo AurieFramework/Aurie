@@ -68,8 +68,10 @@ namespace Aurie
 	struct AurieInterfaceBase;
 	using PVOID = void*; // Allow usage of PVOID even without including PVOID
 
-	enum AurieStatus : uint32_t
+	enum AurieStatus : int32_t
 	{
+		// The requested operation is already complete.
+		AURIE_ALREADY_COMPLETE = -1,
 		// The operation completed successfully.
 		AURIE_SUCCESS = 0,
 		// An invalid architecture was specified.
@@ -131,7 +133,7 @@ namespace Aurie
 
 	constexpr inline bool AurieSuccess(const AurieStatus Status) noexcept
 	{
-		return Status == AURIE_SUCCESS;
+		return Status <= AURIE_SUCCESS;
 	}
 
 	constexpr inline const char* AurieStatusToString(const AurieStatus Status) noexcept
