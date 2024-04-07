@@ -238,13 +238,95 @@ namespace Aurie
 			OUT SYSTEM_THREAD_INFORMATION& ThreadInformation
 		)
 		{
-			return ElpQueryInformationThread(
+			// This works only on Windows 10 and up, x64 only.
+			// WOW64 doesn't have the infoclass.
+			NTSTATUS last_status = ElpQueryInformationThread(
 				ThreadHandle,
 				40, // ThreadSystemThreadInformation
 				&ThreadInformation,
 				sizeof(ThreadInformation),
 				nullptr
 			);
+
+			// If the call succeeded, we're good to go.
+			// Otherwise, we need to do more work.
+			if (NT_SUCCESS(last_status))
+				return last_status;
+
+			
+			// Ask the function how much memory is needed for the list
+			ULONG size_needed = 0;
+			last_status = NtQuerySystemInformation(
+				SystemProcessInformation,
+				nullptr,
+				0,
+				&size_needed
+			);
+
+			// Allocate twice the amount, just to be safe that no new process
+			// can cause the buffer to be insufficient in size.
+			size_needed *= 2;
+
+			PVOID system_info_buffer = malloc(size_needed);
+			if (!system_info_buffer)
+				return STATUS_INSUFFICIENT_RESOURCES;
+
+			last_status = NtQuerySystemInformation(
+				SystemProcessInformation,
+				system_info_buffer,
+				size_needed,
+				nullptr
+			);
+
+			// Make sure we succeeded in grabbing the lists
+			if (!NT_SUCCESS(last_status))
+			{
+				free(system_info_buffer);
+				return last_status;
+			}
+			
+			// Iterate through to find our process - we're using Aurie's SYSTEM_PROCESS_INFORMATION struct.
+			const auto process_information = reinterpret_cast<PSYSTEM_PROCESS_INFORMATION>(system_info_buffer);
+			auto current_process = process_information;
+
+			do
+			{
+				// If we're at our current process, break out of the loop
+				if (HandleToULong(current_process->UniqueProcessId) == GetCurrentProcessId())
+					break;
+
+				// Go to the next entry
+				current_process = reinterpret_cast<PSYSTEM_PROCESS_INFORMATION>(
+					reinterpret_cast<PBYTE>(current_process) + current_process->NextEntryOffset
+				);
+
+			} while (current_process->NextEntryOffset);
+
+			// If we're not at our process ID, we must've broken out
+			// of the loop by reaching the end of the list (NextEntryOffset == 0).
+			// In this case, we bail.
+			if (HandleToULong(current_process->UniqueProcessId) != GetCurrentProcessId())
+			{
+				free(process_information);
+				return STATUS_NOT_FOUND;
+			}
+
+			// Now, we do a linear scan for our thread
+			for (size_t i = 0; i < current_process->NumberOfThreads; i++)
+			{
+				PSYSTEM_THREAD_INFORMATION thread_information = &current_process->Threads[i];
+				
+				// Skip any threads that don't share a thread ID with the wanted thread
+				if (HandleToULong(thread_information->ClientId.UniqueThread) != GetThreadId(ThreadHandle))
+					continue;
+
+				// Save the thread info, break out. We got our thread.
+				ThreadInformation = *thread_information;
+				break;
+			}
+
+			free(process_information);
+			return last_status;
 		}
 
 		NTSTATUS ElpResumeProcess(

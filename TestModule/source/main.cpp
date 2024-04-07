@@ -15,8 +15,13 @@ EXPORTED AurieStatus ModulePreinitialize(
 
 
 	bool is_game_suspended = false;
-	ElIsProcessSuspended(is_game_suspended);
-	printf("[TestModule] ModulePreload. ElIsProcessSuspended returns %s\n", is_game_suspended ? "true" : "false");
+	AurieStatus status = ElIsProcessSuspended(is_game_suspended);
+
+	printf(
+		"[TestModule] ModulePreload. ElIsProcessSuspended returns %s with status %s\n", 
+		is_game_suspended ? "true" : "false",
+		AurieStatusToString(status)
+	);
 
 	return AURIE_SUCCESS;
 }

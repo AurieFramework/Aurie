@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cinttypes>
 #include <filesystem>
 #include "KInjector/KInjector.hpp"
 
@@ -137,7 +138,7 @@ int wmain(int argc, wchar_t** argv)
 		);
 	}
 
-	printf("[>] MapFolder mapped %lld modules\n", module_count);
+	printf("[>] MapFolder mapped %" PRIdPTR " modules\n", module_count);
 	
 	// If no modules were mapped, we can just resume the process.
 	if (module_count == 0)
