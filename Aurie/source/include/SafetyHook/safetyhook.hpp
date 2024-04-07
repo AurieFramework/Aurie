@@ -34,12 +34,16 @@
 
 #pragma once
 
+#ifndef SAFETYHOOK_USE_CXXMODULES
 #include <cstdint>
 #include <expected>
 #include <memory>
 #include <mutex>
 #include <utility>
 #include <vector>
+#else
+import std.compat;
+#endif
 
 
 //
@@ -56,11 +60,15 @@
 
 #pragma once
 
+#ifndef SAFETYHOOK_USE_CXXMODULES
 #include <cstdint>
 #include <expected>
 #include <memory>
 #include <mutex>
 #include <vector>
+#else
+import std.compat;
+#endif
 
 namespace safetyhook {
 class Allocator;
@@ -180,6 +188,90 @@ private:
 } // namespace safetyhook
 
 //
+// Header: safetyhook/common.hpp
+//
+// Include stack:
+//   - safetyhook.hpp
+//   - safetyhook/easy.hpp
+//   - safetyhook/inline_hook.hpp
+//
+
+#pragma once
+
+#if defined(_MSC_VER)
+#define SAFETYHOOK_COMPILER_MSVC 1
+#define SAFETYHOOK_COMPILER_GCC 0
+#define SAFETYHOOK_COMPILER_CLANG 0
+#elif defined(__GNUC__)
+#define SAFETYHOOK_COMPILER_MSVC 0
+#define SAFETYHOOK_COMPILER_GCC 1
+#define SAFETYHOOK_COMPILER_CLANG 0
+#elif defined(__clang__)
+#define SAFETYHOOK_COMPILER_MSVC 0
+#define SAFETYHOOK_COMPILER_GCC 0
+#define SAFETYHOOK_COMPILER_CLANG 1
+#else
+#error "Unsupported compiler"
+#endif
+
+#if SAFETYHOOK_COMPILER_MSVC
+#if defined(_M_IX86)
+#define SAFETYHOOK_ARCH_X86_32 1
+#define SAFETYHOOK_ARCH_X86_64 0
+#elif defined(_M_X64)
+#define SAFETYHOOK_ARCH_X86_32 0
+#define SAFETYHOOK_ARCH_X86_64 1
+#else
+#error "Unsupported architecture"
+#endif
+#elif SAFETYHOOK_COMPILER_GCC || SAFETYHOOK_COMPILER_CLANG
+#if defined(__i386__)
+#define SAFETYHOOK_ARCH_X86_32 1
+#define SAFETYHOOK_ARCH_X86_64 0
+#elif defined(__x86_64__)
+#define SAFETYHOOK_ARCH_X86_32 0
+#define SAFETYHOOK_ARCH_X86_64 1
+#else
+#error "Unsupported architecture"
+#endif
+#endif
+
+#if defined(_WIN32)
+#define SAFETYHOOK_OS_WINDOWS 1
+#define SAFETYHOOK_OS_LINUX 0
+#elif defined(__linux__)
+#define SAFETYHOOK_OS_WINDOWS 0
+#define SAFETYHOOK_OS_LINUX 1
+#else
+#error "Unsupported OS"
+#endif
+
+#if SAFETYHOOK_OS_WINDOWS
+#if SAFETYHOOK_COMPILER_MSVC
+#define SAFETYHOOK_CCALL __cdecl
+#define SAFETYHOOK_STDCALL __stdcall
+#define SAFETYHOOK_FASTCALL __fastcall
+#define SAFETYHOOK_THISCALL __thiscall
+#elif SAFETYHOOK_COMPILER_GCC || SAFETYHOOK_COMPILER_CLANG
+#define SAFETYHOOK_CCALL __attribute__((cdecl))
+#define SAFETYHOOK_STDCALL __attribute__((stdcall))
+#define SAFETYHOOK_FASTCALL __attribute__((fastcall))
+#define SAFETYHOOK_THISCALL __attribute__((thiscall))
+#endif
+#else
+#define SAFETYHOOK_CCALL
+#define SAFETYHOOK_STDCALL
+#define SAFETYHOOK_FASTCALL
+#define SAFETYHOOK_THISCALL
+#endif
+
+#if SAFETYHOOK_COMPILER_MSVC
+#define SAFETYHOOK_NOINLINE __declspec(noinline)
+#elif SAFETYHOOK_COMPILER_GCC || SAFETYHOOK_COMPILER_CLANG
+#define SAFETYHOOK_NOINLINE __attribute__((noinline))
+#endif
+
+//
 // Header: safetyhook/utility.hpp
 //
 // Include stack:
@@ -190,9 +282,14 @@ private:
 
 #pragma once
 
+#ifndef SAFETYHOOK_USE_CXXMODULES
 #include <algorithm>
 #include <cstdint>
+#include <optional>
 #include <type_traits>
+#else
+import std.compat;
+#endif
 
 namespace safetyhook {
 template <typename T> constexpr void store(uint8_t* address, const T& value) {
@@ -203,6 +300,40 @@ template <typename T>
 concept FnPtr = requires(T f) { std::is_pointer_v<T>&& std::is_function_v<std::remove_pointer_t<T>>; };
 
 bool is_executable(uint8_t* address);
+
+class UnprotectMemory {
+public:
+    UnprotectMemory() = delete;
+    ~UnprotectMemory();
+    UnprotectMemory(const UnprotectMemory&) = delete;
+    UnprotectMemory(UnprotectMemory&& other) noexcept;
+    UnprotectMemory& operator=(const UnprotectMemory&) = delete;
+    UnprotectMemory& operator=(UnprotectMemory&& other) noexcept;
+
+private:
+    friend std::optional<UnprotectMemory> unprotect(uint8_t*, size_t);
+
+    UnprotectMemory(uint8_t* address, size_t size, uint32_t original_protection)
+        : m_address{address}, m_size{size}, m_original_protection{original_protection} {}
+
+    uint8_t* m_address{};
+    size_t m_size{};
+    uint32_t m_original_protection{};
+};
+
+[[nodiscard]] std::optional<UnprotectMemory> unprotect(uint8_t* address, size_t size);
+
+template <typename T> constexpr T align_up(T address, size_t align) {
+    const auto unaligned_address = (uintptr_t)address;
+    const auto aligned_address = (unaligned_address + align - 1) & ~(align - 1);
+    return (T)aligned_address;
+}
+
+template <typename T> constexpr T align_down(T address, size_t align) {
+    const auto unaligned_address = (uintptr_t)address;
+    const auto aligned_address = unaligned_address & ~(align - 1);
+    return (T)aligned_address;
+}
 } // namespace safetyhook
 
 namespace safetyhook {
@@ -218,6 +349,8 @@ public:
             SHORT_JUMP_IN_TRAMPOLINE,              ///< The trampoline contains a short jump.
             IP_RELATIVE_INSTRUCTION_OUT_OF_RANGE,  ///< An IP-relative instruction is out of range.
             UNSUPPORTED_INSTRUCTION_IN_TRAMPOLINE, ///< An unsupported instruction was found in the trampoline.
+            FAILED_TO_UNPROTECT,                   ///< Failed to unprotect memory.
+            NOT_ENOUGH_SPACE,                      ///< Not enough space to create the hook.
         } type;
 
         /// @brief Extra information about the error.
@@ -260,6 +393,16 @@ public:
         [[nodiscard]] static Error unsupported_instruction_in_trampoline(uint8_t* ip) {
             return {.type = UNSUPPORTED_INSTRUCTION_IN_TRAMPOLINE, .ip = ip};
         }
+
+        /// @brief Create a FAILED_TO_UNPROTECT error.
+        /// @param ip The IP of the problematic instruction.
+        /// @return The new FAILED_TO_UNPROTECT error.
+        [[nodiscard]] static Error failed_to_unprotect(uint8_t* ip) { return {.type = FAILED_TO_UNPROTECT, .ip = ip}; }
+
+        /// @brief Create a NOT_ENOUGH_SPACE error.
+        /// @param ip The IP of the problematic instruction.
+        /// @return The new NOT_ENOUGH_SPACE error.
+        [[nodiscard]] static Error not_enough_space(uint8_t* ip) { return {.type = NOT_ENOUGH_SPACE, .ip = ip}; }
     };
 
     /// @brief Create an inline hook.
@@ -341,6 +484,10 @@ public:
     /// @return The address of the trampoline to call the original function.
     template <typename T> [[nodiscard]] T original() const { return reinterpret_cast<T>(m_trampoline.address()); }
 
+    /// @brief Returns a vector containing the original bytes of the target function.
+    /// @return A vector of the original bytes of the target function.
+    [[nodiscard]] const auto& original_bytes() const { return m_original_bytes; }
+
     /// @brief Calls the original function.
     /// @tparam RetT The return type of the function.
     /// @tparam ...Args The argument types of the function.
@@ -360,7 +507,7 @@ public:
     /// @note This function will use the __cdecl calling convention.
     template <typename RetT = void, typename... Args> RetT ccall(Args... args) {
         std::scoped_lock lock{m_mutex};
-        return m_trampoline ? original<RetT(__cdecl*)(Args...)>()(args...) : RetT();
+        return m_trampoline ? original<RetT(SAFETYHOOK_CCALL*)(Args...)>()(args...) : RetT();
     }
 
     /// @brief Calls the original function.
@@ -371,7 +518,7 @@ public:
     /// @note This function will use the __thiscall calling convention.
     template <typename RetT = void, typename... Args> RetT thiscall(Args... args) {
         std::scoped_lock lock{m_mutex};
-        return m_trampoline ? original<RetT(__thiscall*)(Args...)>()(args...) : RetT();
+        return m_trampoline ? original<RetT(SAFETYHOOK_THISCALL*)(Args...)>()(args...) : RetT();
     }
 
     /// @brief Calls the original function.
@@ -382,7 +529,7 @@ public:
     /// @note This function will use the __stdcall calling convention.
     template <typename RetT = void, typename... Args> RetT stdcall(Args... args) {
         std::scoped_lock lock{m_mutex};
-        return m_trampoline ? original<RetT(__stdcall*)(Args...)>()(args...) : RetT();
+        return m_trampoline ? original<RetT(SAFETYHOOK_STDCALL*)(Args...)>()(args...) : RetT();
     }
 
     /// @brief Calls the original function.
@@ -393,7 +540,7 @@ public:
     /// @note This function will use the __fastcall calling convention.
     template <typename RetT = void, typename... Args> RetT fastcall(Args... args) {
         std::scoped_lock lock{m_mutex};
-        return m_trampoline ? original<RetT(__fastcall*)(Args...)>()(args...) : RetT();
+        return m_trampoline ? original<RetT(SAFETYHOOK_FASTCALL*)(Args...)>()(args...) : RetT();
     }
 
     /// @brief Calls the original function.
@@ -417,7 +564,7 @@ public:
     /// @note This function is unsafe because it doesn't lock the mutex. Only use this if you don't care about unhook
     /// safety or are worried about the performance cost of locking the mutex.
     template <typename RetT = void, typename... Args> RetT unsafe_ccall(Args... args) {
-        return original<RetT(__cdecl*)(Args...)>()(args...);
+        return original<RetT(SAFETYHOOK_CCALL*)(Args...)>()(args...);
     }
 
     /// @brief Calls the original function.
@@ -429,7 +576,7 @@ public:
     /// @note This function is unsafe because it doesn't lock the mutex. Only use this if you don't care about unhook
     /// safety or are worried about the performance cost of locking the mutex.
     template <typename RetT = void, typename... Args> RetT unsafe_thiscall(Args... args) {
-        return original<RetT(__thiscall*)(Args...)>()(args...);
+        return original<RetT(SAFETYHOOK_THISCALL*)(Args...)>()(args...);
     }
 
     /// @brief Calls the original function.
@@ -441,7 +588,7 @@ public:
     /// @note This function is unsafe because it doesn't lock the mutex. Only use this if you don't care about unhook
     /// safety or are worried about the performance cost of locking the mutex.
     template <typename RetT = void, typename... Args> RetT unsafe_stdcall(Args... args) {
-        return original<RetT(__stdcall*)(Args...)>()(args...);
+        return original<RetT(SAFETYHOOK_STDCALL*)(Args...)>()(args...);
     }
 
     /// @brief Calls the original function.
@@ -453,10 +600,12 @@ public:
     /// @note This function is unsafe because it doesn't lock the mutex. Only use this if you don't care about unhook
     /// safety or are worried about the performance cost of locking the mutex.
     template <typename RetT = void, typename... Args> RetT unsafe_fastcall(Args... args) {
-        return original<RetT(__fastcall*)(Args...)>()(args...);
+        return original<RetT(SAFETYHOOK_FASTCALL*)(Args...)>()(args...);
     }
 
 private:
+    friend class MidHook;
+
     uint8_t* m_target{};
     uint8_t* m_destination{};
     Allocation m_trampoline{};
@@ -468,7 +617,7 @@ private:
         const std::shared_ptr<Allocator>& allocator, uint8_t* target, uint8_t* destination);
     std::expected<void, Error> e9_hook(const std::shared_ptr<Allocator>& allocator);
 
-#ifdef _M_X64
+#if SAFETYHOOK_ARCH_X86_64
     std::expected<void, Error> ff_hook(const std::shared_ptr<Allocator>& allocator);
 #endif
 
@@ -489,8 +638,12 @@ private:
 
 #pragma once
 
+#ifndef SAFETYHOOK_USE_CXXMODULES
 #include <cstdint>
 #include <memory>
+#else
+import std.compat;
+#endif
 
 
 //
@@ -507,7 +660,12 @@ private:
 
 #pragma once
 
+#ifndef SAFETYHOOK_USE_CXXMODULES
 #include <cstdint>
+#else
+import std.compat;
+#endif
+
 
 namespace safetyhook {
 union Xmm {
@@ -523,18 +681,22 @@ union Xmm {
 /// @details This structure is used to pass the context of the hooked function to the destination allowing full access
 /// to the 64-bit registers at the moment the hook is called.
 /// @note rip will point to a trampoline containing the replaced instruction(s).
+/// @note rsp is read-only. Modifying it will have no effect. Use trampoline_rsp to modify rsp if needed but make sure
+/// the top of the stack is the rip you want to resume at.
 struct Context64 {
     Xmm xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15;
-    uintptr_t rflags, r15, r14, r13, r12, r11, r10, r9, r8, rdi, rsi, rdx, rcx, rbx, rax, rbp, rsp, rip;
+    uintptr_t rflags, r15, r14, r13, r12, r11, r10, r9, r8, rdi, rsi, rdx, rcx, rbx, rax, rbp, rsp, trampoline_rsp, rip;
 };
 
 /// @brief Context structure for 32-bit MidHook.
 /// @details This structure is used to pass the context of the hooked function to the destination allowing full access
 /// to the 32-bit registers at the moment the hook is called.
 /// @note eip will point to a trampoline containing the replaced instruction(s).
+/// @note esp is read-only. Modifying it will have no effect. Use trampoline_esp to modify esp if needed but make sure
+/// the top of the stack is the eip you want to resume at.
 struct Context32 {
     Xmm xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7;
-    uintptr_t eflags, edi, esi, edx, ecx, ebx, eax, ebp, esp, eip;
+    uintptr_t eflags, edi, esi, edx, ecx, ebx, eax, ebp, esp, trampoline_esp, eip;
 };
 
 /// @brief Context structure for MidHook.
@@ -542,9 +704,9 @@ struct Context32 {
 /// to the registers at the moment the hook is called.
 /// @note The structure is different depending on architecture.
 /// @note The structure only provides access to integer registers.
-#ifdef _M_X64
+#if SAFETYHOOK_ARCH_X86_64
 using Context = Context64;
-#else
+#elif SAFETYHOOK_ARCH_X86_32
 using Context = Context32;
 #endif
 
@@ -589,41 +751,41 @@ public:
 
     /// @brief Creates a new MidHook object.
     /// @param target The address of the function to hook.
-    /// @param destination The destination function.
+    /// @param destination_fn The destination function.
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note This will use the default global Allocator.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
-    [[nodiscard]] static std::expected<MidHook, Error> create(void* target, MidHookFn destination);
+    [[nodiscard]] static std::expected<MidHook, Error> create(void* target, MidHookFn destination_fn);
 
     /// @brief Creates a new MidHook object.
     /// @param target The address of the function to hook.
-    /// @param destination The destination function.
+    /// @param destination_fn The destination function.
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note This will use the default global Allocator.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
-    [[nodiscard]] static std::expected<MidHook, Error> create(FnPtr auto target, MidHookFn destination) {
-        return create(reinterpret_cast<void*>(target), destination);
+    [[nodiscard]] static std::expected<MidHook, Error> create(FnPtr auto target, MidHookFn destination_fn) {
+        return create(reinterpret_cast<void*>(target), destination_fn);
     }
 
     /// @brief Creates a new MidHook object with a given Allocator.
     /// @param allocator The Allocator to use.
     /// @param target The address of the function to hook.
-    /// @param destination The destination function.
+    /// @param destination_fn The destination function.
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
     [[nodiscard]] static std::expected<MidHook, Error> create(
-        const std::shared_ptr<Allocator>& allocator, void* target, MidHookFn destination);
+        const std::shared_ptr<Allocator>& allocator, void* target, MidHookFn destination_fn);
 
     /// @brief Creates a new MidHook object with a given Allocator.
     /// @tparam T The type of the function to hook.
     /// @param allocator The Allocator to use.
     /// @param target The address of the function to hook.
-    /// @param destination The destination function.
+    /// @param destination_fn The destination function.
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
     [[nodiscard]] static std::expected<MidHook, Error> create(
-        const std::shared_ptr<Allocator>& allocator, FnPtr auto target, MidHookFn destination) {
-        return create(allocator, reinterpret_cast<void*>(target), destination);
+        const std::shared_ptr<Allocator>& allocator, FnPtr auto target, MidHookFn destination_fn) {
+        return create(allocator, reinterpret_cast<void*>(target), destination_fn);
     }
 
     MidHook() = default;
@@ -649,6 +811,10 @@ public:
     /// @brief Get the destination function.
     /// @return The destination function.
     [[nodiscard]] MidHookFn destination() const { return m_destination; }
+
+    /// @brief Returns a vector containing the original bytes of the target function.
+    /// @return A vector of the original bytes of the target function.
+    [[nodiscard]] const auto& original_bytes() const { return m_hook.m_original_bytes; }
 
     /// @brief Tests if the hook is valid.
     /// @return true if the hook is valid, false otherwise.
@@ -678,9 +844,13 @@ private:
 
 #pragma once
 
+#ifndef SAFETYHOOK_USE_CXXMODULES
 #include <cstdint>
 #include <expected>
 #include <unordered_map>
+#else
+import std.compat;
+#endif
 
 
 namespace safetyhook {
@@ -716,7 +886,7 @@ public:
     /// @param args The arguments to pass to the method.
     /// @return The return value of the method.
     template <typename RetT = void, typename... Args> RetT ccall(Args... args) {
-        return original<RetT(__cdecl*)(Args...)>()(args...);
+        return original<RetT(SAFETYHOOK_CCALL*)(Args...)>()(args...);
     }
 
     /// @brief Calls the original method with the __thiscall calling convention.
@@ -725,7 +895,7 @@ public:
     /// @param args The arguments to pass to the method.
     /// @return The return value of the method.
     template <typename RetT = void, typename... Args> RetT thiscall(Args... args) {
-        return original<RetT(__thiscall*)(Args...)>()(args...);
+        return original<RetT(SAFETYHOOK_THISCALL*)(Args...)>()(args...);
     }
 
     /// @brief Calls the original method with the __stdcall calling convention.
@@ -734,7 +904,7 @@ public:
     /// @param args The arguments to pass to the method.
     /// @return The return value of the method.
     template <typename RetT = void, typename... Args> RetT stdcall(Args... args) {
-        return original<RetT(__stdcall*)(Args...)>()(args...);
+        return original<RetT(SAFETYHOOK_STDCALL*)(Args...)>()(args...);
     }
 
     /// @brief Calls the original method with the __fastcall calling convention.
@@ -743,7 +913,7 @@ public:
     /// @param args The arguments to pass to the method.
     /// @return The return value of the method.
     template <typename RetT = void, typename... Args> RetT fastcall(Args... args) {
-        return original<RetT(__fastcall*)(Args...)>()(args...);
+        return original<RetT(SAFETYHOOK_FASTCALL*)(Args...)>()(args...);
     }
 
 private:
@@ -881,41 +1051,6 @@ namespace safetyhook {
     }
 }
 
-} // namespace safetyhook
-
-//
-// Header: safetyhook/thread_freezer.hpp
-//
-// Include stack:
-//   - safetyhook.hpp
-//
-
-/// @file safetyhook/thread_freezer.hpp
-/// @brief A class for freezing all threads in the process.
-
-#pragma once
-
-#include <cstdint>
-#include <functional>
-
-#include <Windows.h>
-
-namespace safetyhook {
-/// @brief Executes a function while all other threads are frozen. Also allows for visiting each frozen thread and
-/// modifying it's context.
-/// @param run_fn The function to run while all other threads are frozen.
-/// @param visit_fn The function that will be called for each frozen thread.
-/// @note The visit function will be called in the order that the threads were frozen.
-/// @note The visit function will be called before the run function.
-/// @note Keep the logic inside run_fn and visit_fn as simple as possible to avoid deadlocks.
-void execute_while_frozen(
-    const std::function<void()>& run_fn, const std::function<void(uint32_t, HANDLE, CONTEXT&)>& visit_fn = {});
-
-/// @brief Will modify the context of a thread's IP to point to a new address if its IP is at the old address.
-/// @param ctx The thread context to modify.
-/// @param old_ip The old IP address.
-/// @param new_ip The new IP address.
-void fix_ip(CONTEXT& ctx, uint8_t* old_ip, uint8_t* new_ip);
 } // namespace safetyhook
 
 using SafetyHookContext = safetyhook::Context;
