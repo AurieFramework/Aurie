@@ -54,6 +54,55 @@ namespace Aurie
 		}
 	};
 
+	struct AurieCallback : AurieObject
+	{
+		// The name of the callback
+		const char* CallbackName;
+
+		// The module that registered the callback
+		AurieModule* OwnerModule;
+
+		// Callback to invoke prior to looping the callbacks list
+		AurieCallbackEntryEx PreCallback;
+
+		// Callback to invoke prior to calling an entry from the callback list
+		AurieCallbackEntryEx PreInvokeCallback;
+
+		// Callback to invoke after calling an entry from the callback list
+		AurieCallbackEntry PostInvokeCallback;
+
+		// Callback to invoke post looping the callbacks list
+		AurieCallbackEntry PostCallback;
+
+		// The list of callbacks - invoked in order of registration
+		std::list<AurieCallbackEntry> Callbacks;
+		
+		union
+		{
+			uint8_t Bitfield;
+			struct
+			{
+				// If true, the callback is a pseudo-object that is created by the framework
+				// due to a module registering a routine for this callback, but the callback
+				// not yet being created.
+				bool IsPartial : 1;
+
+				// If false, any attempts to dispatch the callback will return AURIE_ACCESS_DENIED.
+				bool Dispatchable : 1;
+
+				// If true, the callback is awaiting deletion and will no longer be called
+				bool DeferredDeletion : 1;
+
+				bool Reserved : 5;
+			};
+		} Flags;
+
+		virtual AurieObjectType GetObjectType() override
+		{
+			return AURIE_OBJECT_CALLBACK;
+		}
+	};
+
 	// A direct representation of a loaded object.
 	// Contains internal resources such as the interface table.
 	// This structure should be opaque to modules as the contents may change at any time.
@@ -130,9 +179,6 @@ namespace Aurie
 		// Functions hooked by the module by Mm*Hook functions
 		std::list<AurieHook> Hooks;
 
-		// If set, notifies the plugin of any module actions
-		AurieModuleCallback ModuleOperationCallback;
-
 		virtual AurieObjectType GetObjectType() override
 		{
 			return AURIE_OBJECT_MODULE;
@@ -151,12 +197,10 @@ namespace Aurie
 			this->ImageBase = {};
 			this->ImageSize = 0;
 			this->ImageEntrypoint = {};
-
 			this->ModuleInitialize = nullptr;
 			this->ModulePreinitialize = nullptr;
 			this->ModuleUnload = nullptr;
 			this->FrameworkInitialize = nullptr;
-			this->ModuleOperationCallback = nullptr;
 		}
 	};
 

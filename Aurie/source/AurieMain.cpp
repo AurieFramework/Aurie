@@ -151,7 +151,6 @@ void ArProcessAttach(HINSTANCE Instance)
 	}
 
 	// Now we have to wait until the current process has finished initializating
-	
 	// Query the process subsystem
 	unsigned short current_process_subsystem = 0;
 	PpGetImageSubsystem(

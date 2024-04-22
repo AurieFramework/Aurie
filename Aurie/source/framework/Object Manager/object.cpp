@@ -129,14 +129,6 @@ namespace Aurie
 			return Object->GetObjectType();
 		}
 
-		void ObpSetModuleOperationCallback(
-			IN AurieModule* Module, 
-			IN AurieModuleCallback CallbackRoutine
-		)
-		{
-			Module->ModuleOperationCallback = CallbackRoutine;
-		}
-
 		void ObpDispatchModuleOperationCallbacks(
 			IN AurieModule* AffectedModule, 
 			IN AurieEntry Routine, 
@@ -155,22 +147,48 @@ namespace Aurie
 			else if (Routine == AffectedModule->ModuleUnload)
 				current_operation_type = AURIE_OPERATION_UNLOAD;
 			
-			AurieOperationInfo operation_information = ObpCreateOperationInfo(
-				AffectedModule,
-				IsFutureCall
+			// TODO
+		}
+
+		bool ObpIsCallbackPartial(
+			IN AurieCallback* CallbackObject
+		)
+		{
+			return CallbackObject->Flags.IsPartial;
+		}
+
+		bool ObpIsCallbackDeferDeleted(
+			IN AurieCallback* CallbackObject
+		)
+		{
+			return CallbackObject->Flags.DeferredDeletion;
+		}
+
+		AurieStatus ObpLookupCallbackByName(
+			IN const char* Name, 
+			IN bool CaseSensitive, 
+			OPTIONAL OUT AurieCallback** CallbackObject
+		)
+		{
+			auto callback_position = std::find_if(
+				g_ObpCallbackList.begin(),
+				g_ObpCallbackList.end(),
+				[Name, CaseSensitive](AurieCallback& Object) -> bool
+				{
+					if (CaseSensitive)
+						return !strcmp(Name, Object.CallbackName);
+
+					return !_stricmp(Name, Object.CallbackName);
+				}
 			);
 
-			for (auto& loaded_module : g_LdrModuleList)
-			{
-				if (!loaded_module.ModuleOperationCallback)
-					continue;
+			if (callback_position == g_ObpCallbackList.cend())
+				return AURIE_OBJECT_NOT_FOUND;
 
-				loaded_module.ModuleOperationCallback(
-					AffectedModule,
-					current_operation_type,
-					&operation_information
-				);
-			}
+			if (CallbackObject)
+				*CallbackObject = &(*callback_position);
+
+			return AURIE_SUCCESS;
 		}
 
 		AurieStatus ObpAddInterfaceToTable(
@@ -183,18 +201,6 @@ namespace Aurie
 			return AURIE_SUCCESS;
 		}
 
-		AurieOperationInfo ObpCreateOperationInfo(
-			IN AurieModule* Module,
-			IN bool IsFutureCall
-		)
-		{
-			AurieOperationInfo operation_information = {};
-
-			operation_information.IsFutureCall = IsFutureCall;
-			operation_information.ModuleBaseAddress = MdpGetModuleBaseAddress(Module);
-
-			return operation_information;
-		}
 
 		AurieStatus ObpDestroyInterface(
 			IN AurieModule* Module, 
@@ -260,6 +266,213 @@ namespace Aurie
 			// We didn't find any interface with that name.
 			return AURIE_OBJECT_NOT_FOUND;
 		}
+
+		AurieStatus ObpCreateCallbackObject(
+			IN AurieModule* Owner,
+			IN const char* CallbackName,
+			IN AurieCallbackEntryEx PreCallback, 
+			IN AurieCallbackEntry PostCallback, 
+			IN bool IsDispatchable,
+			IN bool IsPartial, 
+			OUT AurieCallback** CallbackObject
+		)
+		{
+			if (AurieSuccess(ObpLookupCallbackByName(CallbackName, false, nullptr)))
+				return AURIE_OBJECT_ALREADY_EXISTS;
+
+			AurieCallback new_callback;
+			ObpInitializeCallbackObject(
+				&new_callback,
+				Owner,
+				CallbackName,
+				PreCallback,
+				nullptr,
+				nullptr,
+				PostCallback,
+				IsDispatchable,
+				IsPartial
+			);
+
+			*CallbackObject = ObpAddCallbackToTable(new_callback);
+			return AURIE_SUCCESS;
+		}
+
+		void ObpInitializeCallbackObject(
+			IN AurieCallback* CallbackObject, 
+			IN AurieModule* Owner, 
+			IN const char* CallbackName, 
+			IN AurieCallbackEntryEx PreCallback,
+			IN AurieCallbackEntryEx PreInvokeCallback,
+			IN AurieCallbackEntry PostInvokeCallback,
+			IN AurieCallbackEntry PostCallback,
+			IN bool IsDispatchable, 
+			IN bool IsPartial
+		)
+		{
+			CallbackObject->CallbackName = CallbackName;
+			CallbackObject->OwnerModule = Owner;
+			CallbackObject->PreCallback = PreCallback;
+			CallbackObject->PreInvokeCallback = PreInvokeCallback;
+			CallbackObject->PostInvokeCallback = PostInvokeCallback;
+			CallbackObject->PostCallback = PostCallback;
+
+			CallbackObject->Flags.IsPartial = IsPartial;
+			CallbackObject->Flags.Dispatchable = IsDispatchable;
+			CallbackObject->Flags.Reserved = 0;
+		}
+
+		AurieCallback* ObpAddCallbackToTable(
+			IN const AurieCallback& Callback
+		)
+		{
+			return &g_ObpCallbackList.emplace_back(Callback);
+		}
+
+		bool ObpIsCallbackMethodPresent(
+			IN AurieCallback* CallbackObject, 
+			IN AurieCallbackEntry CallbackMethod
+		)
+		{
+			return std::find(
+				CallbackObject->Callbacks.begin(),
+				CallbackObject->Callbacks.end(),
+				CallbackMethod
+			) != std::end(CallbackObject->Callbacks);
+		}
+
+		size_t ObpQueryCallbackMethodCount(
+			IN AurieCallback* CallbackObject
+		)
+		{
+			return CallbackObject->Callbacks.size();
+		}
+
+		AurieStatus ObpAssignCallback(
+			IN AurieCallback* CallbackObject,
+			IN uint32_t Position,
+			IN AurieCallbackEntry CallbackEntry
+		)
+		{
+			// Make sure we're not doing OOB access
+			if (Position > ObpQueryCallbackMethodCount(CallbackObject))
+				return AURIE_INVALID_PARAMETER;
+
+			// Make sure the method isn't already present in the callback object
+			if (ObpIsCallbackMethodPresent(CallbackObject, CallbackEntry))
+				return AURIE_OBJECT_ALREADY_EXISTS;
+
+			// Craft the iterator at Position
+			auto target_position = CallbackObject->Callbacks.begin();
+			std::advance(target_position, Position);
+
+			// Insert shit there
+			CallbackObject->Callbacks.insert(
+				target_position,
+				CallbackEntry
+			);
+
+			return AURIE_SUCCESS;
+		}
+
+		AurieStatus ObpNotifyCallback(
+			IN AurieCallback* CallbackObject, 
+			IN AurieObject* AffectedObject, 
+			IN PVOID Argument1, 
+			IN PVOID Argument2
+		)
+		{
+			AurieStatus last_status = CallbackObject->PreCallback(
+				AffectedObject, 
+				Argument1, 
+				Argument2
+			);
+
+			if (!AurieSuccess(last_status))
+				return last_status;
+
+			for (AurieCallbackEntry callback : CallbackObject->Callbacks)
+			{
+				struct
+				{
+					PVOID TargetMethod;
+					PVOID Argument1;
+					PVOID Argument2;
+				} pre_invoke_arguments = {
+					.TargetMethod = callback,
+					.Argument1 = Argument1,
+					.Argument2 = Argument2
+				};
+
+				// Dispatch the pre-invoke callback first
+				last_status = CallbackObject->PreInvokeCallback(
+					AffectedObject, 
+					&pre_invoke_arguments, 
+					nullptr
+				);
+
+				// Skip any callbacks for which the preinvoke callback returned 
+				if (!AurieSuccess(last_status))
+					continue;
+
+				callback(AffectedObject, Argument1, Argument2);
+
+				CallbackObject->PostInvokeCallback(
+					AffectedObject,
+					Argument1,
+					Argument2
+				);
+			}
+
+			CallbackObject->PostCallback(
+				AffectedObject,
+				Argument1,
+				Argument2
+			);
+
+			return AURIE_SUCCESS;
+		}
+
+		AurieStatus ObpDeferCallbackDeletion(
+			IN AurieCallback* CallbackObject
+		)
+		{
+			if (CallbackObject->Flags.DeferredDeletion)
+				return AURIE_ALREADY_COMPLETE;
+
+			CallbackObject->Flags.DeferredDeletion = true;
+
+			return AURIE_SUCCESS;
+		}
+
+		void ObpDeleteDeferredCallbacks()
+		{
+			g_ObpCallbackList.remove_if(
+				[](AurieCallback& Callback) -> bool
+				{
+					return Callback.Flags.DeferredDeletion;
+				}
+			);
+		}
+
+		void ObpSetCallbackFlags(
+			IN AurieCallback* CallbackObject, 
+			IN bool AllowDispatch,
+			IN bool IsPartial,
+			IN bool DeferDelete
+		)
+		{
+			CallbackObject->Flags.IsPartial = IsPartial;
+			CallbackObject->Flags.Dispatchable = AllowDispatch;
+			CallbackObject->Flags.DeferredDeletion = DeferDelete;
+			CallbackObject->Flags.Reserved = 0;
+		}
+
+		bool ObpIsCallbackDispatchable(
+			IN AurieCallback* CallbackObject
+		)
+		{
+			return CallbackObject->Flags.Dispatchable;
+		}
 	}
 
 	AurieStatus ObGetInterface(
@@ -314,6 +527,132 @@ namespace Aurie
 		);
 
 		return AURIE_SUCCESS;
+	}
+
+	AurieStatus ObCreateCallback(
+		IN AurieModule* OwnerModule, 
+		IN const char* CallbackName, 
+		IN AurieCallbackEntry CallbackRoutine, 
+		OUT AurieCallback** CallbackObject
+	)
+	{
+		AurieStatus last_status = AURIE_SUCCESS;
+		AurieCallback* callback_object = nullptr;
+
+		// Try to look up an existing callback by the unique name (not case-sensitive)
+		last_status = Internal::ObpLookupCallbackByName(
+			CallbackName,
+			false,
+			&callback_object
+		);
+
+		// If the callback exists (the lookup succeeds),
+		// it can be either already registered, in which case we error,
+		// or can be a pseudocallback in which case we re-register it as a "full" callback
+		if (AurieSuccess(last_status))
+		{
+			// If the callback isn't partial, then it means another module already registered it
+			if (!Internal::ObpIsCallbackPartial(callback_object))
+				return AURIE_OBJECT_ALREADY_EXISTS;
+
+			// If the callback **is** partial, we need to unset the IsPartial flag
+			Internal::ObpSetCallbackFlags(
+				callback_object,
+				Internal::ObpIsCallbackDispatchable(callback_object),
+				false,
+				Internal::ObpIsCallbackDeferDeleted(callback_object)
+			);
+
+			// We also want to assign the owner module to it, as it should currently be nullptr
+			callback_object->OwnerModule = OwnerModule;
+			
+			// Now, a full-fledged callback exists and is linked to the module
+			return AURIE_SUCCESS;
+		}
+
+		// If no callback exists, we create it and push it to the list
+		last_status = Internal::ObpCreateCallbackObject(
+			OwnerModule,
+			CallbackName,
+			nullptr,
+			nullptr,
+			true,
+			false,
+			&callback_object
+		);
+
+		// If we failed creation, don't touch the contents of the user buffer
+		if (!AurieSuccess(last_status))
+			return last_status;
+
+		// Creation succeded, we can send the callback on it's merry way
+		*CallbackObject = callback_object;
+		return AURIE_SUCCESS;
+	}
+
+	AurieStatus ObDestroyCallback(
+		IN AurieModule* OwnerModule, 
+		IN AurieCallback* CallbackObject
+	)
+	{
+		AurieStatus last_status = AURIE_SUCCESS;
+		AurieCallback* callback_object = nullptr;
+
+		// If the owner doesn't match, it's either a partial callback,
+		// in which case the owner will be nullptr, or not our callback
+		// and we can't delete it.
+		if (CallbackObject->OwnerModule != OwnerModule 
+			&& !Internal::ObpIsCallbackPartial(CallbackObject))
+		{
+			return AURIE_ACCESS_DENIED;
+		}
+
+		return Internal::ObpDeferCallbackDeletion(CallbackObject);
+	}
+
+	AurieStatus ObNotifyCallback(
+		IN const char* CallbackName, 
+		OPTIONAL IN PVOID Argument1,
+		OPTIONAL IN PVOID Argument2
+	)
+	{
+		AurieStatus last_status = AURIE_SUCCESS;
+		AurieCallback* callback_object = nullptr;
+
+		// Try to look up an existing callback by the unique name (not case-sensitive)
+		last_status = Internal::ObpLookupCallbackByName(
+			CallbackName,
+			false,
+			&callback_object
+		);
+
+		// If the callback doesn't exist, we fail...
+		if (!AurieSuccess(last_status))
+			return last_status;
+
+		if (!Internal::ObpIsCallbackDispatchable(callback_object))
+			return AURIE_ACCESS_DENIED;
+
+		// If the object is deferred to be deleted, or 
+		// the callback is without an owner, it cannot be notified.
+		if (Internal::ObpIsCallbackDeferDeleted(callback_object) ||
+			Internal::ObpIsCallbackPartial(callback_object))
+		{
+			return AURIE_OBJECT_NOT_FOUND;
+		}
+
+		for (const auto callback : callback_object->Callbacks)
+		{
+			AurieStatus callback_status = AURIE_SUCCESS;
+
+			// User-notified callbacks 
+			callback_status = callback_object->PreInvokeCallback(
+				callback_object, 
+				Argument1, 
+				Argument2
+			);
+		}
+
 	}
 }
 
