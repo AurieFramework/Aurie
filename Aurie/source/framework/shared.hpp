@@ -44,11 +44,11 @@
 #endif // AURIE_FWK_MAJOR
 
 #ifndef AURIE_FWK_MINOR
-#define AURIE_FWK_MINOR 0
+#define AURIE_FWK_MINOR 1
 #endif // AURIE_FWK_MINOR
 
 #ifndef AURIE_FWK_PATCH
-#define AURIE_FWK_PATCH 5
+#define AURIE_FWK_PATCH 0
 #endif // AURIE_FWK_PATCH
 
 
@@ -112,7 +112,9 @@ namespace Aurie
 		// An AurieMemoryAllocation object
 		AURIE_OBJECT_ALLOCATION = 3,
 		// An AurieHook object
-		AURIE_OBJECT_HOOK = 4
+		AURIE_OBJECT_HOOK = 4,
+		// An AurieBreakpoint object
+		AURIE_OBJECT_BREAKPOINT = 5,
 	};
 
 	enum AurieModuleOperationType : uint32_t
@@ -225,6 +227,11 @@ namespace Aurie
 		IN AurieModuleOperationType OperationType,
 		OPTIONAL IN OUT AurieOperationInfo* OperationInfo
 		);
+
+	using AurieBreakpointCallback = bool(*)(
+		IN OUT PVOID ProcessorContext,
+		IN uint32_t ExceptionCode
+	);
 }
 
 #ifndef AURIE_INCLUDE_PRIVATE
@@ -443,6 +450,22 @@ namespace Aurie
 		)
 		{
 			return AURIE_API_CALL(MmpSigscanRegion, RegionBase, RegionSize, Pattern, PatternMask, PatternBase);
+		}
+
+
+		inline AurieStatus MmpSetBreakpoint(
+			IN PVOID Rip,
+			IN AurieBreakpointCallback BreakpointCallback
+		)
+		{
+			return AURIE_API_CALL(MmpSetBreakpoint, Rip, BreakpointCallback);
+		}
+
+		inline AurieStatus MmpUnsetBreakpoint(
+			IN PVOID Rip
+		)
+		{
+			return AURIE_API_CALL(MmpUnsetBreakpoint, Rip);
 		}
 	}
 

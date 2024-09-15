@@ -17,6 +17,7 @@
 #include <Windows.h>
 #include <winternl.h>
 #include <list>
+#include <map>
 #include <SafetyHook/safetyhook.hpp>
 
 namespace Aurie
@@ -176,6 +177,18 @@ namespace Aurie
 		virtual AurieObjectType GetObjectType() override
 		{
 			return AURIE_OBJECT_HOOK;
+		}
+	};
+
+	struct AurieBreakpoint : AurieObject
+	{
+		UCHAR ReplacedByte = 0;
+		PVOID BreakpointAddress = nullptr;
+		AurieBreakpointCallback Callback = nullptr;
+
+		virtual AurieObjectType GetObjectType() override
+		{
+			return AURIE_OBJECT_BREAKPOINT;
 		}
 	};
 

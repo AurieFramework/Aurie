@@ -263,6 +263,181 @@ namespace Aurie
 
 			return MmpAddHookToTable(Module, std::move(hook));
 		}
+
+		AurieBreakpoint MmpInitializeBreakpointObject(
+			IN PVOID Rip, 
+			IN AurieBreakpointCallback Callback
+		)
+		{
+			AurieBreakpoint object;
+			object.BreakpointAddress = Rip;
+			object.Callback = Callback;
+
+			return object;
+		}
+
+		EXPORTED AurieStatus MmpSetBreakpoint(
+			IN PVOID Rip, 
+			IN AurieBreakpointCallback BreakpointCallback
+		)
+		{
+			// Only one breakpoint can be at a given address
+			if (g_BreakpointList.contains(reinterpret_cast<ULONG64>(Rip)))
+				return AURIE_OBJECT_ALREADY_EXISTS;
+
+			AurieBreakpoint breakpoint_object = MmpInitializeBreakpointObject(Rip, BreakpointCallback);
+
+			// Suspend all threads except ours, such that the 
+			// process of inserting a breakpoint can be done atomically.
+			MmpSuspendAllThreads();
+
+			// Try to insert the breakpoint opcode
+			if (!MmpInsertBreakpointOpcode(
+				Rip,
+				breakpoint_object
+			))
+			{
+				MmpResumeAllThreads();
+				return AURIE_EXTERNAL_ERROR;
+			}
+
+			// Insert the breakpoint object
+			g_BreakpointList.insert(
+				{
+					reinterpret_cast<ULONG64>(Rip),
+					breakpoint_object
+				}
+			);
+
+			MmpResumeAllThreads();
+			return AURIE_SUCCESS;
+		}
+
+		EXPORTED AurieStatus MmpUnsetBreakpoint(
+			IN PVOID Rip
+		)
+		{
+			const ULONG64 rip = reinterpret_cast<ULONG64>(Rip);
+
+			if (!g_BreakpointList.contains(rip))
+				return AURIE_OBJECT_NOT_FOUND;
+
+			// Suspend all threads except ours such that the process 
+			// can be done atomically.
+			MmpSuspendAllThreads();
+			
+			// Remove the breakpoint opcode
+			MmpRemoveBreakpointOpcode(
+				Rip,
+				g_BreakpointList[rip]
+			);
+
+			// Resume all threads
+			MmpResumeAllThreads();
+
+			// Remove our entry
+			g_BreakpointList.erase(rip);
+
+			return AURIE_SUCCESS;
+		}
+
+		bool MmpInsertBreakpointOpcode(
+			IN PVOID Address,
+			IN AurieBreakpoint& BreakpointObject
+		)
+		{
+			constexpr unsigned char nop = { 0x90 };
+
+			// TODO: Check that the address is on an instruction boundary.
+			// Save the replaced byte
+			BreakpointObject.ReplacedByte = *static_cast<PUCHAR>(Address);
+
+			// Use WPM because it tries really hard to get the memory written:
+			// https://devblogs.microsoft.com/oldnewthing/20181206-00/?p=100415
+			return WriteProcessMemory(
+				GetCurrentProcess(),
+				Address,
+				&nop,
+				sizeof(nop),
+				nullptr
+			);
+		}
+
+		bool MmpRemoveBreakpointOpcode(
+			IN PVOID Address, 
+			IN AurieBreakpoint BreakpointObject
+		)
+		{
+			// Use WPM because it tries really hard to get the memory written:
+			// https://devblogs.microsoft.com/oldnewthing/20181206-00/?p=100415
+			return WriteProcessMemory(
+				GetCurrentProcess(),
+				Address,
+				&BreakpointObject.ReplacedByte,
+				sizeof(BreakpointObject.ReplacedByte),
+				nullptr
+			);
+		}
+
+		void MmpSuspendAllThreads()
+		{
+			ElForEachThread(
+				[](IN const THREADENTRY32& Entry) -> bool
+				{
+					HANDLE thread = OpenThread(THREAD_SUSPEND_RESUME, false, Entry.th32ThreadID);
+
+					if (!thread)
+						return false;
+
+					SuspendThread(thread);
+					CloseHandle(thread);
+
+					return false;
+				}
+			);
+		}
+
+		void MmpResumeAllThreads()
+		{
+			ElForEachThread(
+				[](IN const THREADENTRY32& Entry) -> bool
+				{
+					HANDLE thread = OpenThread(THREAD_SUSPEND_RESUME, false, Entry.th32ThreadID);
+
+					if (!thread)
+						return false;
+
+					ResumeThread(thread);
+					CloseHandle(thread);
+
+					return false;
+				}
+			);
+		}
+
+		LONG MmpExceptionHandler(
+			IN PEXCEPTION_POINTERS ExceptionContext
+		)
+		{
+			PCONTEXT processor_context = ExceptionContext->ContextRecord;
+			const ULONG32 exception_reason = ExceptionContext->ExceptionRecord->ExceptionCode;
+
+			// We don't care about any exceptions other than #BP. 
+			if (exception_reason != EXCEPTION_BREAKPOINT)
+				return EXCEPTION_CONTINUE_SEARCH;
+
+			// Continue searching for an exception handler if we're not breakpointed here.
+			if (!g_BreakpointList.contains(processor_context->Rip))
+				return EXCEPTION_CONTINUE_SEARCH;
+
+			// Invoke the callback, let it freely adjust the CPU context.
+			bool should_continue_execution = g_BreakpointList[processor_context->Rip].Callback(
+				processor_context,
+				exception_reason
+			);
+
+			return should_continue_execution ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_CONTINUE_SEARCH;
+		}
 	}
 
 	size_t MmSigscanModule(

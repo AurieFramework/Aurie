@@ -134,6 +134,40 @@ namespace Aurie
 			IN PVOID SourceFunction,
 			IN PVOID DestinationFunction
 		);
+
+		AurieBreakpoint MmpInitializeBreakpointObject(
+			IN PVOID Rip,
+			IN AurieBreakpointCallback Callback
+		);
+
+		EXPORTED AurieStatus MmpSetBreakpoint(
+			IN PVOID Rip,
+			IN AurieBreakpointCallback BreakpointCallback
+		);
+
+		EXPORTED AurieStatus MmpUnsetBreakpoint(
+			IN PVOID Rip
+		);
+
+		bool MmpInsertBreakpointOpcode(
+			IN PVOID Address,
+			IN AurieBreakpoint& BreakpointObject
+		);
+
+		bool MmpRemoveBreakpointOpcode(
+			IN PVOID Address,
+			IN AurieBreakpoint BreakpointObject
+		);
+
+		void MmpSuspendAllThreads();
+
+		void MmpResumeAllThreads();
+
+		LONG MmpExceptionHandler(
+			IN PEXCEPTION_POINTERS ExceptionContext
+		);
+
+		inline std::map<ULONG64, AurieBreakpoint> g_BreakpointList;
 	}
 }
 
