@@ -118,7 +118,7 @@ void ArProcessAttach(HINSTANCE Instance)
 	}
 
 	g_VehHandle = AddVectoredExceptionHandler(
-		false,
+		true,
 		Internal::MmpExceptionHandler
 	);
 

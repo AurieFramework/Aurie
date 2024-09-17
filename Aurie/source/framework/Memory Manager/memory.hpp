@@ -159,9 +159,9 @@ namespace Aurie
 			IN AurieBreakpoint BreakpointObject
 		);
 
-		void MmpSuspendAllThreads();
+		void MmpFreezeCurrentProcess();
 
-		void MmpResumeAllThreads();
+		void MmpResumeCurrentProcess();
 
 		LONG MmpExceptionHandler(
 			IN PEXCEPTION_POINTERS ExceptionContext

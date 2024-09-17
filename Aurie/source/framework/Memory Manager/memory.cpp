@@ -199,7 +199,12 @@ namespace Aurie
 			if (!AurieSuccess(last_status))
 				return last_status;
 
+			// Do the unhook atomically
+			Internal::MmpFreezeCurrentProcess();
+
 			hook_object->HookInstance = {};
+
+			Internal::MmpResumeCurrentProcess();
 
 			if (RemoveFromTable)
 			{
@@ -256,11 +261,13 @@ namespace Aurie
 			IN PVOID DestinationFunction
 		)
 		{
+			// Create the hook object
 			AurieHook hook = {};
 			hook.Owner = Module;
 			hook.Identifier = HookIdentifier;
 			hook.HookInstance = safetyhook::create_inline(SourceFunction, DestinationFunction);
 
+			// Add the hook to the table
 			return MmpAddHookToTable(Module, std::move(hook));
 		}
 
@@ -289,7 +296,7 @@ namespace Aurie
 
 			// Suspend all threads except ours, such that the 
 			// process of inserting a breakpoint can be done atomically.
-			MmpSuspendAllThreads();
+			MmpFreezeCurrentProcess();
 
 			// Try to insert the breakpoint opcode
 			if (!MmpInsertBreakpointOpcode(
@@ -297,7 +304,7 @@ namespace Aurie
 				breakpoint_object
 			))
 			{
-				MmpResumeAllThreads();
+				MmpResumeCurrentProcess();
 				return AURIE_EXTERNAL_ERROR;
 			}
 
@@ -309,7 +316,7 @@ namespace Aurie
 				}
 			);
 
-			MmpResumeAllThreads();
+			MmpResumeCurrentProcess();
 			return AURIE_SUCCESS;
 		}
 
@@ -324,7 +331,7 @@ namespace Aurie
 
 			// Suspend all threads except ours such that the process 
 			// can be done atomically.
-			MmpSuspendAllThreads();
+			MmpFreezeCurrentProcess();
 			
 			// Remove the breakpoint opcode
 			MmpRemoveBreakpointOpcode(
@@ -333,7 +340,7 @@ namespace Aurie
 			);
 
 			// Resume all threads
-			MmpResumeAllThreads();
+			MmpResumeCurrentProcess();
 
 			// Remove our entry
 			g_BreakpointList.erase(rip);
@@ -346,7 +353,8 @@ namespace Aurie
 			IN AurieBreakpoint& BreakpointObject
 		)
 		{
-			constexpr unsigned char nop = { 0x90 };
+			// HLT will always raise #GP(0) if CPL != 0
+			constexpr unsigned char hlt = { 0xF4 };
 
 			// TODO: Check that the address is on an instruction boundary.
 			// Save the replaced byte
@@ -357,8 +365,8 @@ namespace Aurie
 			return WriteProcessMemory(
 				GetCurrentProcess(),
 				Address,
-				&nop,
-				sizeof(nop),
+				&hlt,
+				sizeof(hlt),
 				nullptr
 			);
 		}
@@ -379,11 +387,19 @@ namespace Aurie
 			);
 		}
 
-		void MmpSuspendAllThreads()
+		void MmpFreezeCurrentProcess()
 		{
 			ElForEachThread(
 				[](IN const THREADENTRY32& Entry) -> bool
 				{
+					// Skip my thread
+					if (GetCurrentThreadId() == Entry.th32ThreadID)
+						return false;
+
+					// Skip everything that's not my process
+					if (GetCurrentProcessId() != Entry.th32OwnerProcessID)
+						return false;
+
 					HANDLE thread = OpenThread(THREAD_SUSPEND_RESUME, false, Entry.th32ThreadID);
 
 					if (!thread)
@@ -397,11 +413,19 @@ namespace Aurie
 			);
 		}
 
-		void MmpResumeAllThreads()
+		void MmpResumeCurrentProcess()
 		{
 			ElForEachThread(
 				[](IN const THREADENTRY32& Entry) -> bool
 				{
+					// Skip my thread
+					if (GetCurrentThreadId() == Entry.th32ThreadID)
+						return false;
+
+					// Skip everything that's not my process
+					if (GetCurrentProcessId() != Entry.th32OwnerProcessID)
+						return false;
+
 					HANDLE thread = OpenThread(THREAD_SUSPEND_RESUME, false, Entry.th32ThreadID);
 
 					if (!thread)
@@ -422,8 +446,8 @@ namespace Aurie
 			PCONTEXT processor_context = ExceptionContext->ContextRecord;
 			const ULONG32 exception_reason = ExceptionContext->ExceptionRecord->ExceptionCode;
 
-			// We don't care about any exceptions other than #BP. 
-			if (exception_reason != EXCEPTION_BREAKPOINT)
+			// We don't care about any exceptions other than #GP. 
+			if (exception_reason != EXCEPTION_PRIV_INSTRUCTION)
 				return EXCEPTION_CONTINUE_SEARCH;
 
 			// Continue searching for an exception handler if we're not breakpointed here.
@@ -512,6 +536,8 @@ namespace Aurie
 		if (AurieSuccess(MmHookExists(Module, HookIdentifier)))
 			return AURIE_OBJECT_ALREADY_EXISTS;
 
+		Internal::MmpFreezeCurrentProcess();
+
 		// Creates and enables the actual hook
 		AurieHook* created_hook = Internal::MmpCreateHook(
 			Module,
@@ -521,15 +547,22 @@ namespace Aurie
 		);
 
 		if (!created_hook)
+		{
+			Internal::MmpResumeCurrentProcess();
 			return AURIE_INSUFFICIENT_MEMORY;
+		}
 
 		// If the hook is invalid, we're probably passing invalid parameters to it.
 		if (!created_hook->HookInstance)
+		{
+			Internal::MmpResumeCurrentProcess();
 			return AURIE_INVALID_PARAMETER;
+		}
 
 		if (Trampoline)
 			*Trampoline = created_hook->HookInstance.original<PVOID>();
 		
+		Internal::MmpResumeCurrentProcess();
 		return AURIE_SUCCESS;
 	}
 
