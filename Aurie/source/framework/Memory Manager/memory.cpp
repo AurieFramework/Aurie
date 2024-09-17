@@ -439,7 +439,7 @@ namespace Aurie
 			);
 		}
 
-		LONG MmpExceptionHandler(
+		LONG WINAPI MmpExceptionHandler(
 			IN PEXCEPTION_POINTERS ExceptionContext
 		)
 		{
@@ -451,14 +451,27 @@ namespace Aurie
 				return EXCEPTION_CONTINUE_SEARCH;
 
 			// Continue searching for an exception handler if we're not breakpointed here.
+
+#ifdef _WIN64
 			if (!g_BreakpointList.contains(processor_context->Rip))
 				return EXCEPTION_CONTINUE_SEARCH;
+#else
+			if (!g_BreakpointList.contains(processor_context->Eip))
+				return EXCEPTION_CONTINUE_SEARCH;
+#endif // _WIN64
 
 			// Invoke the callback, let it freely adjust the CPU context.
+#ifdef _WIN64
 			bool should_continue_execution = g_BreakpointList[processor_context->Rip].Callback(
 				processor_context,
 				exception_reason
 			);
+#else
+			bool should_continue_execution = g_BreakpointList[processor_context->Eip].Callback(
+				processor_context,
+				exception_reason
+			);
+#endif // _WIN64
 
 			return should_continue_execution ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_CONTINUE_SEARCH;
 		}

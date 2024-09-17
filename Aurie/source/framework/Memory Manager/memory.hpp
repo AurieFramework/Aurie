@@ -163,7 +163,7 @@ namespace Aurie
 
 		void MmpResumeCurrentProcess();
 
-		LONG MmpExceptionHandler(
+		LONG WINAPI MmpExceptionHandler(
 			IN PEXCEPTION_POINTERS ExceptionContext
 		);
 
