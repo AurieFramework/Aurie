@@ -545,12 +545,12 @@ namespace AurieInstaller.ViewModels.Pages
 
             if (!runner_box.Items.Contains(runner_name))
             {
-                runner_box.Items.Add(runner_name);
                 RunnerData new_runner = new() {
                     m_Name = runner_name,
                     m_Path = runner_path
                 };
                 settings.m_AddedRunners.Add(new_runner);
+                runner_box.Items.Add(runner_name);
             }
             runner_box.IsEnabled = true;
             install_button.Visibility = Visibility.Visible;
@@ -617,7 +617,8 @@ namespace AurieInstaller.ViewModels.Pages
                 return;
             }
             string runner_name = (string)runner_box.SelectedItem;
-            string runner_path = GetRunnerPathFromName(runner_name);
+            string runner_path = GetRunnerPathFromName(runner_name) ?? "";
+
             try
             {
                 using (RegistryKey? runner_key = GetRunnerKey(runner_name, true))
@@ -772,6 +773,37 @@ namespace AurieInstaller.ViewModels.Pages
                             using RegistryKey? ifeo = GetIFEOKey(true);
                             ifeo?.DeleteSubKeyTree(runner_name);
                         }
+
+                        RunnerData removed_runner = new()
+                        {
+                            m_Name = runner_name,
+                            m_Path = runner_path
+                        };
+
+                        // Remove all entries for this runner from the added runners
+                        settings.m_AddedRunners.RemoveAll(runner => runner.m_Path == removed_runner.m_Path);
+                        settings.m_CurrentSelectedRunner = "";
+                        runner_box.Items.Remove(runner_box.SelectedItem);
+                        runner_box.SelectedItem = null;
+
+                        // If the runner directory exists
+                        string runner_directory = Path.GetDirectoryName(removed_runner.m_Path) ?? "";
+                        if (Path.Exists(runner_directory))
+                        {
+                            string mods_directory = Path.Combine(runner_directory, "mods") ?? "";
+                            if (Path.Exists(mods_directory))
+                                Directory.Delete(mods_directory, true);
+                        }
+
+                        runner_box.Text = "Select a game...";
+
+                        if (runner_box.Items.IsEmpty)
+                        {
+                            runner_box.IsEnabled = false;
+                        }
+
+                        settings_manager.SaveSettings(settings);
+
                         await GetSnackbarPresenter().HideCurrent();
                         Snackbar snackbar = new(GetSnackbarPresenter()) {
                             MinHeight = 0,
