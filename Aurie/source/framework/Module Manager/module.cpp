@@ -526,6 +526,7 @@ namespace Aurie
 		// No longer safe to access module_object
 		Module = Internal::MdpAddModuleToList(std::move(module_object));
 
+		// If we're loaded at runtime, we have to call the module methods manually
 		if (IsRuntimeLoad)
 		{
 			// Dispatch Module Preinitialize to not break modules that depend on it (eg. YYTK)
@@ -544,6 +545,20 @@ namespace Aurie
 			}
 
 			Module->Flags.IsPreloaded = true;
+
+			// Check the environment we are in. This is to detect plugins loaded by other plugins
+			// from their ModulePreinitialize routines. In such cases, we don't want
+			// to call the loaded plugin's ModuleInitialize, as the process isn't yet
+			// initialized.
+			bool are_we_within_early_launch = false;
+			ElIsProcessSuspended(are_we_within_early_launch);
+
+			// If we're within early launch, ModuleInitialize should not be called.
+			// Instead, it will be called in ArProcessAttach when the module initializes.
+			if (are_we_within_early_launch)
+			{
+				return AURIE_SUCCESS;
+			}
 
 			// Dispatch Module Initialize
 			last_status = Internal::MdpDispatchEntry(

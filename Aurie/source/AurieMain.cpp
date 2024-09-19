@@ -133,10 +133,23 @@ void ArProcessAttach(HINSTANCE Instance)
 		nullptr
 	);
 
-	// Call ModulePreload on all loaded plugins
+	// Call ModulePreinitialize on all loaded plugins
 	for (auto& entry : Internal::g_LdrModuleList)
 	{
-		AurieStatus last_status = Internal::MdpDispatchEntry(
+		AurieStatus last_status = AURIE_SUCCESS;
+
+		// Skip modules that have already been preloaded - this can happen in one specific scenario:
+		// Mod A gets loaded, in ModulePreload calls MdMapImage on Mod B.
+		// 
+		// Mod B is loaded while the game process is suspended, which prompts
+		// the module manager to treat it as a non-runtime loaded mod.
+		// 
+		// The module manager will not call the ModuleInitialize routine
+		// if the process is suspended at the time of the call.
+		if (MdIsImagePreinitialized(&entry))
+			continue;
+
+		last_status = Internal::MdpDispatchEntry(
 			&entry,
 			entry.ModulePreinitialize
 		);
