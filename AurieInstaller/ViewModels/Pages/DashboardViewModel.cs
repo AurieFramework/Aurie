@@ -82,32 +82,6 @@ namespace AurieInstaller.ViewModels.Pages
         private AppSettings settings = SettingsManager.LoadSettings();
         private bool can_install = true;
 
-        /*public const uint DONT_RESOLVE_DLL_REFERENCES = 0x00000001;
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr LoadLibraryEx(string lpFileName, IntPtr hFile, uint dwFlags);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool FreeLibrary(IntPtr hModule);
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        public struct ModInfo
-        {
-            [MarshalAs(UnmanagedType.LPStr)]
-            public string mod_name;
-            public int version_major;
-            public int version_minor;
-            public int version_patch;
-            public string mod_repo;
-            public string mod_icon;
-        }
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void AurieGetModInfoDelegate(ref ModInfo info);*/
         private static ISnackbarService? snackbar_service;
 
         public ISnackbarService m_SnackbarService
@@ -340,36 +314,7 @@ namespace AurieInstaller.ViewModels.Pages
                 foreach (string file in aurie_files)
                 {
                     string mod_name = Path.GetFileName(file);
-                    /*if (mod_name == "discord-rpc.dll")
-                    {
-                        Console.WriteLine($"'{file}'");
-                        IntPtr module_handle = LoadLibraryEx(file, IntPtr.Zero, DONT_RESOLVE_DLL_REFERENCES);
-                        if (module_handle != IntPtr.Zero)
-                        {
-                            IntPtr function_pointer = GetProcAddress(module_handle, "aurie_get_mod_info");
-                            if (function_pointer != IntPtr.Zero)
-                            {
-                                AurieGetModInfoDelegate aurie_get_mod_info = Marshal.GetDelegateForFunctionPointer<AurieGetModInfoDelegate>(function_pointer);
-
-                                ModInfo mod_info = new();
-                                aurie_get_mod_info(ref mod_info);
-
-                                Console.WriteLine($"Mod Name: {mod_info.mod_name}");
-                                Console.WriteLine($"Version: {mod_info.version_major}.{mod_info.version_minor}.{mod_info.version_patch}");
-                                Console.WriteLine($"Mod Repo: {mod_info.mod_repo}");
-                            }
-                            else
-                            {
-                                Console.WriteLine($"'aurie_get_mod_info' not found for {mod_name}!");
-                            }
-                            FreeLibrary(module_handle);
-                        }
-                        else
-                        {
-                            int errorCode = Marshal.GetLastWin32Error();
-                            Console.WriteLine($"Cannot load library for {mod_name}! Error code: {errorCode}");
-                        }
-                    }*/
+ 
                     bool mod_enabled = !mod_name.Contains(".dll.disabled");
                     ModItem mod = new() {
                         m_ModPath = file,
@@ -516,8 +461,12 @@ namespace AurieInstaller.ViewModels.Pages
                 {
                     foreach (JsonElement asset in assets_array.EnumerateArray())
                     {
-                        string asset_name = asset.GetProperty("name").GetString();
-                        string download_url = asset.GetProperty("browser_download_url").GetString();
+                        string? asset_name = asset.GetProperty("name").GetString();
+                        string? download_url = asset.GetProperty("browser_download_url").GetString();
+
+                        // Skip null entries
+                        if (asset_name is null || download_url is null)
+                            continue;
 
                         if (FileNames.Contains(asset_name))
                         {
@@ -801,6 +750,10 @@ namespace AurieInstaller.ViewModels.Pages
                         {
                             runner_box.IsEnabled = false;
                         }
+
+                        play_button.Visibility = Visibility.Hidden;
+                        add_mods_button.Visibility = Visibility.Hidden;
+                        remove_mods_button.Visibility = Visibility.Hidden;
 
                         settings_manager.SaveSettings(settings);
 
