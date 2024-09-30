@@ -66,6 +66,13 @@ namespace Aurie
 		IN std::string_view HookIdentifier
 	);
 
+	EXPORTED AurieStatus MmCreateMidfunctionHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier,
+		IN PVOID SourceAddress,
+		IN AurieMidHookFunction TargetHandler
+	);
+
 	namespace Internal
 	{
 		AurieMemoryAllocation MmpAllocateMemory(
@@ -106,9 +113,26 @@ namespace Aurie
 			IN const PVOID AllocationBase
 		);
 
-		AurieHook* MmpAddHookToTable(
+		AurieInlineHook* MmpAddInlineHookToTable(
 			IN AurieModule* OwnerModule,
-			IN AurieHook&& Hook
+			IN AurieInlineHook&& Hook
+		);
+
+		AurieMidHook* MmpAddMidHookToTable(
+			IN AurieModule* OwnerModule,
+			IN AurieMidHook&& Hook
+		);
+
+		AurieStatus MmpRemoveInlineHook(
+			IN AurieModule* Module,
+			IN AurieInlineHook* Hook,
+			IN bool RemoveFromTable
+		);
+
+		AurieStatus MmpRemoveMidHook(
+			IN AurieModule* Module,
+			IN AurieMidHook* Hook,
+			IN bool RemoveFromTable
 		);
 
 		AurieStatus MmpRemoveHook(
@@ -117,57 +141,45 @@ namespace Aurie
 			IN bool RemoveFromTable
 		);
 
-		void MmpRemoveHookFromTable(
+		void MmpRemoveInlineHookFromTable(
 			IN AurieModule* Module,
-			IN AurieHook* Hook
+			IN AurieInlineHook* Hook
 		);
 
-		AurieStatus MmpLookupHookByName(
+		void MmpRemoveMidHookFromTable(
+			IN AurieModule* Module,
+			IN AurieMidHook* Hook
+		);
+
+		AurieStatus MmpLookupInlineHookByName(
 			IN AurieModule* Module,
 			IN std::string_view HookIdentifier,
-			OUT AurieHook*& Hook
+			OUT AurieInlineHook*& Hook
 		);
 
-		AurieHook* MmpCreateHook(
+		AurieStatus MmpLookupMidHookByName(
+			IN AurieModule* Module,
+			IN std::string_view HookIdentifier,
+			OUT AurieMidHook*& Hook
+		);
+
+		AurieInlineHook* MmpCreateInlineHook(
 			IN AurieModule* Module,
 			IN std::string_view HookIdentifier,
 			IN PVOID SourceFunction,
 			IN PVOID DestinationFunction
 		);
 
-		AurieBreakpoint MmpInitializeBreakpointObject(
-			IN PVOID Rip,
-			IN AurieBreakpointCallback Callback
-		);
-
-		EXPORTED AurieStatus MmpSetBreakpoint(
-			IN PVOID Rip,
-			IN AurieBreakpointCallback BreakpointCallback
-		);
-
-		EXPORTED AurieStatus MmpUnsetBreakpoint(
-			IN PVOID Rip
-		);
-
-		bool MmpInsertBreakpointOpcode(
-			IN PVOID Address,
-			IN AurieBreakpoint& BreakpointObject
-		);
-
-		bool MmpRemoveBreakpointOpcode(
-			IN PVOID Address,
-			IN AurieBreakpoint BreakpointObject
+		AurieMidHook* MmpCreateMidHook(
+			IN AurieModule* Module,
+			IN std::string_view HookIdentifier,
+			IN PVOID SourceInstruction,
+			IN AurieMidHookFunction TargetFunction
 		);
 
 		void MmpFreezeCurrentProcess();
 
 		void MmpResumeCurrentProcess();
-
-		LONG WINAPI MmpExceptionHandler(
-			IN PEXCEPTION_POINTERS ExceptionContext
-		);
-
-		inline std::map<ULONG64, AurieBreakpoint> g_BreakpointList;
 	}
 }
 

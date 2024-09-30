@@ -349,7 +349,8 @@ namespace Aurie
 
 		// We don't have to do anything else, since SafetyHook will handle everything for us.
 		// Truly a GOATed library, thank you @localcc for telling me about it love ya
-		Module->Hooks.clear();
+		Module->InlineHooks.clear();
+		Module->MidHooks.clear();
 
 		// Call the unload entry if needed
 		if (CallUnloadRoutine)

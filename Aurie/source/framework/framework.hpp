@@ -129,7 +129,8 @@ namespace Aurie
 		std::list<AurieMemoryAllocation> MemoryAllocations;
 
 		// Functions hooked by the module by Mm*Hook functions
-		std::list<AurieHook> Hooks;
+		std::list<AurieInlineHook> InlineHooks;
+		std::list<AurieMidHook> MidHooks;
 
 		// If set, notifies the plugin of any module actions
 		AurieModuleCallback ModuleOperationCallback;
@@ -161,13 +162,13 @@ namespace Aurie
 		}
 	};
 
-	struct AurieHook : AurieObject
+	struct AurieInlineHook : AurieObject
 	{
 		AurieModule* Owner = nullptr;
 		std::string Identifier;
 		SafetyHookInline HookInstance;
 
-		bool operator==(const AurieHook& Other) const
+		bool operator==(const AurieInlineHook& Other) const
 		{
 			return
 				this->HookInstance.destination() == Other.HookInstance.destination() &&
@@ -180,15 +181,22 @@ namespace Aurie
 		}
 	};
 
-	struct AurieBreakpoint : AurieObject
+	struct AurieMidHook : AurieObject
 	{
-		UCHAR ReplacedByte = 0;
-		PVOID BreakpointAddress = nullptr;
-		AurieBreakpointCallback Callback = nullptr;
+		AurieModule* Owner = nullptr;
+		std::string Identifier;
+		SafetyHookMid HookInstance;
+
+		bool operator==(const AurieMidHook& Other) const
+		{
+			return
+				this->HookInstance.destination() == Other.HookInstance.destination() &&
+				this->HookInstance.target() == Other.HookInstance.target();
+		}
 
 		virtual AurieObjectType GetObjectType() override
 		{
-			return AURIE_OBJECT_BREAKPOINT;
+			return AURIE_OBJECT_MIDFUNCTION_HOOK;
 		}
 	};
 

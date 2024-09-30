@@ -8,8 +8,6 @@
 
 #include "framework/framework.hpp"
 
-static PVOID g_VehHandle = nullptr;
-
 // Unload routine, frees everything properly
 void ArProcessDetach(HINSTANCE)
 {
@@ -43,9 +41,6 @@ void ArProcessDetach(HINSTANCE)
 
 	// Remove all the allocations, they're now invalid
 	g_ArInitialImage->MemoryAllocations.clear();
-
-	// Remove the VEH
-	RemoveVectoredExceptionHandler(g_VehHandle);
 
 	// Null the initial image, and clear the module list
 	g_ArInitialImage = nullptr;
@@ -116,11 +111,6 @@ void ArProcessAttach(HINSTANCE Instance)
 			MB_OK | MB_TOPMOST | MB_ICONERROR | MB_SETFOREGROUND
 		);
 	}
-
-	g_VehHandle = AddVectoredExceptionHandler(
-		true,
-		Internal::MmpExceptionHandler
-	);
 
 	// Craft the path from which the mods will be loaded
 	folder_path = folder_path / "mods" / "aurie";

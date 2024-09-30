@@ -740,8 +740,25 @@ namespace AurieInstaller.ViewModels.Pages
                         if (Path.Exists(runner_directory))
                         {
                             string mods_directory = Path.Combine(runner_directory, "mods") ?? "";
-                            if (Path.Exists(mods_directory))
+
+                            string aurie_directory = Path.Combine(runner_directory, "mods", "aurie");
+                            string native_directory = Path.Combine(runner_directory, "mods", "native");
+                            string loader_file = Path.Combine(runner_directory, "mods", "AurieLoader.exe");
+
+                            if (Directory.Exists(aurie_directory))
+                                Directory.Delete(aurie_directory, true);
+
+                            if (Directory.Exists(native_directory))
+                                Directory.Delete(native_directory, true);
+
+                            if (File.Exists(loader_file))
+                                File.Delete(loader_file);
+
+                            // If no more files remain
+                            if (Directory.GetFileSystemEntries(mods_directory).Count() == 0)
+                            {
                                 Directory.Delete(mods_directory, true);
+                            }
                         }
 
                         runner_box.Text = "Select a game...";
@@ -754,6 +771,7 @@ namespace AurieInstaller.ViewModels.Pages
                         play_button.Visibility = Visibility.Hidden;
                         add_mods_button.Visibility = Visibility.Hidden;
                         remove_mods_button.Visibility = Visibility.Hidden;
+                        install_button.Visibility = Visibility.Hidden;
 
                         settings_manager.SaveSettings(settings);
 
