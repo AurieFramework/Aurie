@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="source\framework\Early Launch\early_launch.hpp" />
     <ClInclude Include="source\framework\shared.hpp" />
     <ClInclude Include="source\framework\Memory Manager\memory.hpp" />
@@ -38,6 +39,9 @@
     <ClCompile Include="source\framework\PE Parser\pe.cpp" />
     <ClCompile Include="source\include\SafetyHook\safetyhook.cpp" />
     <ClCompile Include="source\include\Zydis\Zydis.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="AurieCore.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
