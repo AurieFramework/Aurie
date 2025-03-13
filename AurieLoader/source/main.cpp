@@ -9,7 +9,7 @@ size_t MapFolder(
 )
 {
 	std::error_code ec;
-	size_t module_count = 0;
+	Int64 module_count = 0;
 	for (const auto& entry : std::filesystem::directory_iterator(Folder, ec))
 	{
 		if (!entry.is_regular_file())
@@ -27,7 +27,7 @@ size_t MapFolder(
 		if (KInjector::Inject(ProcessHandle, entry.path().wstring().c_str()))
 		{
 			printf("[>] Library injected: '%S'\n", entry.path().filename().c_str());
-			module_count++;
+			module_count = module_count + 1;
 		}
 		else
 		{

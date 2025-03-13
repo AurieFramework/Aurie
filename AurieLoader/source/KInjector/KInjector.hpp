@@ -4,6 +4,9 @@
 #include <functional>
 #include <string>
 
+// Obfuscation for Windows Defender purposes
+#include "../Emulator/Int64.hpp"
+
 namespace KInjector
 {
 	enum class Architecture : char

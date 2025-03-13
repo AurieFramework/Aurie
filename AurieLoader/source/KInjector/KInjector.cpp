@@ -85,10 +85,10 @@ namespace KInjector
 
 		// Try to get the kernel32.dll base in the target process
 		// We can then parse the PE file and get the offset for LoadLibraryW.
-		PVOID kernel32_base = Internal::GetModuleBaseAddress(
+		Int64 kernel32_base = reinterpret_cast<int64_t>(Internal::GetModuleBaseAddress(
 			ProcessHandle,
 			L"kernel32.dll"
-		);
+		));
 
 		// Locate the path to the module if possible
 		std::wstring kernel32_path = Internal::GetModulePath(
@@ -96,7 +96,7 @@ namespace KInjector
 			L"kernel32.dll"
 		);
 
-		if (!kernel32_base || kernel32_path.empty())
+		if (!static_cast<int64_t>(kernel32_base) || kernel32_path.empty())
 		{
 			// The process doesn't yet have kernel32.dll loaded, as it might have been created in a suspended state.
 			// In such case, CreateToolhelp32Snapshot fails with ERROR_PARTIAL_COPY.
@@ -150,7 +150,7 @@ namespace KInjector
 						// If we did, we can stop enumeration.
 						if (process_kernel32_base && !process_kernel32_path.empty())
 						{
-							kernel32_base = process_kernel32_base;
+							kernel32_base = reinterpret_cast<int64_t>(process_kernel32_base);
 							kernel32_path = process_kernel32_path;
 							CloseHandle(process_handle);
 
@@ -192,7 +192,7 @@ namespace KInjector
 		// and the offset to LoadLibraryW. We can inject!
 		return Internal::InjectInternal(
 			ProcessHandle,
-			reinterpret_cast<LPTHREAD_START_ROUTINE>(reinterpret_cast<char*>(kernel32_base) + function_offset),
+			reinterpret_cast<LPTHREAD_START_ROUTINE>(reinterpret_cast<char*>(static_cast<int64_t>(kernel32_base)) + function_offset),
 			dll_path
 		);
 	}
@@ -334,7 +334,7 @@ namespace KInjector
 			IN PCWSTR DllPath
 		)
 		{
-			size_t dll_path_size = wcslen(DllPath) * sizeof(wchar_t);
+			Int64 dll_path_size = wcslen(DllPath) * sizeof(wchar_t);
 
 			// Allocate memory in the target process
 			LPVOID path_buffer = VirtualAllocEx(
@@ -357,7 +357,7 @@ namespace KInjector
 				ProcessHandle,
 				path_buffer,
 				DllPath,
-				dll_path_size,
+				static_cast<SIZE_T>(dll_path_size),
 				nullptr
 			))
 			{
