@@ -47,7 +47,7 @@ jobs:
       run: dotnet publish /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:PublishSingleFile=true /p:SelfContained=false AurieInstaller
     
     - name: Create release artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Aurie Build (x64, Release)
         path: |
