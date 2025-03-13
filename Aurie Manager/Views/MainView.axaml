@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Aurie_Manager.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="360"
+             x:Class="Aurie_Manager.Views.MainView"
+			 Background="#202020"
+			 Foreground="White"
+             x:DataType="vm:MainViewModel">
+  <Design.DataContext>
+    <!-- This only sets the DataContext for the previewer in an IDE,
+         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+    <vm:MainViewModel />
+  </Design.DataContext>
+	<StackPanel>
+		<Grid ShowGridLines="True" ColumnDefinitions="310, 160" RowDefinitions="Auto, 60, 160" Margin="5">
+			<Label FontWeight="Bold" FontSize="28" Grid.Column="0">
+				Install Manager
+			</Label>
+
+			<!-- The margin (1, 0) is needed such that the I in "Install Manager" 
+				 stays aligned with the small I in "Installed games" -->
+			<Label Margin="1, 0" Grid.Row="1" VerticalAlignment="Center">Installed games: </Label>
+			<ComboBox	Name="GameSelectionComboBox" 
+						Grid.Row="1" 
+						Margin="10" 
+						Width="180" 
+						HorizontalAlignment="Right" 
+						VerticalAlignment="Center" 
+						SelectionChanged="GameSelectionComboBox_SelectionChanged"
+						ItemsSource="{Binding p_AddedGames}">
+			</ComboBox>
+		</Grid>
+	</StackPanel>
+</UserControl>

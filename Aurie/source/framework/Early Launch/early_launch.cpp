@@ -267,7 +267,7 @@ namespace Aurie
 			// can cause the buffer to be insufficient in size.
 			size_needed *= 2;
 
-			PVOID system_info_buffer = malloc(size_needed);
+			PVOID system_info_buffer = MmAllocateMemory(g_ArInitialImage, size_needed);
 			if (!system_info_buffer)
 				return STATUS_INSUFFICIENT_RESOURCES;
 
@@ -281,7 +281,7 @@ namespace Aurie
 			// Make sure we succeeded in grabbing the lists
 			if (!NT_SUCCESS(last_status))
 			{
-				free(system_info_buffer);
+				MmFreeMemory(g_ArInitialImage, system_info_buffer);
 				return last_status;
 			}
 			
@@ -307,7 +307,7 @@ namespace Aurie
 			// In this case, we bail.
 			if (HandleToULong(current_process->UniqueProcessId) != GetCurrentProcessId())
 			{
-				free(process_information);
+				MmFreeMemory(g_ArInitialImage, process_information);
 				return STATUS_NOT_FOUND;
 			}
 
@@ -325,7 +325,7 @@ namespace Aurie
 				break;
 			}
 
-			free(process_information);
+			MmFreeMemory(g_ArInitialImage, process_information);
 			return last_status;
 		}
 

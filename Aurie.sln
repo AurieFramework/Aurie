@@ -9,7 +9,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AurieLoader", "AurieLoader\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AurieCore", "Aurie\AurieCore.vcxproj", "{DBEA28B6-4D6E-4A5A-BE6C-B7BCF97A77CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AurieInstaller", "AurieInstaller\AurieInstaller.csproj", "{6D3ED184-511F-4863-AFDF-0855F27400F8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AurieInstaller", "AurieInstaller\AurieInstaller.csproj", "{6D3ED184-511F-4863-AFDF-0855F27400F8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aurie Manager", "Aurie Manager\Aurie Manager.csproj", "{321541D2-762D-4248-8FE8-0A7DBD5D1734}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aurie Manager.Desktop", "Aurie Manager.Desktop\Aurie Manager.Desktop.csproj", "{F900A728-2353-46DC-B33C-483DA23C7C0D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +73,30 @@ Global
 		{6D3ED184-511F-4863-AFDF-0855F27400F8}.Release|x64.Build.0 = Release|Any CPU
 		{6D3ED184-511F-4863-AFDF-0855F27400F8}.Release|x86.ActiveCfg = Release|Any CPU
 		{6D3ED184-511F-4863-AFDF-0855F27400F8}.Release|x86.Build.0 = Release|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Debug|x64.Build.0 = Debug|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Debug|x86.Build.0 = Debug|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Release|Any CPU.Build.0 = Release|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Release|x64.ActiveCfg = Release|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Release|x64.Build.0 = Release|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Release|x86.ActiveCfg = Release|Any CPU
+		{321541D2-762D-4248-8FE8-0A7DBD5D1734}.Release|x86.Build.0 = Release|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Debug|x64.Build.0 = Debug|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Debug|x86.Build.0 = Debug|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Release|x64.ActiveCfg = Release|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Release|x64.Build.0 = Release|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Release|x86.ActiveCfg = Release|Any CPU
+		{F900A728-2353-46DC-B33C-483DA23C7C0D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

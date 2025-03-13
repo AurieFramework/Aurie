@@ -278,7 +278,7 @@ namespace Aurie
 		)
 		{
 			AurieMemoryAllocation allocation;
-			allocation.AllocationBase = malloc(AllocationSize);
+			allocation.AllocationBase = reinterpret_cast<void*>(new char[AllocationSize]);
 			allocation.AllocationSize = AllocationSize;
 			allocation.OwnerModule = OwnerModule;
 
@@ -310,7 +310,7 @@ namespace Aurie
 				);
 			}
 
-			free(AllocationBase);
+			delete[] AllocationBase;
 		}
 
 		AurieMemoryAllocation* MmpAddAllocationToTable(

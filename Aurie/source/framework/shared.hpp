@@ -48,7 +48,7 @@
 #endif // AURIE_FWK_MINOR
 
 #ifndef AURIE_FWK_PATCH
-#define AURIE_FWK_PATCH 0
+#define AURIE_FWK_PATCH 1
 #endif // AURIE_FWK_PATCH
 
 
