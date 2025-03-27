@@ -200,6 +200,13 @@ namespace Aurie
 		}
 	};
 
+	struct AurieLogEntry
+	{
+		AurieModule* Creator = nullptr;
+		std::string StringToPrint;
+		AurieLogSeverity Severity = LOG_SEVERITY_INFO;
+	};
+
 	typedef enum _KTHREAD_STATE
 	{
 		Initialized,
@@ -318,6 +325,7 @@ namespace Aurie
 	} SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
 }
 
+#include "Debugging/debug.hpp"
 #include "Early Launch/early_launch.hpp"
 #include "Memory Manager/memory.hpp"
 #include "Module Manager/module.hpp"

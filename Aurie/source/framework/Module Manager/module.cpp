@@ -502,6 +502,13 @@ namespace Aurie
 
 		// Map the image
 		last_status = Internal::MdpMapImage(ImagePath, image_base);
+		DbgPrintEx(
+			LOG_SEVERITY_TRACE, 
+			"[MdMapImageEx] MdpMapImage(%S) returns %s (GLE 0x%x)", 
+			ImagePath.filename().c_str(),
+			AurieStatusToString(last_status),
+			GetLastError()
+		);
 
 		if (!AurieSuccess(last_status))
 			return last_status;

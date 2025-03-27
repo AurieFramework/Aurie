@@ -7,18 +7,11 @@ EXPORTED AurieStatus ModulePreinitialize(
 	IN const fs::path& ModulePath
 )
 {
-	AllocConsole();
-	FILE* fDummy;
-	freopen_s(&fDummy, "CONIN$", "r", stdin);
-	freopen_s(&fDummy, "CONOUT$", "w", stderr);
-	freopen_s(&fDummy, "CONOUT$", "w", stdout);
-
-
 	bool is_game_suspended = false;
 	AurieStatus status = ElIsProcessSuspended(is_game_suspended);
 
-	printf(
-		"[TestModule] ModulePreload. ElIsProcessSuspended returns %s with status %s\n", 
+	DbgPrint(
+		"[TestModule] ModulePreload. ElIsProcessSuspended returns %s with status %s",
 		is_game_suspended ? "true" : "false",
 		AurieStatusToString(status)
 	);
@@ -33,10 +26,10 @@ EXPORTED AurieStatus ModuleInitialize(
 {
 	AurieStatus last_status = AURIE_SUCCESS;
 
-	printf("Hello from the test Aurie Framework module!\n");
-	printf("- AurieModule: %p\n", Module);
-	printf("- ModulePath: %S\n", ModulePath.wstring().c_str());
-	printf("- g_ArInitialImage: %p\n", g_ArInitialImage);
+	DbgPrint("Hello from the test Aurie Framework module!");
+	DbgPrint("- AurieModule: %p", Module);
+	DbgPrint("- ModulePath: %S", ModulePath.wstring().c_str());
+	DbgPrint("- g_ArInitialImage: %p", g_ArInitialImage);
 
 	PVOID current_nt_header = nullptr;
 	last_status = Internal::PpiGetNtHeader(
@@ -45,9 +38,9 @@ EXPORTED AurieStatus ModuleInitialize(
 	);
 
 	if (AurieSuccess(last_status))
-		printf("[>] Internal::PpiGetNtHeader succeeds (current_nt_header %p)!\n", current_nt_header);
+		DbgPrint("[>] Internal::PpiGetNtHeader succeeds (current_nt_header %p)!", current_nt_header);
 	else
-		printf("[!] Internal::PpiGetNtHeader fails!\n");
+		DbgPrintEx(LOG_SEVERITY_WARNING, "[!] Internal::PpiGetNtHeader fails!");
 
 	return AURIE_SUCCESS;
 }

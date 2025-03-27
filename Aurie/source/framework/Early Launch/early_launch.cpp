@@ -55,10 +55,12 @@ namespace Aurie
 				return false;
 			};
 
+		DbgPrintEx(LOG_SEVERITY_TRACE, "[ElWaitForCurrentProcessWindow] Waiting for process window...");
 		while (!window_information.ProcessWindow)
 		{
 			EnumWindows(enum_windows_callback, reinterpret_cast<LPARAM>(&window_information));
 		}
+		DbgPrintEx(LOG_SEVERITY_TRACE, "[ElWaitForCurrentProcessWindow] Got process window!");
 
 		return window_information.ProcessWindow;
 	}
@@ -333,10 +335,31 @@ namespace Aurie
 			IN HANDLE ProcessHandle
 		)
 		{
+			//ElForEachThread(
+			//	[ProcessHandle](const THREADENTRY32& ThreadEntry) -> bool
+			//	{
+			//		// Skip any threads that aren't in our own process
+			//		if (ThreadEntry.th32OwnerProcessID != GetCurrentProcessId())
+			//			return false;
+
+			//		HANDLE thread_handle = OpenThread(
+			//			THREAD_ALL_ACCESS,
+			//			false,
+			//			ThreadEntry.th32ThreadID
+			//		);
+
+			//		// We can't open this thread for some reason
+			//		if (!thread_handle)
+			//			return false;
+
+			//		ResumeThread(thread_handle);
+			//		return false;
+			//	}
+			//);
+
 			using FN_NtResumeProcess = NTSTATUS(NTAPI*)(
 				IN HANDLE ProcessHandle
 			);
-
 			auto NtResumeProcess = reinterpret_cast<FN_NtResumeProcess>(ElpGetProcedure(
 				L"ntdll.dll",
 				"NtResumeProcess"

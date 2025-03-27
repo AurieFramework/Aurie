@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="source\framework\Debugging\debug.hpp" />
     <ClInclude Include="source\framework\Early Launch\early_launch.hpp" />
     <ClInclude Include="source\framework\shared.hpp" />
     <ClInclude Include="source\framework\Memory Manager\memory.hpp" />
@@ -28,10 +29,115 @@
     <ClInclude Include="source\framework\PE Parser\pe.hpp" />
     <ClInclude Include="source\framework\framework.hpp" />
     <ClInclude Include="source\include\SafetyHook\safetyhook.hpp" />
+    <ClInclude Include="source\include\spdlog\async.h" />
+    <ClInclude Include="source\include\spdlog\async_logger-inl.h" />
+    <ClInclude Include="source\include\spdlog\async_logger.h" />
+    <ClInclude Include="source\include\spdlog\cfg\argv.h" />
+    <ClInclude Include="source\include\spdlog\cfg\env.h" />
+    <ClInclude Include="source\include\spdlog\cfg\helpers-inl.h" />
+    <ClInclude Include="source\include\spdlog\cfg\helpers.h" />
+    <ClInclude Include="source\include\spdlog\common-inl.h" />
+    <ClInclude Include="source\include\spdlog\common.h" />
+    <ClInclude Include="source\include\spdlog\details\backtracer-inl.h" />
+    <ClInclude Include="source\include\spdlog\details\backtracer.h" />
+    <ClInclude Include="source\include\spdlog\details\circular_q.h" />
+    <ClInclude Include="source\include\spdlog\details\console_globals.h" />
+    <ClInclude Include="source\include\spdlog\details\file_helper-inl.h" />
+    <ClInclude Include="source\include\spdlog\details\file_helper.h" />
+    <ClInclude Include="source\include\spdlog\details\fmt_helper.h" />
+    <ClInclude Include="source\include\spdlog\details\log_msg-inl.h" />
+    <ClInclude Include="source\include\spdlog\details\log_msg.h" />
+    <ClInclude Include="source\include\spdlog\details\log_msg_buffer-inl.h" />
+    <ClInclude Include="source\include\spdlog\details\log_msg_buffer.h" />
+    <ClInclude Include="source\include\spdlog\details\mpmc_blocking_q.h" />
+    <ClInclude Include="source\include\spdlog\details\null_mutex.h" />
+    <ClInclude Include="source\include\spdlog\details\os-inl.h" />
+    <ClInclude Include="source\include\spdlog\details\os.h" />
+    <ClInclude Include="source\include\spdlog\details\periodic_worker-inl.h" />
+    <ClInclude Include="source\include\spdlog\details\periodic_worker.h" />
+    <ClInclude Include="source\include\spdlog\details\registry-inl.h" />
+    <ClInclude Include="source\include\spdlog\details\registry.h" />
+    <ClInclude Include="source\include\spdlog\details\synchronous_factory.h" />
+    <ClInclude Include="source\include\spdlog\details\tcp_client-windows.h" />
+    <ClInclude Include="source\include\spdlog\details\tcp_client.h" />
+    <ClInclude Include="source\include\spdlog\details\thread_pool-inl.h" />
+    <ClInclude Include="source\include\spdlog\details\thread_pool.h" />
+    <ClInclude Include="source\include\spdlog\details\udp_client-windows.h" />
+    <ClInclude Include="source\include\spdlog\details\udp_client.h" />
+    <ClInclude Include="source\include\spdlog\details\windows_include.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bin_to_hex.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\args.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\base.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\chrono.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\color.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\compile.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\core.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\format-inl.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\format.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\os.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\ostream.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\printf.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\ranges.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\std.h" />
+    <ClInclude Include="source\include\spdlog\fmt\bundled\xchar.h" />
+    <ClInclude Include="source\include\spdlog\fmt\chrono.h" />
+    <ClInclude Include="source\include\spdlog\fmt\compile.h" />
+    <ClInclude Include="source\include\spdlog\fmt\fmt.h" />
+    <ClInclude Include="source\include\spdlog\fmt\ostr.h" />
+    <ClInclude Include="source\include\spdlog\fmt\ranges.h" />
+    <ClInclude Include="source\include\spdlog\fmt\std.h" />
+    <ClInclude Include="source\include\spdlog\fmt\xchar.h" />
+    <ClInclude Include="source\include\spdlog\formatter.h" />
+    <ClInclude Include="source\include\spdlog\fwd.h" />
+    <ClInclude Include="source\include\spdlog\logger-inl.h" />
+    <ClInclude Include="source\include\spdlog\logger.h" />
+    <ClInclude Include="source\include\spdlog\mdc.h" />
+    <ClInclude Include="source\include\spdlog\pattern_formatter-inl.h" />
+    <ClInclude Include="source\include\spdlog\pattern_formatter.h" />
+    <ClInclude Include="source\include\spdlog\sinks\android_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\ansicolor_sink-inl.h" />
+    <ClInclude Include="source\include\spdlog\sinks\ansicolor_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\base_sink-inl.h" />
+    <ClInclude Include="source\include\spdlog\sinks\base_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\basic_file_sink-inl.h" />
+    <ClInclude Include="source\include\spdlog\sinks\basic_file_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\callback_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\daily_file_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\dist_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\dup_filter_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\hourly_file_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\kafka_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\mongo_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\msvc_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\null_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\ostream_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\qt_sinks.h" />
+    <ClInclude Include="source\include\spdlog\sinks\ringbuffer_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\rotating_file_sink-inl.h" />
+    <ClInclude Include="source\include\spdlog\sinks\rotating_file_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\sink-inl.h" />
+    <ClInclude Include="source\include\spdlog\sinks\sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\stdout_color_sinks-inl.h" />
+    <ClInclude Include="source\include\spdlog\sinks\stdout_color_sinks.h" />
+    <ClInclude Include="source\include\spdlog\sinks\stdout_sinks-inl.h" />
+    <ClInclude Include="source\include\spdlog\sinks\stdout_sinks.h" />
+    <ClInclude Include="source\include\spdlog\sinks\syslog_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\systemd_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\tcp_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\udp_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\wincolor_sink-inl.h" />
+    <ClInclude Include="source\include\spdlog\sinks\wincolor_sink.h" />
+    <ClInclude Include="source\include\spdlog\sinks\win_eventlog_sink.h" />
+    <ClInclude Include="source\include\spdlog\spdlog-inl.h" />
+    <ClInclude Include="source\include\spdlog\spdlog.h" />
+    <ClInclude Include="source\include\spdlog\stopwatch.h" />
+    <ClInclude Include="source\include\spdlog\tweakme.h" />
+    <ClInclude Include="source\include\spdlog\version.h" />
     <ClInclude Include="source\include\Zydis\Zydis.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\AurieMain.cpp" />
+    <ClCompile Include="source\framework\Debugging\debug.cpp" />
     <ClCompile Include="source\framework\Early Launch\early_launch.cpp" />
     <ClCompile Include="source\framework\Memory Manager\memory.cpp" />
     <ClCompile Include="source\framework\Module Manager\module.cpp" />
@@ -107,6 +213,9 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DisableSpecificWarnings>4201;</DisableSpecificWarnings>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExternalWarningLevel>InheritWarningLevel</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,6 +234,9 @@
       <AdditionalIncludeDirectories>$(ProjectDir)source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4201;</DisableSpecificWarnings>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExternalWarningLevel>InheritWarningLevel</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,6 +256,9 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DisableSpecificWarnings>4201;</DisableSpecificWarnings>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExternalWarningLevel>InheritWarningLevel</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -162,6 +277,9 @@
       <AdditionalIncludeDirectories>$(ProjectDir)source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4201;</DisableSpecificWarnings>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExternalWarningLevel>InheritWarningLevel</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

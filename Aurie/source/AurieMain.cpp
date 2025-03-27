@@ -13,6 +13,8 @@ void ArProcessDetach(HINSTANCE)
 {
 	using namespace Aurie;
 
+	Beep(1200, 200);
+	
 	// Unload all modules except the initial image
 	// First calls the ModuleUnload functions (if they're set up)
 	for (auto& entry : Internal::g_LdrModuleList)
@@ -45,6 +47,9 @@ void ArProcessDetach(HINSTANCE)
 	// Null the initial image, and clear the module list
 	g_ArInitialImage = nullptr;
 	Internal::g_LdrModuleList.clear();
+
+	// Destroy the console
+	Internal::DbgpDestroyConsole();
 }
 
 // Called upon framework initialization (DLL_PROCESS_ATTACH) event.
@@ -95,6 +100,29 @@ void ArProcessAttach(HINSTANCE Instance)
 		std::move(initial_module)
 	);
 
+	// Create a logger
+	Internal::DbgpCreateConsole("AurieCore");
+	Internal::DbgpInitLogger();
+
+	Internal::g_PrintWorkerThreadHandle = CreateThread(
+		nullptr,
+		0,
+		reinterpret_cast<LPTHREAD_START_ROUTINE>(Internal::DbgpPrintWorkerThread),
+		nullptr,
+		0,
+		nullptr
+	);
+
+	if (!Internal::g_PrintWorkerThreadHandle)
+	{
+		return (void)MessageBoxA(
+			nullptr,
+			"Failed to create logger thread!",
+			"Aurie Framework",
+			MB_OK | MB_TOPMOST | MB_ICONERROR | MB_SETFOREGROUND
+		);
+	}
+
 	// Get the current folder (where the main executable is)
 	fs::path folder_path;
 	if (!AurieSuccess(
@@ -111,6 +139,8 @@ void ArProcessAttach(HINSTANCE Instance)
 			MB_OK | MB_TOPMOST | MB_ICONERROR | MB_SETFOREGROUND
 		);
 	}
+
+	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Current folder is %S", folder_path.wstring().c_str());
 
 	// Craft the path from which the mods will be loaded
 	folder_path = folder_path / "mods" / "aurie";
@@ -200,10 +230,26 @@ void ArProcessAttach(HINSTANCE Instance)
 	// We can't do this in the for loop because of iterators...
 	Internal::MdpPurgeMarkedModules();
 
+	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Init done.");
+
 	while (!GetAsyncKeyState(VK_END))
 	{
 		Sleep(1);
 	}
+
+	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Unloading now.");
+	Sleep(50); // Sleep for a bit to let the logger do it's job.
+
+	spdlog::apply_all([](std::shared_ptr<spdlog::logger> Logger) { Logger->flush(); });
+
+	Internal::g_ShouldExitWorkerThread = true;
+	WaitForSingleObject(Internal::g_PrintWorkerThreadHandle, 100);
+
+	CloseHandle(Internal::g_PrintWorkerThreadHandle);
+	Internal::g_PrintWorkerThreadHandle = nullptr;
+
+	// Stop logger thread
+	spdlog::shutdown();
 
 	// Calls DllMain with DLL_PROCESS_DETACH, which calls ArProcessDetach
 	FreeLibraryAndExitThread(Instance, 0);
