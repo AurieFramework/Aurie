@@ -153,6 +153,27 @@ void ArProcessAttach(HINSTANCE Instance)
 		nullptr
 	);
 
+	// Call ModuleEntrypoint on all loaded plugins
+	for (auto& entry : Internal::g_LdrModuleList)
+	{
+		AurieStatus last_status = AURIE_SUCCESS;
+
+		last_status = Internal::MdpDispatchEntry(
+			&entry,
+			entry.ModuleEntrypoint
+		);
+
+		// Mark mods failed for loading for the purge
+		if (!AurieSuccess(last_status))
+			Internal::MdpMarkModuleForPurge(&entry);
+		else
+			entry.Flags.EntrypointRan = true;
+	}
+
+	// Purge all the modules that failed loading
+	// We can't do this in the for loop because of iterators...
+	Internal::MdpPurgeMarkedModules();
+
 	// Call ModulePreinitialize on all loaded plugins
 	for (auto& entry : Internal::g_LdrModuleList)
 	{

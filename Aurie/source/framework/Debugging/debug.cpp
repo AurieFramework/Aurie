@@ -4,22 +4,6 @@
 
 namespace Aurie
 {
-	void DbgPrint(
-		IN const char* Format, 
-		IN ...
-	)
-	{
-		va_list list;
-		va_start(list, Format);
-
-		vDbgPrint(
-			Format,
-			list
-		);
-
-		va_end(list);
-	}
-
 	void vDbgPrint(
 		IN const char* Format, 
 		IN va_list Arguments
@@ -32,18 +16,16 @@ namespace Aurie
 		);
 	}
 
-	void DbgPrintEx(
-		IN AurieLogSeverity Severity, 
-		IN const char* Format, 
+	void DbgPrint(
+		IN const char* Format,
 		IN ...
 	)
 	{
 		va_list list;
 		va_start(list, Format);
 
-		vDbgPrintEx(
-			Severity, 
-			Format, 
+		vDbgPrint(
+			Format,
 			list
 		);
 
@@ -67,6 +49,24 @@ namespace Aurie
 			Severity,
 			buffer
 		);
+	}
+
+	void DbgPrintEx(
+		IN AurieLogSeverity Severity,
+		IN const char* Format,
+		IN ...
+	)
+	{
+		va_list list;
+		va_start(list, Format);
+
+		vDbgPrintEx(
+			Severity,
+			Format,
+			list
+		);
+
+		va_end(list);
 	}
 
 	namespace Internal
@@ -96,7 +96,7 @@ namespace Aurie
 			file_sink->set_level(spdlog::level::trace);
 
 			default_logger->sinks().push_back(file_sink);
-			default_logger->set_pattern("[%T] [%l] %^%v%$");
+			default_logger->set_pattern("%^[%T] [%l] %v%$");
 			spdlog::flush_every(std::chrono::seconds(1));
 		}
 

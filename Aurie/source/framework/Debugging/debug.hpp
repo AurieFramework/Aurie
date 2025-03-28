@@ -7,18 +7,12 @@
 
 namespace Aurie
 {
-	EXPORTED void DbgPrint(
-		IN const char* Format,
-		IN ...
-	);
-
 	EXPORTED void vDbgPrint(
 		IN const char* Format,
 		IN va_list Arguments
 	);
 
-	EXPORTED void DbgPrintEx(
-		IN AurieLogSeverity Severity,
+	EXPORTED void DbgPrint(
 		IN const char* Format,
 		IN ...
 	);
@@ -27,6 +21,12 @@ namespace Aurie
 		IN AurieLogSeverity Severity,
 		IN const char* Format,
 		IN va_list Arguments
+	);
+
+	EXPORTED void DbgPrintEx(
+		IN AurieLogSeverity Severity,
+		IN const char* Format,
+		IN ...
 	);
 
 	namespace Internal

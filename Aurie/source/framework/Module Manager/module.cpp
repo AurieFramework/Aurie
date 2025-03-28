@@ -304,6 +304,7 @@ namespace Aurie
 		uintptr_t module_init_offset = PpFindFileExportByName(ImagePath, "ModuleInitialize");
 
 		uintptr_t module_callback_offset = PpFindFileExportByName(ImagePath, "ModuleOperationCallback");
+		uintptr_t module_entrypoint_offset = PpFindFileExportByName(ImagePath, "ModuleEntrypoint");
 		uintptr_t module_preload_offset = PpFindFileExportByName(ImagePath, "ModulePreinitialize");
 		uintptr_t module_unload_offset = PpFindFileExportByName(ImagePath, "ModuleUnload");
 
@@ -313,6 +314,7 @@ namespace Aurie
 		AurieEntry module_init = reinterpret_cast<AurieEntry>(image_base + module_init_offset);
 		AurieEntry module_preload = reinterpret_cast<AurieEntry>(image_base + module_preload_offset);
 		AurieEntry module_unload = reinterpret_cast<AurieEntry>(image_base + module_unload_offset);
+		AurieEntry module_entrypoint = reinterpret_cast<AurieEntry>(image_base + module_entrypoint_offset);
 		AurieLoaderEntry framework_init = reinterpret_cast<AurieLoaderEntry>(image_base + framework_init_offset);
 		AurieModuleCallback module_callback = reinterpret_cast<AurieModuleCallback>(image_base + module_callback_offset);
 
@@ -331,6 +333,9 @@ namespace Aurie
 
 		if (module_unload_offset)
 			ModuleImage->ModuleUnload = module_unload;
+
+		if (module_entrypoint_offset)
+			ModuleImage->ModuleEntrypoint = module_entrypoint;
 
 		// We always need __AurieFrameworkInit to exist.
 		// We also need either a ModuleInitialize or a ModulePreinitialize function.
