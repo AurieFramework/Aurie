@@ -10,7 +10,7 @@ using PFN_LoadLibraryW = decltype(&::LoadLibraryW);
 using PFN_SuspendThread = decltype(&::SuspendThread);
 using PFN_RtlPcToFileHeader = decltype(&::RtlPcToFileHeader);
 using PFN_RtlImageNtHeader = decltype(&::PE::RtlImageNtHeader);
-using PFN_ProcessEntrypoint = void(*)(void*, uintptr_t);
+using PFN_ProcessEntrypoint = void(*)(ULONG_PTR, ULONG_PTR, ULONG_PTR, ULONG_PTR);
 
 constexpr SIZE_T payload_size = 0x1000;
 struct AurieRwxPage
@@ -30,14 +30,14 @@ static_assert(sizeof(AurieRwxPage) <= payload_size);
 // No CFG for this function. This is what gets executed instead of the process entrypoint.
 #pragma runtime_checks("", off)
 __declspec(safebuffers) __declspec(guard(nocf))
-void ArProcessEntrypoint(struct _PEB* Rcx, uintptr_t EntrypointAddress)
+void ArProcessEntrypoint(ULONG_PTR ShellcodePage, ULONG_PTR Rdx, ULONG_PTR R8, ULONG_PTR R9)
 {
-	const AurieRwxPage* shellcode_page = reinterpret_cast<AurieRwxPage*>(EntrypointAddress & ~(0xFFF));
+	const AurieRwxPage* shellcode_page = reinterpret_cast<AurieRwxPage*>(ShellcodePage & ~(0xFFF));
 	
 	// Get the image base address using RtlPcToFileHeader
 	PVOID image_base = nullptr;
 	shellcode_page->m_RtlPcToFileHeader(
-		reinterpret_cast<PVOID>(EntrypointAddress),
+		reinterpret_cast<PVOID>(ShellcodePage),
 		&image_base
 	);
 
@@ -51,7 +51,7 @@ void ArProcessEntrypoint(struct _PEB* Rcx, uintptr_t EntrypointAddress)
 
 	return reinterpret_cast<PFN_ProcessEntrypoint>(
 		static_cast<char*>(image_base) + shellcode_page->m_OriginalEntrypointAddress
-	)(Rcx, EntrypointAddress);
+	)(ShellcodePage, Rdx, R8, R9);
 }
 #pragma runtime_checks("", restore)
 
@@ -130,6 +130,9 @@ int wmain(int argc, wchar_t** argv)
 	if (repeated_install)
 		nt_headers->OptionalHeader.AddressOfEntryPoint = rwx_page->m_OriginalEntrypointAddress;
 
+	// lea rcx, [rip]
+	char shellcode_prologue[] = "\x48\x8d\x0d\x00\x00\x00\x00";
+
 	memset(rwx_page, 0, payload_size);
 	rwx_page->m_LoadLibraryW = LoadLibraryW;
 	rwx_page->m_RtlPcToFileHeader = RtlPcToFileHeader;
@@ -172,8 +175,24 @@ int wmain(int argc, wchar_t** argv)
 		);
 	}
 
+	constexpr auto shellcode_prologue_size = sizeof(shellcode_prologue) - 1;
 	// Copy shellcode into it
-	memcpy(rwx_page->m_ShellcodeBytes, (PVOID)address_to_copy_from, sizeof(rwx_page->m_ShellcodeBytes));
+	memcpy(rwx_page->m_ShellcodeBytes, (PVOID)shellcode_prologue, shellcode_prologue_size);
+	printf("Copying %lld bytes to %p\n", shellcode_prologue_size, rwx_page->m_ShellcodeBytes);
+
+	memcpy(
+		rwx_page->m_ShellcodeBytes + shellcode_prologue_size,
+		(PVOID)address_to_copy_from, 
+		sizeof(rwx_page->m_ShellcodeBytes) - shellcode_prologue_size
+	);
+
+	printf(
+		"Copying %lld bytes to %p\n", 
+		sizeof(rwx_page->m_ShellcodeBytes) - shellcode_prologue_size,
+		rwx_page->m_ShellcodeBytes + shellcode_prologue_size
+	);
+
+
 	std::ofstream out_file(argv[1], std::ios::binary);
 	out_file.write((const char*)file_base, file_size);
 		
