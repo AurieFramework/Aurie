@@ -100,6 +100,25 @@ void ArProcessAttach(HINSTANCE Instance)
 		std::move(initial_module)
 	);
 
+	// Get the current folder (where the main executable is)
+	fs::path game_folder;
+	if (!AurieSuccess(
+		Internal::MdpGetImageFolder(
+			g_ArInitialImage,
+			game_folder
+		)
+	))
+	{
+		return (void)MessageBoxA(
+			nullptr,
+			"Failed to get initial folder!",
+			"Aurie Framework",
+			MB_OK | MB_TOPMOST | MB_ICONERROR | MB_SETFOREGROUND
+		);
+	}
+
+	SetCurrentDirectoryW(game_folder.native().c_str());
+
 	// Create a logger
 	Internal::DbgpCreateConsole("AurieCore");
 	Internal::DbgpInitLogger();
@@ -123,31 +142,14 @@ void ArProcessAttach(HINSTANCE Instance)
 		);
 	}
 
-	// Get the current folder (where the main executable is)
-	fs::path folder_path;
-	if (!AurieSuccess(
-		Internal::MdpGetImageFolder(
-			g_ArInitialImage, 
-			folder_path
-		)
-	))
-	{
-		return (void)MessageBoxA(
-			nullptr,
-			"Failed to get initial folder!",
-			"Aurie Framework",
-			MB_OK | MB_TOPMOST | MB_ICONERROR | MB_SETFOREGROUND
-		);
-	}
-
-	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Current folder is %S", folder_path.wstring().c_str());
+	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Current folder is %S", game_folder.wstring().c_str());
 
 	// Craft the path from which the mods will be loaded
-	folder_path = folder_path / "mods" / "aurie";
+	game_folder = game_folder / "mods" / "aurie";
 
 	// Load everything from %APPDIR%\\mods\\aurie
 	Internal::MdpMapFolder(
-		folder_path,
+		game_folder,
 		true,
 		false,
 		nullptr

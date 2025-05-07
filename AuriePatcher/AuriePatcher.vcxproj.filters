@@ -18,7 +18,7 @@
     <ClCompile Include="source\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\pe_parser.cpp">
+    <ClCompile Include="include\PE\pe_parser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="include\Zydis\Zydis.c">
@@ -26,10 +26,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\pe_parser.hpp">
+    <ClInclude Include="include\PE\pe_parser.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Zydis\Zydis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NT\nt.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

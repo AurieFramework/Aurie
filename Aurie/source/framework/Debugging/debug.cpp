@@ -87,9 +87,10 @@ namespace Aurie
 
 		void DbgpInitLogger()
 		{
+
 			std::shared_ptr<spdlog::logger> default_logger = spdlog::default_logger();
 			spdlog::sink_ptr file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("aurie.log", true);
-			
+
 			spdlog::set_level(spdlog::level::trace);
 
 			default_logger->sinks().front()->set_level(spdlog::level::debug);

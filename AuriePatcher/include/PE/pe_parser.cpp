@@ -30,10 +30,10 @@ DWORD PE::MapFileToMemory(
 
 	// Copy the file to the allocated buffer
 	input_file.seekg(0, std::ios::beg);
-	input_file.read(file_in_memory, file_size);
+	input_file.read(file_in_memory, file_size_raw);
 	input_file.close();
 
-	SizeOfFile = file_size;
+	SizeOfFile = file_size_raw;
 	BaseOfFile = file_in_memory;
 
 	return ERROR_SUCCESS;
@@ -73,6 +73,36 @@ PIMAGE_SECTION_HEADER PE::AddRwxSection(IN PVOID ImageBase, IN const char* Secti
 	);
 
 	return new_section_header;
+}
+
+void PE::RemoveLastSection(
+	IN PVOID ImageBase
+)
+{
+	auto nt_headers = RtlImageNtHeader(ImageBase);
+	// Get all relevant information from the file
+	const WORD section_count = nt_headers->FileHeader.NumberOfSections;
+	const DWORD section_alignment = nt_headers->OptionalHeader.SectionAlignment;
+	const UINT32 file_alignment = nt_headers->OptionalHeader.FileAlignment;
+
+	// Can't have no sections
+	if (section_count <= 1)
+		return;
+
+	// Get all relevant pointers to sections
+	PIMAGE_SECTION_HEADER first_section = IMAGE_FIRST_SECTION(nt_headers);
+
+	PIMAGE_SECTION_HEADER second_last_header = &first_section[section_count - 2];
+	PIMAGE_SECTION_HEADER last_section_header = &first_section[section_count - 1];
+
+	nt_headers->FileHeader.NumberOfSections--;
+	nt_headers->OptionalHeader.SizeOfImage = P2ALIGNUP(
+		second_last_header->VirtualAddress + second_last_header->Misc.VirtualSize,
+		section_alignment
+	);
+
+	// Erase contents of the section
+	memset(last_section_header, 0, sizeof(IMAGE_SECTION_HEADER));
 }
 
 PIMAGE_SECTION_HEADER PE::GetSectionHeaderByName(

@@ -26,6 +26,10 @@ namespace PE
 		IN SIZE_T SectionSize
 	);
 
+	void RemoveLastSection(
+		IN PVOID ImageBase
+	);
+
 	PIMAGE_SECTION_HEADER GetSectionHeaderByName(
 		IN PIMAGE_NT_HEADERS NtHeader,
 		IN const char* Name
