@@ -286,14 +286,19 @@ namespace Aurie
 		}
 
 		AurieStatus MmpVerifyCallback(
-			IN HMODULE Module,
+			IN AurieModule* Module,
 			IN PVOID CallbackRoutine
 		)
 		{
-			if (CallbackRoutine && Module)
-				return AURIE_SUCCESS;
+			if (!Module || !CallbackRoutine)
+				return AURIE_ACCESS_DENIED;
 
-			return AURIE_ACCESS_DENIED;
+			const auto callback_address = reinterpret_cast<uintptr_t>(CallbackRoutine);
+			if ((callback_address < Module->ImageBase.Address) ||
+				(callback_address > Module->ImageBase.Address + Module->ImageSize))
+				return AURIE_ACCESS_DENIED;
+
+			return AURIE_SUCCESS;
 		}
 
 		void MmpFreeMemory(

@@ -9,12 +9,12 @@
 #include "framework/framework.hpp"
 
 // Unload routine, frees everything properly
-void ArProcessDetach(HINSTANCE)
+static void ArProcessDetach(HINSTANCE)
 {
 	using namespace Aurie;
 
 	Beep(1200, 200);
-	
+
 	// Unload all modules except the initial image
 	// First calls the ModuleUnload functions (if they're set up)
 	for (auto& entry : Internal::g_LdrModuleList)
@@ -54,7 +54,7 @@ void ArProcessDetach(HINSTANCE)
 
 // Called upon framework initialization (DLL_PROCESS_ATTACH) event.
 // This is the first function that runs.
-void ArProcessAttach(HINSTANCE Instance)
+static void ArProcessAttach(HINSTANCE Instance)
 {
 	using namespace Aurie;
 
@@ -120,39 +120,41 @@ void ArProcessAttach(HINSTANCE Instance)
 	SetCurrentDirectoryW(game_folder.native().c_str());
 
 	// Create a logger
-	Internal::DbgpCreateConsole("AurieCore");
+	Internal::DbgpCreateConsole("Aurie Framework Log | Press Ctrl+C to close");
 	Internal::DbgpInitLogger();
-
-	Internal::g_PrintWorkerThreadHandle = CreateThread(
-		nullptr,
-		0,
-		reinterpret_cast<LPTHREAD_START_ROUTINE>(Internal::DbgpPrintWorkerThread),
-		nullptr,
-		0,
-		nullptr
-	);
-
-	if (!Internal::g_PrintWorkerThreadHandle)
-	{
-		return (void)MessageBoxA(
-			nullptr,
-			"Failed to create logger thread!",
-			"Aurie Framework",
-			MB_OK | MB_TOPMOST | MB_ICONERROR | MB_SETFOREGROUND
-		);
-	}
 
 	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Current folder is %S", game_folder.wstring().c_str());
 
 	// Craft the path from which the mods will be loaded
 	game_folder = game_folder / "mods" / "aurie";
 
-	// Load everything from %APPDIR%\\mods\\aurie
-	Internal::MdpMapFolder(
+	// Build a list of "priority mods" - these are mods that have a ModuleEntrypoint 
+	// We can't use MdpMapFolder as that doesn't allow us to specify custom conditions
+	std::vector<fs::path> priority_modules;
+	Internal::MdpBuildModuleList(
 		game_folder,
 		true,
-		false,
-		nullptr
+		[](const fs::directory_entry& Entry)
+		{
+			if (!Internal::MdpIsValidModulePredicate(Entry))
+				return false;
+
+			if (!PpFindFileExportByName(Entry, "ModuleEntrypoint"))
+				return false;
+
+			return true;
+		},
+		priority_modules
+	);
+
+	// Sort the priority modules list from A-Z
+	std::sort(
+		priority_modules.begin(),
+		priority_modules.end()
+	);
+
+	Internal::MdpMapModulesFromList(
+		priority_modules
 	);
 
 	// Call ModuleEntrypoint on all loaded plugins
@@ -175,6 +177,14 @@ void ArProcessAttach(HINSTANCE Instance)
 	// Purge all the modules that failed loading
 	// We can't do this in the for loop because of iterators...
 	Internal::MdpPurgeMarkedModules();
+
+	// Load everything from %APPDIR%\\mods\\aurie
+	Internal::MdpMapFolder(
+		game_folder,
+		true,
+		false,
+		nullptr
+	);
 
 	// Call ModulePreinitialize on all loaded plugins
 	for (auto& entry : Internal::g_LdrModuleList)
@@ -261,15 +271,9 @@ void ArProcessAttach(HINSTANCE Instance)
 	}
 
 	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Unloading now.");
-	Sleep(50); // Sleep for a bit to let the logger do it's job.
 
+	// Flush all loggers
 	spdlog::apply_all([](std::shared_ptr<spdlog::logger> Logger) { Logger->flush(); });
-
-	Internal::g_ShouldExitWorkerThread = true;
-	WaitForSingleObject(Internal::g_PrintWorkerThreadHandle, 100);
-
-	CloseHandle(Internal::g_PrintWorkerThreadHandle);
-	Internal::g_PrintWorkerThreadHandle = nullptr;
 
 	// Stop logger thread
 	spdlog::shutdown();

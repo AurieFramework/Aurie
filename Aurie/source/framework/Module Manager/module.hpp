@@ -124,6 +124,12 @@ namespace Aurie
 			OUT AurieModule* ModuleImage
 		);
 
+		bool MdpIsCurrentBuildDebug();
+
+		AurieStatus MdpVerifyModuleBuild(
+			IN HMODULE ImageBaseAddress
+		);
+
 		AurieStatus MdpUnmapImage(
 			IN AurieModule* Module,
 			IN bool RemoveFromList,
@@ -140,6 +146,14 @@ namespace Aurie
 			IN bool Recursive,
 			IN bool IsRuntimeLoad,
 			OPTIONAL OUT size_t* NumberOfMappedModules
+		);
+
+		AurieStatus MdpMapModulesFromList(
+			IN const std::vector<fs::path>& ModuleList
+		);
+
+		bool MdpIsValidModulePredicate(
+			IN const fs::directory_entry& Entry
 		);
 
 		inline std::list<AurieModule> g_LdrModuleList;

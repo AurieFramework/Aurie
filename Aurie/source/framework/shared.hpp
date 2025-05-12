@@ -102,7 +102,11 @@ namespace Aurie
 		// The object was not found.
 		AURIE_OBJECT_NOT_FOUND,
 		// The requested resource is unavailable.
-		AURIE_UNAVAILABLE
+		AURIE_UNAVAILABLE,
+		// The verification failed.
+		AURIE_VERIFICATION_FAILURE,
+		// A generic error has occurred.
+		AURIE_UNKNOWN_ERROR
 	};
 
 	enum AurieObjectType : uint32_t
@@ -127,7 +131,9 @@ namespace Aurie
 		// The call is a ModuleInitialize call
 		AURIE_OPERATION_INITIALIZE = 2,
 		// The call is a ModuleUnload call
-		AURIE_OPERATION_UNLOAD = 3
+		AURIE_OPERATION_UNLOAD = 3,
+		// The call is a ModuleEntrypoint call
+		AURIE_OPERATION_ENTRYPOINT = 4
 	};
 
 	union XmmRegister {
@@ -267,6 +273,10 @@ namespace Aurie
 			return "AURIE_OBJECT_NOT_FOUND";
 		case AURIE_UNAVAILABLE:
 			return "AURIE_UNAVAILABLE";
+		case AURIE_VERIFICATION_FAILURE:
+			return "AURIE_VERIFICATION_FAILURE";
+		case AURIE_UNKNOWN_ERROR:
+			return "AURIE_UNKNOWN_ERROR";
 		}
 
 		return "AURIE_UNKNOWN_STATUS_CODE";
@@ -374,6 +384,15 @@ namespace Aurie
 		)
 		{
 			return TRUE;
+		}
+
+		EXPORTED inline bool __AurieIsDebugBuild()
+		{
+		#ifdef NDEBUG
+			return false;
+		#else
+			return true;
+		#endif
 		}
 
 		EXPORTED inline AurieStatus __AurieFrameworkInit(

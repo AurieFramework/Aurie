@@ -1,8 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <PE/pe_parser.hpp>
-#include <Zydis/Zydis.h>
 #include <NT/nt.hpp>
+
+#define AURIE_SECTION_NAME ".aurie"
 
 #define NT_SUCCESS(Status)  (((NTSTATUS)(Status)) >= 0)
 #define NtCurrentThread() ((HANDLE)(LONG_PTR)-2)
@@ -12,7 +13,7 @@ using PFN_OriginalEntrypoint = void(*)();
 extern "C" __declspec(dllexport) DWORD g_OldOEP = 0;
 extern "C" __declspec(dllexport) wchar_t g_AuriePath[MAX_PATH] = {};
 
-SIZE_T GetCurrentExecutableSize()
+static SIZE_T GetCurrentExecutableSize()
 {
 	HMODULE current_executable = GetModuleHandleA(nullptr);
 	PIMAGE_NT_HEADERS nt_headers = PE::RtlImageNtHeader(
@@ -22,7 +23,7 @@ SIZE_T GetCurrentExecutableSize()
 	return P2ALIGNUP(nt_headers->OptionalHeader.SizeOfImage, USN_PAGE_SIZE);
 }
 
-USHORT GetCurrentMachine()
+static USHORT GetCurrentMachine()
 {
 	HMODULE current_executable = GetModuleHandleA(nullptr);
 	PIMAGE_NT_HEADERS nt_headers = PE::RtlImageNtHeader(
@@ -32,63 +33,13 @@ USHORT GetCurrentMachine()
 	return nt_headers->FileHeader.Machine;
 }
 
-template <typename T>
-T* GetExport(
-	IN PVOID Dll,
-	IN PIMAGE_NT_HEADERS NtHeader,
-	IN const char* ExportName
-)
-{
-	// In case our file doesn't have an export header
-	if (NtHeader->OptionalHeader.NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_EXPORT)
-		return nullptr;
-
-	auto export_directory = reinterpret_cast<PIMAGE_EXPORT_DIRECTORY>(
-		static_cast<char*>(Dll) + NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress
-		);
-
-	// Get all our required arrays
-	DWORD* function_names = reinterpret_cast<DWORD*>(
-		static_cast<char*>(Dll) + export_directory->AddressOfNames
-		);
-
-	WORD* function_name_ordinals = reinterpret_cast<WORD*>(
-		static_cast<char*>(Dll) + export_directory->AddressOfNameOrdinals
-		);
-
-	DWORD* function_addresses = reinterpret_cast<DWORD*>(
-		static_cast<char*>(Dll) + export_directory->AddressOfFunctions
-		);
-
-	// Loop over all the named exports
-	for (DWORD n = 0; n < export_directory->NumberOfNames; n++)
-	{
-		// Get the name of the export
-		const char* export_name = static_cast<char*>(Dll) + function_names[n];
-
-		// Get the function ordinal for array access
-		short function_ordinal = function_name_ordinals[n];
-
-		// Get the function offset
-		DWORD function_offset = function_addresses[function_ordinal];
-
-		// If it's our target export
-		if (!_stricmp(ExportName, export_name))
-		{
-			return reinterpret_cast<T*>(static_cast<char*>(Dll) + function_offset);
-		}
-	}
-
-	return nullptr;
-}
-
 // This is the function that runs as the entrypoint for a given executable.
 // Due to this, I impose the restriction of only NTDLL.dll API calls being made from here.
 // Any WinAPI function that invokes TLS callbacks will crash the executable.
 // 
 // Also, exports have to be resolved manually here, as after a system reboot,
 // ASLR changes addresses of system DLLs.
-void ArProcessInitialize()
+static void ArProcessInitialize()
 {
 	// We cannot use RtlImageNtHeader, so this does the trick.
 	auto get_nt_header = [](PVOID ImageBase) -> PIMAGE_NT_HEADERS
@@ -122,7 +73,7 @@ void ArProcessInitialize()
 	auto find_export = [get_nt_header]<typename T>(PVOID Dll, const char* ExportName) -> T*
 		{
 			PIMAGE_NT_HEADERS nt_headers = get_nt_header(Dll);
-			return GetExport<T>(
+			return PE::GetExport<T>(
 				Dll,
 				nt_headers,
 				ExportName
@@ -244,9 +195,9 @@ int wmain(int argc, wchar_t** argv)
 	// If we're installing, prepare the section and write our executable there.
 	if (!_wcsicmp(argv[3], L"install"))
 	{
-		// Try to find the ".aurie" section inside the executable.
+		// Try to find the Aurie section inside the executable.
 		// This returns nullptr if none exists, signalling that Aurie isn't yet installed.
-		PIMAGE_SECTION_HEADER new_section = PE::GetSectionHeaderByName(nt_headers, ".aurie");
+		PIMAGE_SECTION_HEADER new_section = PE::GetSectionHeaderByName(nt_headers, AURIE_SECTION_NAME);
 		const bool new_install = (new_section == nullptr);
 
 		// If not installed, add the section.
@@ -254,7 +205,7 @@ int wmain(int argc, wchar_t** argv)
 		{
 			new_section = PE::AddRwxSection(
 				file_base,
-				".aurie",
+				AURIE_SECTION_NAME,
 				my_executable_size
 			);
 
@@ -263,11 +214,11 @@ int wmain(int argc, wchar_t** argv)
 		}
 
 		// Print the address
-		printf(".aurie section at %p\n", new_section);
+		printf("%s section at %p\n", AURIE_SECTION_NAME, new_section);
 
 		if (new_section->SizeOfRawData < my_executable_size)
 		{
-			printf(".aurie section size is inconsistent. Reinstall the game.\n");
+			printf("%s section size is inconsistent. Reinstall the game.\n", AURIE_SECTION_NAME);
 			return ERROR_BUFFER_OVERFLOW;
 		}
 
@@ -275,9 +226,9 @@ int wmain(int argc, wchar_t** argv)
 		if (!new_install)
 		{
 			char* aurie_image = static_cast<char*>(file_base) + new_section->PointerToRawData;
-			auto stored_oep = GetExport<decltype(g_OldOEP)>(aurie_image, PE::RtlImageNtHeader(aurie_image), "g_OldOEP");
+			auto stored_oep = PE::GetExport<decltype(g_OldOEP)>(aurie_image, PE::RtlImageNtHeader(aurie_image), "g_OldOEP");
 
-			printf("stored_oep %p contains %x\n", stored_oep, *stored_oep);
+			printf("g_OldOEP stored at %p, contains value 0x%X.\n", stored_oep, *stored_oep);
 
 			// Set the patched executable's PE headers OEP to the old one, so that the code below
 			// can work as if it was run on a new install.
@@ -311,7 +262,7 @@ int wmain(int argc, wchar_t** argv)
 
 	else if (!_wcsicmp(argv[3], L"remove"))
 	{
-		PIMAGE_SECTION_HEADER aurie_section = PE::GetSectionHeaderByName(nt_headers, ".aurie");
+		PIMAGE_SECTION_HEADER aurie_section = PE::GetSectionHeaderByName(nt_headers, AURIE_SECTION_NAME);
 
 		if (!aurie_section)
 		{
@@ -320,7 +271,7 @@ int wmain(int argc, wchar_t** argv)
 		}
 
 		char* aurie_image = static_cast<char*>(file_base) + aurie_section->PointerToRawData;
-		auto stored_oep = GetExport<decltype(g_OldOEP)>(aurie_image, PE::RtlImageNtHeader(aurie_image), "g_OldOEP");
+		auto stored_oep = PE::GetExport<decltype(g_OldOEP)>(aurie_image, PE::RtlImageNtHeader(aurie_image), "g_OldOEP");
 		printf("g_OldOEP stored at %p, contains value 0x%X.\n", stored_oep, *stored_oep);
 
 		// Set the patched executable's PE headers OEP to the old one.

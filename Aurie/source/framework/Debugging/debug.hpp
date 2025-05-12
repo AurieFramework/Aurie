@@ -3,7 +3,6 @@
 
 #include "../framework.hpp"
 #include <spdlog/spdlog.h>
-#include <concurrentqueue.h>
 
 namespace Aurie
 {
@@ -31,7 +30,7 @@ namespace Aurie
 
 	namespace Internal
 	{
-		void DbgpQueueString(
+		void DbgpPrintStringInternal(
 			IN AurieLogSeverity LogSeverity,
 			IN const std::string& Print
 		);
@@ -44,20 +43,15 @@ namespace Aurie
 			OUT std::string& Buffer
 		);
 
+		BOOL WINAPI DbgpConsoleEventHandler(
+			IN DWORD ControlType
+		);
+
 		EXPORTED HWND DbgpCreateConsole(
 			IN const char* Name
 		);
 
 		EXPORTED void DbgpDestroyConsole();
-
-		// Console printing blocks if Quick Edit mode is enabled and text is selected.
-		// This thread exclusively handles writing output to the console.
-		// To ensure proper order, a queue (g_ConsolePrintQueue) is used.
-		void DbgpPrintWorkerThread();
-
-		inline bool g_ShouldExitWorkerThread = false;
-		inline HANDLE g_PrintWorkerThreadHandle = nullptr;
-		inline moodycamel::ConcurrentQueue<AurieLogEntry> g_ConsolePrintQueue;
 	}
 }
 

@@ -45,7 +45,7 @@ namespace Aurie
 			buffer
 		);
 
-		Internal::DbgpQueueString(
+		Internal::DbgpPrintStringInternal(
 			Severity,
 			buffer
 		);
@@ -71,23 +71,19 @@ namespace Aurie
 
 	namespace Internal
 	{
-		void DbgpQueueString(
+		void DbgpPrintStringInternal(
 			IN AurieLogSeverity LogSeverity, 
 			IN const std::string& Print
 		)
 		{
-			AurieLogEntry entry = {
-				.Creator = 0,
-				.StringToPrint = Print,
-				.Severity = LogSeverity,
-			};
-
-			g_ConsolePrintQueue.enqueue(entry);
+			spdlog::log(
+				static_cast<spdlog::level::level_enum>(LogSeverity),
+				Print
+			);
 		}
 
 		void DbgpInitLogger()
 		{
-
 			std::shared_ptr<spdlog::logger> default_logger = spdlog::default_logger();
 			spdlog::sink_ptr file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("aurie.log", true);
 
@@ -121,6 +117,42 @@ namespace Aurie
 			return AURIE_SUCCESS;
 		}
 
+		BOOL WINAPI DbgpConsoleEventHandler(
+			IN DWORD ControlType
+		)
+		{
+			if (ControlType == CTRL_C_EVENT)
+			{
+				int result = MessageBoxA(
+					0,
+					"You're about to close the Aurie Framework console window.\n\n"
+					"To fully exit the application, click 'Yes'.\n"
+					"To close the log window without unloading Aurie, click 'No'.\n"
+					"If you changed your mind, press Cancel or the X button.",
+					"Aurie Framework",
+					MB_ICONQUESTION | MB_SETFOREGROUND | MB_TOPMOST | MB_YESNOCANCEL
+				);
+
+				switch (result)
+				{
+				case IDYES:
+					DbgPrintEx(LOG_SEVERITY_INFO, "Process is closing due to CTRL+C event.");
+					TerminateProcess(GetCurrentProcess(), 0);
+					break;
+				case IDNO:
+					DbgPrintEx(LOG_SEVERITY_INFO, "Log window is closing due to CTRL+C event.");
+					DbgpDestroyConsole();
+					break;
+				default:
+					break;
+				}
+
+				return TRUE;
+			}
+
+			return FALSE;
+		}
+
 		HWND DbgpCreateConsole(
 			IN const char* Name
 		)
@@ -133,37 +165,29 @@ namespace Aurie
 			freopen_s(&dummy_file, "CONOUT$", "w", stderr);
 			freopen_s(&dummy_file, "CONOUT$", "w", stdout);
 
+			SetConsoleCtrlHandler(
+				DbgpConsoleEventHandler,
+				TRUE
+			);
+
+			// Prevent Close (X) and Maximize buttons from being used.
+			// This only affects the console window, not the main game.
+			DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_CLOSE, MF_BYCOMMAND);
+			DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_MAXIMIZE, MF_BYCOMMAND);
+
 			return GetConsoleWindow();
 		}
 
 		void DbgpDestroyConsole()
 		{
+			SetConsoleCtrlHandler(
+				DbgpConsoleEventHandler,
+				FALSE
+			);
+
 			HWND console_window = GetConsoleWindow();
 			FreeConsole();
 			PostMessageW(console_window, WM_CLOSE, 0, 0);
-		}
-
-		void DbgpPrintWorkerThread()
-		{
-			while (!g_ShouldExitWorkerThread)
-			{
-				if (g_ConsolePrintQueue.size_approx() == 0)
-				{
-					Sleep(1);
-					continue;
-				}
-
-				// Empty the print queue
-				AurieLogEntry log_entry;
-				if (g_ConsolePrintQueue.try_dequeue(log_entry))
-				{
-					const std::string& printable = log_entry.StringToPrint;
-					spdlog::log(
-						static_cast<spdlog::level::level_enum>(log_entry.Severity),
-						printable
-					);
-				}
-			}
 		}
 	}
 }

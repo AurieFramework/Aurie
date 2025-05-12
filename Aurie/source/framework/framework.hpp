@@ -16,6 +16,7 @@
 #define WIN32_NO_STATUS
 #include <Windows.h>
 #include <winternl.h>
+#include <cinttypes>
 #include <list>
 #include <map>
 #include <SafetyHook/safetyhook.hpp>
@@ -171,6 +172,7 @@ namespace Aurie
 			this->ModuleUnload = nullptr;
 			this->FrameworkInitialize = nullptr;
 			this->ModuleOperationCallback = nullptr;
+			this->ModuleEntrypoint = nullptr;
 		}
 	};
 
@@ -210,13 +212,6 @@ namespace Aurie
 		{
 			return AURIE_OBJECT_MIDFUNCTION_HOOK;
 		}
-	};
-
-	struct AurieLogEntry
-	{
-		AurieModule* Creator = nullptr;
-		std::string StringToPrint;
-		AurieLogSeverity Severity = LOG_SEVERITY_INFO;
 	};
 
 	typedef enum _KTHREAD_STATE

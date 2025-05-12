@@ -81,7 +81,7 @@ namespace Aurie
 		);
 
 		AurieStatus MmpVerifyCallback(
-			IN HMODULE Module,
+			IN AurieModule* Module,
 			IN PVOID CallbackRoutine
 		);
 

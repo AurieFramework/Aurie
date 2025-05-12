@@ -141,14 +141,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="include\Zydis\Zydis.c" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="include\PE\pe_parser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\NT\nt.hpp" />
-    <ClInclude Include="include\Zydis\Zydis.h" />
     <ClInclude Include="include\PE\pe_parser.hpp" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="AuriePatcher.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

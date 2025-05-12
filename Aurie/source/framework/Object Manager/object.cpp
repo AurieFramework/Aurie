@@ -154,6 +154,8 @@ namespace Aurie
 				current_operation_type = AURIE_OPERATION_INITIALIZE;
 			else if (Routine == AffectedModule->ModuleUnload)
 				current_operation_type = AURIE_OPERATION_UNLOAD;
+			else if (Routine == AffectedModule->ModuleEntrypoint)
+				current_operation_type = AURIE_OPERATION_ENTRYPOINT;
 			
 			AurieOperationInfo operation_information = ObpCreateOperationInfo(
 				AffectedModule,
