@@ -138,6 +138,14 @@ namespace Aurie
 			potential_loaded_copy
 		);
 
+		DbgPrintEx(
+			LOG_SEVERITY_TRACE,
+			"MdpLookupModuleByPath(%S) returns %p (%s)",
+			ImagePath.wstring().c_str(), 
+			potential_loaded_copy, 
+			AurieStatusToString(last_status)
+		);
+
 		// If there's a module that's already loaded from the same path, deny loading it twice
 		if (AurieSuccess(last_status))
 			return AURIE_OBJECT_ALREADY_EXISTS;

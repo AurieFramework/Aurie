@@ -123,6 +123,18 @@ static void ArProcessAttach(HINSTANCE Instance)
 	Internal::DbgpCreateConsole("Aurie Framework Log | Press Ctrl+C to close");
 	Internal::DbgpInitLogger();
 
+	LPWSTR command_line = GetCommandLineW();
+	if (wcsstr(command_line, L"-aurie_wait_for_debug"))
+	{
+		DbgPrintEx(LOG_SEVERITY_INFO, "[ArProcessAttach] Waiting for debugger...", game_folder.wstring().c_str());
+		while (!IsDebuggerPresent()) {};
+
+		Sleep(500); // Give time for the debugger to initialize
+	}
+
+	DbgPrintEx(LOG_SEVERITY_CRITICAL, "This is a special Aurie build intended for debugging.");
+	DbgPrintEx(LOG_SEVERITY_CRITICAL, "Features may or may not be available in this build, and module functionality is not guaranteed.");
+
 	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Current folder is %S", game_folder.wstring().c_str());
 
 	// Craft the path from which the mods will be loaded
@@ -174,10 +186,6 @@ static void ArProcessAttach(HINSTANCE Instance)
 			entry.Flags.EntrypointRan = true;
 	}
 
-	// Purge all the modules that failed loading
-	// We can't do this in the for loop because of iterators...
-	Internal::MdpPurgeMarkedModules();
-
 	// Load everything from %APPDIR%\\mods\\aurie
 	Internal::MdpMapFolder(
 		game_folder,
@@ -185,6 +193,10 @@ static void ArProcessAttach(HINSTANCE Instance)
 		false,
 		nullptr
 	);
+
+	// Purge all the modules that failed loading
+	// We purge after loading everything else, because doing it the other way around would just re-load the module again.
+	Internal::MdpPurgeMarkedModules();
 
 	// Call ModulePreinitialize on all loaded plugins
 	for (auto& entry : Internal::g_LdrModuleList)
@@ -265,7 +277,7 @@ static void ArProcessAttach(HINSTANCE Instance)
 
 	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Init done.");
 
-	while (!GetAsyncKeyState(VK_END))
+	while (true)
 	{
 		Sleep(1);
 	}
