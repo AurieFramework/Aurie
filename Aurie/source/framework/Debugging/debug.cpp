@@ -94,7 +94,7 @@ namespace Aurie
 
 			default_logger->sinks().push_back(file_sink);
 			default_logger->set_pattern("%^[%T] [%l] %v%$");
-			spdlog::flush_every(std::chrono::seconds(1));
+			spdlog::flush_on(spdlog::level::trace);
 		}
 
 		AurieStatus DbgpFormatVaArgs(

@@ -277,10 +277,14 @@ static void ArProcessAttach(HINSTANCE Instance)
 
 	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Init done.");
 
-	while (true)
+	DWORD state = 0;
+	while (!state)
 	{
+		state = GetAsyncKeyState(VK_END);
 		Sleep(1);
 	}
+
+	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] GetAsyncKeyState State: %x", state);
 
 	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Unloading now.");
 

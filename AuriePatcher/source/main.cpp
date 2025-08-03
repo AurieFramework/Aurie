@@ -151,7 +151,7 @@ int wmain(int argc, wchar_t** argv)
 	printf("Using native DLL path: \"%S\"\n", argv[2]);
 
 	PVOID file_base = nullptr;
-	SIZE_T file_size = 0;
+	size_t file_size = 0;
 
 	// Read the file into memory.
 	// We reserve payload_size bytes, all while respecting page alignment.

@@ -454,6 +454,15 @@ namespace Aurie
 		if (Module == g_ArInitialImage)
 			return AURIE_SUCCESS;
 
+		// Ignore dispatch attempts for null functions
+		// 
+		// Note that while MmpVerifyCallback does check for this,
+		// I don't actually want a print to happen.
+		//
+		// This prevents crashes when unloading, as printing from ArDetachProcess context is forbidden.
+		if (Entry == nullptr)
+			return AURIE_SUCCESS;
+
 		// Ignore invalid functions 
 		if (!AurieSuccess(MmpVerifyCallback(Module, Entry)))
 		{
@@ -461,7 +470,7 @@ namespace Aurie
 			MdGetImageFilename(Module, module_name);
 
 			DbgPrintEx(
-				LOG_SEVERITY_DEBUG,
+				LOG_SEVERITY_ERROR,
 				"Callback verification failed for module '%S' at %p (method %p)",
 				module_name.c_str(),
 				MdpGetModuleBaseAddress(Module),
