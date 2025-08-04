@@ -658,5 +658,27 @@ namespace Aurie
 				}
 			);
 		}
+
+		EXPORTED AurieStatus MmpLookupInlineHookBySourceAddress(
+			IN AurieModule* Module,
+			IN PVOID SourceAddress, 
+			OUT std::string& HookName
+		)
+		{
+			auto iterator = std::find_if(
+				Module->InlineHooks.begin(),
+				Module->InlineHooks.end(),
+				[SourceAddress](AurieInlineHook& Object) -> bool
+				{
+					return Object.HookInstance.target() == SourceAddress;
+				}
+			);
+
+			if (iterator == std::end(Module->InlineHooks))
+				return AURIE_OBJECT_NOT_FOUND;
+
+			HookName = iterator->Identifier;
+			return AURIE_SUCCESS;
+		}
 	}
 }

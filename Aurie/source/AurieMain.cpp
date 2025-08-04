@@ -137,6 +137,37 @@ static void ArProcessAttach(HINSTANCE Instance)
 
 	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Current folder is %S", game_folder.wstring().c_str());
 
+	// Load all native mods
+	// AurieLoader used to do this in the past, but 
+	fs::path native_path = game_folder / "mods" / "native";
+	std::error_code ec;
+	for (const auto& entry : std::filesystem::directory_iterator(native_path, ec))
+	{
+		// If the file isn't a regular file (but instead a directory, symlink, etc.), skip it
+		if (!entry.is_regular_file())
+			continue;
+
+		// If the file has no name (wtf?), skip it
+		if (!entry.path().has_filename())
+			continue;
+		
+		// If the file has no extension, skip it
+		if (!entry.path().filename().has_extension())
+			continue;
+
+		// If the file doesn't end with a .dll extension, skip it.
+		if (entry.path().filename().extension().compare(L".dll"))
+			continue;
+
+		// If the module is already loaded, skip it.
+		if (GetModuleHandleW(entry.path().c_str()))
+			continue;
+
+		HMODULE loaded_library = LoadLibraryW(entry.path().c_str());
+		DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Loaded native module \"%S\" at %p", entry.path().c_str(), loaded_library);
+	}
+
+
 	// Craft the path from which the mods will be loaded
 	game_folder = game_folder / "mods" / "aurie";
 

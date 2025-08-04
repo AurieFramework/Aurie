@@ -655,6 +655,15 @@ namespace Aurie
 		{
 			return AURIE_API_CALL(MmpSigscanRegion, RegionBase, RegionSize, Pattern, PatternMask, PatternBase);
 		}
+
+		inline AurieStatus MmpLookupInlineHookBySourceAddress(
+			IN AurieModule* Module,
+			IN PVOID SourceAddress,
+			OUT std::string& HookName
+		)
+		{
+			return AURIE_API_CALL(MmpLookupInlineHookBySourceAddress, Module, SourceAddress, HookName);
+		}
 	}
 
 	inline AurieStatus MdMapImage(

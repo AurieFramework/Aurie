@@ -180,6 +180,12 @@ namespace Aurie
 		void MmpFreezeCurrentProcess();
 
 		void MmpResumeCurrentProcess();
+
+		EXPORTED AurieStatus MmpLookupInlineHookBySourceAddress(
+			IN AurieModule* Module,
+			IN PVOID SourceAddress,
+			OUT std::string& HookName
+		);
 	}
 }
 
