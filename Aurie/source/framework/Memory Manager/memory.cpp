@@ -282,6 +282,7 @@ namespace Aurie
 			allocation.AllocationSize = AllocationSize;
 			allocation.OwnerModule = OwnerModule;
 
+			RtlSecureZeroMemory(allocation.AllocationBase, AllocationSize);
 			return allocation;
 		}
 

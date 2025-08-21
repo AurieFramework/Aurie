@@ -76,10 +76,27 @@ namespace Aurie
 			IN const std::string& Print
 		)
 		{
-			spdlog::log(
-				static_cast<spdlog::level::level_enum>(LogSeverity),
-				Print
-			);
+			std::stringstream stream(Print);
+			std::string split_string;
+
+			while (std::getline(stream, split_string, '\n')) 
+			{
+				// Remove extraneous newlines
+				std::erase(split_string, '\r');
+				std::erase(split_string, '\n');
+
+				// Remove nullbytes since spdlog likes to stuff those in files, which confuses text editors.
+				std::erase(split_string, '\0');
+
+				// Don't print empty strings.
+				if (split_string.empty())
+					continue;
+
+				spdlog::log(
+					static_cast<spdlog::level::level_enum>(LogSeverity),
+					split_string
+				);
+			}
 		}
 
 		void DbgpInitLogger()
