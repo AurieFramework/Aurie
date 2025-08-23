@@ -28,7 +28,17 @@
     <ClInclude Include="source\framework\Object Manager\object.hpp" />
     <ClInclude Include="source\framework\PE Parser\pe.hpp" />
     <ClInclude Include="source\framework\framework.hpp" />
+    <ClInclude Include="source\include\SafetyHook\allocator.hpp" />
+    <ClInclude Include="source\include\SafetyHook\common.hpp" />
+    <ClInclude Include="source\include\SafetyHook\context.hpp" />
+    <ClInclude Include="source\include\SafetyHook\easy.hpp" />
+    <ClInclude Include="source\include\SafetyHook\inline_hook.hpp" />
+    <ClInclude Include="source\include\SafetyHook\mid_hook.hpp" />
+    <ClInclude Include="source\include\SafetyHook\os.hpp" />
+    <ClInclude Include="source\include\SafetyHook\rp_inline_hook.hpp" />
     <ClInclude Include="source\include\SafetyHook\safetyhook.hpp" />
+    <ClInclude Include="source\include\SafetyHook\utility.hpp" />
+    <ClInclude Include="source\include\SafetyHook\vmt_hook.hpp" />
     <ClInclude Include="source\include\spdlog\async.h" />
     <ClInclude Include="source\include\spdlog\async_logger-inl.h" />
     <ClInclude Include="source\include\spdlog\async_logger.h" />
@@ -143,11 +153,24 @@
     <ClCompile Include="source\framework\Module Manager\module.cpp" />
     <ClCompile Include="source\framework\Object Manager\object.cpp" />
     <ClCompile Include="source\framework\PE Parser\pe.cpp" />
-    <ClCompile Include="source\include\SafetyHook\safetyhook.cpp" />
+    <ClCompile Include="source\include\SafetyHook\allocator.cpp" />
+    <ClCompile Include="source\include\SafetyHook\easy.cpp" />
+    <ClCompile Include="source\include\SafetyHook\inline_hook.cpp" />
+    <ClCompile Include="source\include\SafetyHook\mid_hook.cpp" />
+    <ClCompile Include="source\include\SafetyHook\os.linux.cpp" />
+    <ClCompile Include="source\include\SafetyHook\os.windows.cpp" />
+    <ClCompile Include="source\include\SafetyHook\rp_inline_hook.cpp" />
+    <ClCompile Include="source\include\SafetyHook\utility.cpp" />
+    <ClCompile Include="source\include\SafetyHook\vmt_hook.cpp" />
     <ClCompile Include="source\include\Zydis\Zydis.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="AurieCore.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="source\include\SafetyHook\mid_hook.x86_32.asm" />
+    <None Include="source\include\SafetyHook\mid_hook.x86_64-linux.asm" />
+    <None Include="source\include\SafetyHook\mid_hook.x86_64-windows.asm" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -220,6 +243,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -243,6 +267,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -263,6 +288,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -286,6 +312,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

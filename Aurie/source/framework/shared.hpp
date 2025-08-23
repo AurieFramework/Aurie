@@ -63,6 +63,7 @@ namespace Aurie
 	struct AurieMemoryAllocation;
 	struct AurieInlineHook;
 	struct AurieMidHook;
+	struct AurieRpHook;
 	struct AurieHook;
 
 	// Forward declarations (not opaque)
@@ -121,6 +122,8 @@ namespace Aurie
 		AURIE_OBJECT_HOOK = 4,
 		// An AurieHook object
 		AURIE_OBJECT_MIDFUNCTION_HOOK = 5,
+		// An AurieHook object
+		AURIE_OBJECT_RP_HOOK = 6,
 	};
 
 	enum AurieModuleOperationType : uint32_t
@@ -601,6 +604,17 @@ namespace Aurie
 		return AURIE_API_CALL(MmCreateHook, Module, HookIdentifier, SourceFunction, DestinationFunction, Trampoline);
 	}
 
+	inline AurieStatus MmCreateUnsafeHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier,
+		IN PVOID SourceFunction,
+		IN PVOID DestinationFunction,
+		OUT OPTIONAL PVOID* Trampoline
+	)
+	{
+		return AURIE_API_CALL(MmCreateUnsafeHook, Module, HookIdentifier, SourceFunction, DestinationFunction, Trampoline);
+	}
+
 	inline AurieStatus MmCreateMidfunctionHook(
 		IN AurieModule* Module,
 		IN std::string_view HookIdentifier,
@@ -656,13 +670,34 @@ namespace Aurie
 			return AURIE_API_CALL(MmpSigscanRegion, RegionBase, RegionSize, Pattern, PatternMask, PatternBase);
 		}
 
-		inline AurieStatus MmpLookupInlineHookBySourceAddress(
+		inline AurieObject* MmpGetHookByName(
 			IN AurieModule* Module,
-			IN PVOID SourceAddress,
-			OUT std::string& HookName
+			IN std::string_view HookIdentifier
 		)
 		{
-			return AURIE_API_CALL(MmpLookupInlineHookBySourceAddress, Module, SourceAddress, HookName);
+			return AURIE_API_CALL(MmpGetHookByName, Module, HookIdentifier);
+		}
+
+		inline PVOID MmpGetHookSourceAddress(
+			IN AurieObject* Object
+		)
+		{
+			return AURIE_API_CALL(MmpGetHookSourceAddress, Object);
+		}
+
+		inline PVOID MmpGetHookTargetAddress(
+			IN AurieObject* Object
+		)
+		{
+			return AURIE_API_CALL(MmpGetHookTargetAddress, Object);
+		}
+
+		inline AurieStatus MmpGetRegistersForRPHook(
+			IN AurieRpHook* HookObject,
+			OUT ProcessorContext& Context
+		)
+		{
+			return AURIE_API_CALL(MmpGetRegistersForRPHook, HookObject, Context);
 		}
 	}
 

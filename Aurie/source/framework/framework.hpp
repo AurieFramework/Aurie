@@ -144,6 +144,7 @@ namespace Aurie
 		// Functions hooked by the module by Mm*Hook functions
 		std::list<AurieInlineHook> InlineHooks;
 		std::list<AurieMidHook> MidHooks;
+		std::list<AurieRpHook> RPInlineHooks;
 
 		// If set, notifies the plugin of any module actions
 		AurieModuleCallback ModuleOperationCallback;
@@ -211,6 +212,25 @@ namespace Aurie
 		virtual AurieObjectType GetObjectType() override
 		{
 			return AURIE_OBJECT_MIDFUNCTION_HOOK;
+		}
+	};
+
+	struct AurieRpHook : AurieObject
+	{
+		AurieModule* Owner = nullptr;
+		std::string Identifier;
+		SafetyHookRp HookInstance;
+
+		bool operator==(const AurieRpHook& Other) const
+		{
+			return
+				this->HookInstance.destination() == Other.HookInstance.destination() &&
+				this->HookInstance.target() == Other.HookInstance.target();
+		}
+
+		virtual AurieObjectType GetObjectType() override
+		{
+			return AURIE_OBJECT_RP_HOOK;
 		}
 	};
 

@@ -33,13 +33,37 @@
     <ClCompile Include="source\framework\Early Launch\early_launch.cpp">
       <Filter>Zdrojové soubory</Filter>
     </ClCompile>
-    <ClCompile Include="source\include\SafetyHook\safetyhook.cpp">
-      <Filter>Zdrojové soubory</Filter>
-    </ClCompile>
     <ClCompile Include="source\include\Zydis\Zydis.c">
       <Filter>Zdrojové soubory</Filter>
     </ClCompile>
     <ClCompile Include="source\framework\Debugging\debug.cpp">
+      <Filter>Zdrojové soubory</Filter>
+    </ClCompile>
+    <ClCompile Include="source\include\SafetyHook\allocator.cpp">
+      <Filter>Zdrojové soubory</Filter>
+    </ClCompile>
+    <ClCompile Include="source\include\SafetyHook\easy.cpp">
+      <Filter>Zdrojové soubory</Filter>
+    </ClCompile>
+    <ClCompile Include="source\include\SafetyHook\inline_hook.cpp">
+      <Filter>Zdrojové soubory</Filter>
+    </ClCompile>
+    <ClCompile Include="source\include\SafetyHook\mid_hook.cpp">
+      <Filter>Zdrojové soubory</Filter>
+    </ClCompile>
+    <ClCompile Include="source\include\SafetyHook\os.linux.cpp">
+      <Filter>Zdrojové soubory</Filter>
+    </ClCompile>
+    <ClCompile Include="source\include\SafetyHook\os.windows.cpp">
+      <Filter>Zdrojové soubory</Filter>
+    </ClCompile>
+    <ClCompile Include="source\include\SafetyHook\rp_inline_hook.cpp">
+      <Filter>Zdrojové soubory</Filter>
+    </ClCompile>
+    <ClCompile Include="source\include\SafetyHook\utility.cpp">
+      <Filter>Zdrojové soubory</Filter>
+    </ClCompile>
+    <ClCompile Include="source\include\SafetyHook\vmt_hook.cpp">
       <Filter>Zdrojové soubory</Filter>
     </ClCompile>
   </ItemGroup>
@@ -63,9 +87,6 @@
       <Filter>Hlavičkové soubory</Filter>
     </ClInclude>
     <ClInclude Include="source\framework\Early Launch\early_launch.hpp">
-      <Filter>Hlavičkové soubory</Filter>
-    </ClInclude>
-    <ClInclude Include="source\include\SafetyHook\safetyhook.hpp">
       <Filter>Hlavičkové soubory</Filter>
     </ClInclude>
     <ClInclude Include="source\include\Zydis\Zydis.h">
@@ -389,10 +410,54 @@
     <ClInclude Include="source\include\spdlog\version.h">
       <Filter>Hlavičkové soubory</Filter>
     </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\allocator.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\common.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\context.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\easy.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\inline_hook.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\mid_hook.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\os.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\rp_inline_hook.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\safetyhook.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\utility.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="source\include\SafetyHook\vmt_hook.hpp">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="AurieCore.rc">
       <Filter>Soubory zdrojů</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="source\include\SafetyHook\mid_hook.x86_32.asm">
+      <Filter>Zdrojové soubory</Filter>
+    </None>
+    <None Include="source\include\SafetyHook\mid_hook.x86_64-linux.asm">
+      <Filter>Zdrojové soubory</Filter>
+    </None>
+    <None Include="source\include\SafetyHook\mid_hook.x86_64-windows.asm">
+      <Filter>Zdrojové soubory</Filter>
+    </None>
   </ItemGroup>
 </Project>

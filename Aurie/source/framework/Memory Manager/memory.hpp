@@ -51,6 +51,14 @@ namespace Aurie
 		OUT OPTIONAL PVOID* Trampoline
 	);
 
+	EXPORTED AurieStatus MmCreateUnsafeHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier,
+		IN PVOID SourceFunction,
+		IN PVOID DestinationFunction,
+		OUT OPTIONAL PVOID* Trampoline
+	);
+
 	EXPORTED AurieStatus MmHookExists(
 		IN AurieModule* Module,
 		IN std::string_view HookIdentifier
@@ -118,6 +126,11 @@ namespace Aurie
 			IN AurieInlineHook&& Hook
 		);
 
+		AurieRpHook* MmpAddRPInlineHookToTable(
+			IN AurieModule* OwnerModule,
+			IN AurieRpHook&& Hook
+		);
+
 		AurieMidHook* MmpAddMidHookToTable(
 			IN AurieModule* OwnerModule,
 			IN AurieMidHook&& Hook
@@ -132,6 +145,12 @@ namespace Aurie
 		AurieStatus MmpRemoveMidHook(
 			IN AurieModule* Module,
 			IN AurieMidHook* Hook,
+			IN bool RemoveFromTable
+		);
+
+		AurieStatus MmpRemoveRPHook(
+			IN AurieModule* Module,
+			IN AurieRpHook* Hook,
 			IN bool RemoveFromTable
 		);
 
@@ -151,6 +170,11 @@ namespace Aurie
 			IN AurieMidHook* Hook
 		);
 
+		void MmpRemoveRPHookFromTable(
+			IN AurieModule* Module,
+			IN AurieRpHook* Hook
+		);
+
 		AurieStatus MmpLookupInlineHookByName(
 			IN AurieModule* Module,
 			IN std::string_view HookIdentifier,
@@ -161,6 +185,12 @@ namespace Aurie
 			IN AurieModule* Module,
 			IN std::string_view HookIdentifier,
 			OUT AurieMidHook*& Hook
+		);
+
+		AurieStatus MmpLookupRPHookByName(
+			IN AurieModule* Module,
+			IN std::string_view HookIdentifier,
+			OUT AurieRpHook*& Hook
 		);
 
 		AurieInlineHook* MmpCreateInlineHook(
@@ -177,14 +207,33 @@ namespace Aurie
 			IN AurieMidHookFunction TargetFunction
 		);
 
+		AurieRpHook* MmpCreateRpHook(
+			IN AurieModule* Module,
+			IN std::string_view HookIdentifier,
+			IN PVOID SourceInstruction,
+			IN PVOID DestinationFunction
+		);
+
 		void MmpFreezeCurrentProcess();
 
 		void MmpResumeCurrentProcess();
 
-		EXPORTED AurieStatus MmpLookupInlineHookBySourceAddress(
+		EXPORTED AurieObject* MmpGetHookByName(
 			IN AurieModule* Module,
-			IN PVOID SourceAddress,
-			OUT std::string& HookName
+			IN std::string_view HookIdentifier
+		);
+
+		EXPORTED PVOID MmpGetHookSourceAddress(
+			IN AurieObject* Object
+		);
+
+		EXPORTED PVOID MmpGetHookTargetAddress(
+			IN AurieObject* Object
+		);
+
+		EXPORTED AurieStatus MmpGetRegistersForRPHook(
+			IN AurieRpHook* HookObject,
+			OUT ProcessorContext& Context
 		);
 	}
 }
