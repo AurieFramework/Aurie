@@ -51,6 +51,16 @@ namespace Aurie
 		OUT OPTIONAL PVOID* Trampoline
 	);
 
+	EXPORTED AurieStatus MmEnableHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier
+	);
+
+	EXPORTED AurieStatus MmDisableHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier
+	);
+
 	EXPORTED AurieStatus MmCreateUnsafeHook(
 		IN AurieModule* Module,
 		IN std::string_view HookIdentifier,
@@ -79,6 +89,12 @@ namespace Aurie
 		IN std::string_view HookIdentifier,
 		IN PVOID SourceAddress,
 		IN AurieMidHookFunction TargetHandler
+	);
+
+	EXPORTED AurieStatus MmGetRegistersForHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier,
+		OUT ProcessorContext& Context
 	);
 
 	namespace Internal
@@ -160,6 +176,16 @@ namespace Aurie
 			IN bool RemoveFromTable
 		);
 
+		AurieStatus MmpEnableHook(
+			IN AurieModule* Module,
+			IN std::string_view HookIdentifier
+		);
+
+		AurieStatus MmpDisableHook(
+			IN AurieModule* Module,
+			IN std::string_view HookIdentifier
+		);
+
 		void MmpRemoveInlineHookFromTable(
 			IN AurieModule* Module,
 			IN AurieInlineHook* Hook
@@ -218,20 +244,7 @@ namespace Aurie
 
 		void MmpResumeCurrentProcess();
 
-		EXPORTED AurieObject* MmpGetHookByName(
-			IN AurieModule* Module,
-			IN std::string_view HookIdentifier
-		);
-
-		EXPORTED PVOID MmpGetHookSourceAddress(
-			IN AurieObject* Object
-		);
-
-		EXPORTED PVOID MmpGetHookTargetAddress(
-			IN AurieObject* Object
-		);
-
-		EXPORTED AurieStatus MmpGetRegistersForRPHook(
+		AurieStatus MmpGetRegistersForRPHook(
 			IN AurieRpHook* HookObject,
 			OUT ProcessorContext& Context
 		);
