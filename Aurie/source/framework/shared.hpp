@@ -391,11 +391,11 @@ namespace Aurie
 
 		EXPORTED inline bool __AurieIsDebugBuild()
 		{
-		#ifdef NDEBUG
+#ifdef NDEBUG
 			return false;
-		#else
+#else
 			return true;
-		#endif
+#endif
 		}
 
 		EXPORTED inline AurieStatus __AurieFrameworkInit(
@@ -446,6 +446,7 @@ namespace Aurie
 					exit(0);
 				}
 
+				g_FunctionMap[FunctionName] = Func;
 				return Func(Args...);
 			}
 
@@ -467,6 +468,7 @@ namespace Aurie
 					exit(0);
 				}
 
+				g_FunctionMap[FunctionName] = Func;
 				return Func();
 			}
 		};
