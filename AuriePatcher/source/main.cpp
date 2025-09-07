@@ -287,10 +287,29 @@ int wmain(int argc, wchar_t** argv)
 	}
 
 	std::ofstream out_file(argv[1], std::ios::binary);
+	if (!out_file.is_open())
+	{
+		printf("Opening the file \"%S\" failed.\n", argv[1]);
+		return ERROR_ACCESS_DENIED;
+	}
+
 	out_file.write(static_cast<const char*>(file_base), file_size);
+
+	if (out_file.fail())
+	{
+		printf("Writing to file \"%S\" failed.\n", argv[1]);
+		return ERROR_ACCESS_DENIED;
+	}
+
 	out_file.close();
 
-	printf("Done!\n");
+	if (out_file.fail())
+	{
+		printf("Flushing or closing file \"%S\" failed.\n", argv[1]);
+		return ERROR_ACCESS_DENIED;
+	}
+
+	printf("File saved successfully. Done.\n");
 	
 	return ERROR_SUCCESS;
 }

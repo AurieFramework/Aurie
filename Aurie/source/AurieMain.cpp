@@ -212,9 +212,25 @@ static void ArProcessAttach(HINSTANCE Instance)
 
 		// Mark mods failed for loading for the purge
 		if (!AurieSuccess(last_status))
+		{
+			std::wstring module_name = L"<unknown>";
+
+			// We don't care about the result - if the function fails, we fall back to the "<unknown>" string.
+			MdGetImageFilename(&entry, module_name);
+
+			DbgPrintEx(
+				LOG_SEVERITY_WARNING,
+				"[ArProcessAttach] Module \"%S\" failed ModuleEntrypoint with status %s and will be purged.",
+				module_name.c_str(),
+				AurieStatusToString(last_status)
+			);
+
 			Internal::MdpMarkModuleForPurge(&entry);
+		}
 		else
+		{
 			entry.Flags.EntrypointRan = true;
+		}
 	}
 
 	// Load everything from %APPDIR%\\mods\\aurie
@@ -252,9 +268,25 @@ static void ArProcessAttach(HINSTANCE Instance)
 
 		// Mark mods failed for loading for the purge
 		if (!AurieSuccess(last_status))
+		{
+			std::wstring module_name = L"<unknown>";
+
+			// We don't care about the result - if the function fails, we fall back to the "<unknown>" string.
+			MdGetImageFilename(&entry, module_name);
+
+			DbgPrintEx(
+				LOG_SEVERITY_WARNING,
+				"[ArProcessAttach] Module \"%S\" failed ModulePreinitialize with status %s and will be purged.",
+				module_name.c_str(),
+				AurieStatusToString(last_status)
+			);
+
 			Internal::MdpMarkModuleForPurge(&entry);
+		}
 		else
+		{
 			entry.Flags.IsPreloaded = true;
+		}
 	}
 
 	// Purge all the modules that failed loading
@@ -297,9 +329,25 @@ static void ArProcessAttach(HINSTANCE Instance)
 
 		// Mark mods failed for loading for the purge
 		if (!AurieSuccess(last_status))
+		{
+			std::wstring module_name = L"<unknown>";
+
+			// We don't care about the result - if the function fails, we fall back to the "<unknown>" string.
+			MdGetImageFilename(&entry, module_name);
+
+			DbgPrintEx(
+				LOG_SEVERITY_WARNING, 
+				"[ArProcessAttach] Module \"%S\" failed ModuleInitialize with status %s and will be purged.",
+				module_name.c_str(),
+				AurieStatusToString(last_status)
+			);
+
 			Internal::MdpMarkModuleForPurge(&entry);
+		}
 		else
+		{
 			entry.Flags.IsInitialized = true;
+		}
 	}
 
 	// Purge all the modules that failed loading
