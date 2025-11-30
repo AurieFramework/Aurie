@@ -63,6 +63,7 @@ namespace Aurie
 	struct AurieMemoryAllocation;
 	struct AurieInlineHook;
 	struct AurieMidHook;
+	struct AurieRpHook;
 	struct AurieHook;
 
 	// Forward declarations (not opaque)
@@ -102,7 +103,11 @@ namespace Aurie
 		// The object was not found.
 		AURIE_OBJECT_NOT_FOUND,
 		// The requested resource is unavailable.
-		AURIE_UNAVAILABLE
+		AURIE_UNAVAILABLE,
+		// The verification failed.
+		AURIE_VERIFICATION_FAILURE,
+		// A generic error has occurred.
+		AURIE_UNKNOWN_ERROR
 	};
 
 	enum AurieObjectType : uint32_t
@@ -117,6 +122,8 @@ namespace Aurie
 		AURIE_OBJECT_HOOK = 4,
 		// An AurieHook object
 		AURIE_OBJECT_MIDFUNCTION_HOOK = 5,
+		// An AurieHook object
+		AURIE_OBJECT_RP_HOOK = 6,
 	};
 
 	enum AurieModuleOperationType : uint32_t
@@ -127,7 +134,9 @@ namespace Aurie
 		// The call is a ModuleInitialize call
 		AURIE_OPERATION_INITIALIZE = 2,
 		// The call is a ModuleUnload call
-		AURIE_OPERATION_UNLOAD = 3
+		AURIE_OPERATION_UNLOAD = 3,
+		// The call is a ModuleEntrypoint call
+		AURIE_OPERATION_ENTRYPOINT = 4
 	};
 
 	union XmmRegister {
@@ -267,6 +276,10 @@ namespace Aurie
 			return "AURIE_OBJECT_NOT_FOUND";
 		case AURIE_UNAVAILABLE:
 			return "AURIE_UNAVAILABLE";
+		case AURIE_VERIFICATION_FAILURE:
+			return "AURIE_VERIFICATION_FAILURE";
+		case AURIE_UNKNOWN_ERROR:
+			return "AURIE_UNKNOWN_ERROR";
 		}
 
 		return "AURIE_UNKNOWN_STATUS_CODE";
@@ -376,6 +389,15 @@ namespace Aurie
 			return TRUE;
 		}
 
+		EXPORTED inline bool __AurieIsDebugBuild()
+		{
+#ifdef NDEBUG
+			return false;
+#else
+			return true;
+#endif
+		}
+
 		EXPORTED inline AurieStatus __AurieFrameworkInit(
 			IN AurieModule* InitialImage,
 			IN void* (*PpGetFrameworkRoutine)(IN const char* ImageExportName),
@@ -424,6 +446,7 @@ namespace Aurie
 					exit(0);
 				}
 
+				g_FunctionMap[FunctionName] = Func;
 				return Func(Args...);
 			}
 
@@ -445,6 +468,7 @@ namespace Aurie
 					exit(0);
 				}
 
+				g_FunctionMap[FunctionName] = Func;
 				return Func();
 			}
 		};
@@ -582,6 +606,33 @@ namespace Aurie
 		return AURIE_API_CALL(MmCreateHook, Module, HookIdentifier, SourceFunction, DestinationFunction, Trampoline);
 	}
 
+	inline AurieStatus MmEnableHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier
+	)
+	{
+		return AURIE_API_CALL(MmEnableHook, Module, HookIdentifier);
+	}
+
+	inline AurieStatus MmDisableHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier
+	)
+	{
+		return AURIE_API_CALL(MmDisableHook, Module, HookIdentifier);
+	}
+
+	inline AurieStatus MmCreateUnsafeHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier,
+		IN PVOID SourceFunction,
+		IN PVOID DestinationFunction,
+		OUT OPTIONAL PVOID* Trampoline
+	)
+	{
+		return AURIE_API_CALL(MmCreateUnsafeHook, Module, HookIdentifier, SourceFunction, DestinationFunction, Trampoline);
+	}
+
 	inline AurieStatus MmCreateMidfunctionHook(
 		IN AurieModule* Module,
 		IN std::string_view HookIdentifier,
@@ -614,6 +665,15 @@ namespace Aurie
 	)
 	{
 		return AURIE_API_CALL(MmRemoveHook, Module, HookIdentifier);
+	}
+
+	inline AurieStatus MmGetRegistersForHook(
+		IN AurieModule* Module,
+		IN std::string_view HookIdentifier,
+		OUT ProcessorContext& Context
+	)
+	{
+		return AURIE_API_CALL(MmGetRegistersForHook, Module, HookIdentifier, Context);
 	}
 
 	namespace Internal

@@ -1,4 +1,3 @@
-// Note to self: Fix project template, change C++ standard to C++17 and the target to DLL
 #include "Aurie/shared.hpp"
 using namespace Aurie;
 
