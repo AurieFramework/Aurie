@@ -132,9 +132,6 @@ static void ArProcessAttach(HINSTANCE Instance)
 		Sleep(500); // Give time for the debugger to initialize
 	}
 
-	DbgPrintEx(LOG_SEVERITY_CRITICAL, "This is a special Aurie build intended for debugging.");
-	DbgPrintEx(LOG_SEVERITY_CRITICAL, "Features may or may not be available in this build, and module functionality is not guaranteed.");
-
 	DbgPrintEx(LOG_SEVERITY_TRACE, "[ArProcessAttach] Current folder is %S", game_folder.wstring().c_str());
 
 	// Load all native mods

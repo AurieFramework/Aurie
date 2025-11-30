@@ -2,6 +2,20 @@
 #include <iostream>
 #include <spdlog/sinks/basic_file_sink.h>
 
+// Bro I swear wtf are they smoking at Microsoft
+// and more importantly, is there anything left for me?
+// https://learn.microsoft.com/en-us/answers/questions/1184393/when-including-comctl32-lib-causes-the-ordinal-345
+#include <CommCtrl.h>
+#if defined _M_IX86
+#pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_IA64
+#pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='ia64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_X64
+#pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#else
+#pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
+
 namespace Aurie
 {
 	void vDbgPrint(
@@ -140,31 +154,42 @@ namespace Aurie
 		{
 			if (ControlType == CTRL_C_EVENT)
 			{
-				int result = MessageBoxA(
-					0,
-					"You're about to close the Aurie Framework console window.\n\n"
-					"To fully exit the application, click 'Yes'.\n"
-					"To close the log window without unloading Aurie, click 'No'.\n"
-					"If you changed your mind, press Cancel or the X button.",
-					"Aurie Framework",
-					MB_ICONQUESTION | MB_SETFOREGROUND | MB_TOPMOST | MB_YESNOCANCEL
-				);
+				int button_pressed_index = 0;
+				TASKDIALOGCONFIG config = { 0 };
+				const TASKDIALOG_BUTTON buttons[] = {
+					{ IDYES, L"Close application" },
+					{ IDNO, L"Close log window" }
+				};
+				config.cbSize = sizeof(config);
+				config.pszWindowTitle = L"Aurie Framework";
+				config.hInstance = NULL;
+				config.dwCommonButtons = TDCBF_CANCEL_BUTTON;
+				config.pszMainIcon = TD_INFORMATION_ICON;
+				config.pszMainInstruction = L"Framework console closed";
+				config.pszContent =
+					L"You've attempted to close the Aurie console window.\n"
+					L"It isn't possible to re-open it without restarting the game.\n"
+					L"Please pick your desired action or cancel the closure.";
+				config.pButtons = buttons;
+				config.cButtons = ARRAYSIZE(buttons);
 
-				switch (result)
+				TaskDialogIndirect(&config, &button_pressed_index, NULL, NULL);
+				switch (button_pressed_index)
 				{
 				case IDYES:
+					// Close application button
 					DbgPrintEx(LOG_SEVERITY_INFO, "Process is closing due to CTRL+C event.");
 					TerminateProcess(GetCurrentProcess(), 0);
-					break;
+					return TRUE;
 				case IDNO:
+					// Close log window button
 					DbgPrintEx(LOG_SEVERITY_INFO, "Log window is closing due to CTRL+C event.");
 					DbgpDestroyConsole();
-					break;
+					return TRUE;
 				default:
-					break;
+					// Maybe cancel? idfk
+					return TRUE;
 				}
-
-				return TRUE;
 			}
 
 			return FALSE;
