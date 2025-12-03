@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11222.15 d18.0
+VisualStudioVersion = 18.0.11222.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestModule", "TestModule\TestModule.vcxproj", "{3674589E-016F-4EA3-8772-5EB3939145B4}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AurieCore", "Aurie\AurieCore.vcxproj", "{DBEA28B6-4D6E-4A5A-BE6C-B7BCF97A77CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AuriePatcher", "AuriePatcher\AuriePatcher.vcxproj", "{2AADA370-F7C2-4B85-88C8-763AB4376F9C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AurieInstaller", "AurieInstaller\AurieInstaller.csproj", "{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,6 +57,18 @@ Global
 		{2AADA370-F7C2-4B85-88C8-763AB4376F9C}.Release|x64.Build.0 = Release|x64
 		{2AADA370-F7C2-4B85-88C8-763AB4376F9C}.Release|x86.ActiveCfg = Release|Win32
 		{2AADA370-F7C2-4B85-88C8-763AB4376F9C}.Release|x86.Build.0 = Release|Win32
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Debug|x64.Build.0 = Debug|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Debug|x86.Build.0 = Debug|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Release|x64.ActiveCfg = Release|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Release|x64.Build.0 = Release|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Release|x86.ActiveCfg = Release|Any CPU
+		{6AE6FA28-90CF-4EEF-8C79-DBA710712CC6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
