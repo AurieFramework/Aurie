@@ -69,6 +69,9 @@
             // cb_AdvancedMode
             // 
             cb_AdvancedMode.AutoSize = true;
+            cb_AdvancedMode.Checked = true;
+            cb_AdvancedMode.CheckState = CheckState.Checked;
+            cb_AdvancedMode.Enabled = false;
             cb_AdvancedMode.Location = new Point(322, 123);
             cb_AdvancedMode.Name = "cb_AdvancedMode";
             cb_AdvancedMode.Size = new Size(141, 25);

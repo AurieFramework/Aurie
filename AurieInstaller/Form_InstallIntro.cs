@@ -95,7 +95,6 @@ namespace AurieInstaller
                         return;
                     }
 
-
                     // Try to parse all the JSONs into our ReleaseDetails struct.
                     try
                     {
@@ -254,6 +253,10 @@ namespace AurieInstaller
                         progress_bar.lb_Status.Text = "Downloading AurieSharp dependencies...";
                         progress_bar.pb_Status.Value = 80;
                         await NetInstaller.DownloadFileFromUrl(auriesharp_release.Artifacts["ijwhost.dll"], Path.Combine(mods_native, "ijwhost.dll"));
+
+                        progress_bar.lb_Status.Text = "Downloading AurieSharp dependencies...";
+                        progress_bar.pb_Status.Value = 85;
+                        await NetInstaller.DownloadFileFromUrl(auriesharp_release.Artifacts["nethost.dll"], Path.Combine(mods_native, "nethost.dll"));
                     }
 
                     progress_bar.lb_Status.Text = "Patching game...";
