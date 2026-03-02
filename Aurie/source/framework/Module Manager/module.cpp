@@ -666,7 +666,7 @@ namespace Aurie
 			return false;
 
 		// PpiGetModuleSectionBounds gives the RVA of the section as the beginning, so add the base to it.
-		ntdll_text_base += std::bit_cast<uint64_t>(ntdll);
+		ntdll_text_base += reinterpret_cast<uint64_t>(ntdll);
 
 		PVOID backtrace_array[64] = { 0 };
 		WORD captured_frames = RtlCaptureStackBackTrace(0, 64, &backtrace_array[0], nullptr);
